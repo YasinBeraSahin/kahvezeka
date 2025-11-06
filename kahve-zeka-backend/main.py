@@ -43,11 +43,12 @@ origins = [
     "http://localhost:5173", # Bizim React (Vite) sunucumuz
     "http://localhost",
     "https://kahve-zeka.netlify.app",
+    "https://690c8613f89ca0b1c43c842d--kahve-zeka.netlify.app/login",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, # Bu kaynaklardan gelen isteklere izin ver
+    allow_origins=["*"], # Bu kaynaklardan gelen isteklere izin ver
     allow_credentials=True,
     allow_methods=["*"], # Tüm metodlara (GET, POST, vb.) izin ver
     allow_headers=["*"], # Tüm başlıklara (header) izin ver
