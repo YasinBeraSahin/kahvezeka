@@ -16,7 +16,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm # Y
 # Kendi oluşturduğumuz modülleri import ediyoruz
 import models
 import schemas 
-from database import SessionLocal, engine
+from database import SessionLocal, engine,Base
 
 # Şifreleme için context oluşturuyoruz
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -28,7 +28,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Veritabanında tablolarımızı oluşturuyoruz (eğer yoksa).
 # Bu komut models.py içindeki tüm sınıfları bulup tabloya çevirir.
-models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Kahve Zeka API",

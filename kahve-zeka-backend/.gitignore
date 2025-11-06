@@ -1,0 +1,17 @@
+kahve-zeka-backend/.gitignore
+
+Sanal ortamı asla Git'e yükleme
+
+venv/
+
+SQLite veritabanı dosyasını yükleme (Artık PostgreSQL kullanacağız)
+
+kahve_zeka.db
+*.db
+*.sqlite
+*.sqlite3
+
+Python cache dosyaları
+
+pycache/
+*.pyc
