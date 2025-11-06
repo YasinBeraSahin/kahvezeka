@@ -13,7 +13,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
-    is_active = Column(Integer, default=True)
+    is_active = Column(Boolean, default=True)
     
     # --- YENİ SATIRLAR ---
     # Rol: 'customer' (normal kullanıcı) veya 'owner' (işletme sahibi)
