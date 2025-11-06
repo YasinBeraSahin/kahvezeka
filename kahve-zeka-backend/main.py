@@ -359,7 +359,21 @@ def delete_campaign(
     db.delete(db_campaign)
     db.commit()
     return {"message": "Kampanya başarıyla silindi"}
-
+@app.post("/businesses/", response_model=schemas.Business)
+def create_business(business: schemas.BusinessCreate, db: Session = Depends(get_db)):
+    """
+    Sisteme yeni bir kahve mekanı ekler.
+    (Yöntem 2: 'is_approved' varsayılan olarak False başlar)
+    """
+    db_business = models.Business(**business.model_dump())
+    
+    # Not: 'is_approved' sütunu modelde default=False olduğu için
+    # burada ekstra bir şey yapmamıza gerek yok.
+    
+    db.add(db_business)
+    db.commit()
+    db.refresh(db_business)
+    return db_business
 # --- GENEL MEKAN/YORUM ENDPOINT'LERİ ---
 @app.get("/businesses/{business_id}", response_model=schemas.BusinessDetail)
 def get_business(business_id: int, db: Session = Depends(get_db)):
