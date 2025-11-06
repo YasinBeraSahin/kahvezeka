@@ -3,7 +3,7 @@ import { API_URL } from '../apiConfig.js';
 import { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 
-const API_URL = 'http://127.0.0.1:8000';
+
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
