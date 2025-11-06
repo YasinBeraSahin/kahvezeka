@@ -1,7 +1,8 @@
 // src/pages/HomePage.jsx
+import { API_URL } from '../apiConfig.js';
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import MapComponent from '../components/MapComponent';
+import MapComponent from '../components/MapComponent.jsx';
 import { Link } from 'react-router-dom';
 
 const API_URL = 'http://127.0.0.1:8000';

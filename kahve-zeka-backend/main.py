@@ -42,6 +42,7 @@ app = FastAPI(
 origins = [
     "http://localhost:5173", # Bizim React (Vite) sunucumuz
     "http://localhost",
+    "https://kahve-zeka.netlify.app",
 ]
 
 app.add_middleware(

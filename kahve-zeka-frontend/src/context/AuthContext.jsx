@@ -1,4 +1,5 @@
 // src/context/AuthContext.jsx
+import { API_URL } from '../apiConfig.js';
 import { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 

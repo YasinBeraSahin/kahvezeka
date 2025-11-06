@@ -1,4 +1,5 @@
 // src/pages/BusinessPanelPage.jsx
+import { API_URL } from '../apiConfig.js';
 import { 
   Container, Typography, Button, TextField, Box, Paper, 
   CircularProgress, Alert, List, ListItem, ListItemText, 

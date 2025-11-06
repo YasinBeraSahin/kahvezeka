@@ -1,4 +1,5 @@
 // src/pages/BusinessDetailPage.jsx
+import { API_URL } from '../apiConfig.js';
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom'; // Link'i de ekleyin
 import axios from 'axios';

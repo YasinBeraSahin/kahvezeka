@@ -1,4 +1,5 @@
 // src/pages/ProfilePage.jsx
+import { API_URL } from '../apiConfig.js';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';

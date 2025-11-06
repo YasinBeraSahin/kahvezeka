@@ -1,0 +1,14 @@
+# Netlify için ayar dosyası
+
+[build]
+  # Projeyi nasıl 'build' (inşa) edeceği
+  command = "npm run build"
+  # İnşa edilen sitenin hangi klasörde olacağı
+  publish = "dist"
+
+# React Router'ın F5 atınca çalışması için
+# tüm istekleri ana index.html'e yönlendir
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

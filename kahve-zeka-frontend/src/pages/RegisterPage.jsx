@@ -1,4 +1,5 @@
 // src/pages/RegisterPage.jsx
+import { API_URL } from '../apiConfig.js';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';

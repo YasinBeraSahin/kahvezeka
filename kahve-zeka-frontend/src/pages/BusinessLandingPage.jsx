@@ -1,4 +1,5 @@
 // src/pages/BusinessLandingPage.jsx
+import { API_URL } from '../apiConfig.js';
 import { Container, Typography, Button, Box, Paper } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
