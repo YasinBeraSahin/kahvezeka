@@ -14,7 +14,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 # Kendi oluşturduğumuz modülleri import ediyoruz
 import models
 import schemas 
-# --- KRİTİK DÜZELTME 1: 'Base' ve 'engine'i de import et ---
+# 'Base' ve 'engine'i de import et (Kritik Düzeltme)
 from database import SessionLocal, engine, Base 
 
 # Şifreleme için context oluşturuyoruz
@@ -24,9 +24,7 @@ SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-
-# --- KRİTİK DÜZELTME 2: 'database'den gelen 'Base'i kullan ---
-# Bu komut, PostgreSQL'de 'users', 'businesses' vb. tabloları oluşturur.
+# Veritabanında tablolarımızı oluşturuyoruz
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -45,11 +43,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# --- GÜNCELLEME SONU ---
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# Veritabanı oturumu (session) bağımlılığı
+# --- VERİTABANI BAĞIMLILIĞI ---
 def get_db():
     db = SessionLocal()
     try:
@@ -57,7 +54,7 @@ def get_db():
     finally:
         db.close()
 
-# --- GÜVENLİK YARDIMCILARI (Tamamı) ---
+# --- GÜVENLİK VE YARDIMCI FONKSİYONLAR ---
 def get_password_hash(password):
     return pwd_context.hash(password)
 
@@ -359,6 +356,10 @@ def delete_campaign(
     db.delete(db_campaign)
     db.commit()
     return {"message": "Kampanya başarıyla silindi"}
+
+# --- GENEL MEKAN/YORUM ENDPOINT'LERİ ---
+
+# (EKSİK OLAN 1. FONKSİYON)
 @app.post("/businesses/", response_model=schemas.Business)
 def create_business(business: schemas.BusinessCreate, db: Session = Depends(get_db)):
     """
@@ -366,24 +367,64 @@ def create_business(business: schemas.BusinessCreate, db: Session = Depends(get_
     (Yöntem 2: 'is_approved' varsayılan olarak False başlar)
     """
     db_business = models.Business(**business.model_dump())
-    
-    # Not: 'is_approved' sütunu modelde default=False olduğu için
-    # burada ekstra bir şey yapmamıza gerek yok.
-    
     db.add(db_business)
     db.commit()
     db.refresh(db_business)
     return db_business
-# --- GENEL MEKAN/YORUM ENDPOINT'LERİ ---
+
+@app.get("/businesses/", response_model=List[schemas.Business])
+def get_businesses(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """
+    Sistemdeki ONAYLI kahve mekanlarını listeler.
+    """
+    businesses = db.query(models.Business).options(
+        joinedload(models.Business.reviews)
+    ).filter(models.Business.is_approved == True).offset(skip).limit(limit).all()
+    return businesses
+
+# (EKSİK OLAN 2. FONKSİYON)
+@app.get("/businesses/nearby/", response_model=List[schemas.BusinessDistance])
+def get_nearby_businesses(
+    lat: float, 
+    lon: float, 
+    radius_km: float = 5.0,
+    db: Session = Depends(get_db)
+):
+    """
+    Verilen enlem/boylama ve yarıçapa (km) göre ONAYLI mekanları listeler.
+    """
+    all_businesses = db.query(models.Business).options(
+        joinedload(models.Business.reviews)
+    ).filter(models.Business.is_approved == True).all() # <-- GÜVENLİK KİLİDİ
+    
+    nearby_businesses = []
+    
+    for business in all_businesses:
+        distance = get_distance_between_points(
+            lat1=lat, lon1=lon, lat2=business.latitude, lon2=business.longitude
+        )
+        if distance <= radius_km:
+            nearby_businesses.append(
+                schemas.BusinessDistance(business=business, distance_km=distance)
+            )
+            
+    nearby_businesses.sort(key=lambda x: x.distance_km)
+    
+    return nearby_businesses
+
+# DİKKAT: BU GENEL ROTA, ÖZEL OLAN '/businesses/me' ROTASINDAN SONRA GELİYOR
 @app.get("/businesses/{business_id}", response_model=schemas.BusinessDetail)
 def get_business(business_id: int, db: Session = Depends(get_db)):
+    """
+    Tek bir ONAYLI mekanın detaylarını getirir.
+    """
     business = db.query(models.Business).options(
         selectinload(models.Business.reviews).joinedload(models.Review.owner),
         selectinload(models.Business.menu_items),
         selectinload(models.Business.campaigns)
     ).filter(
         models.Business.id == business_id,
-        models.Business.is_approved == True
+        models.Business.is_approved == True # <-- GÜVENLİK KİLİDİ
     ).first()
     
     if business is None:
