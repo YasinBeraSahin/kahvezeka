@@ -5,7 +5,7 @@ import { useParams, Link } from 'react-router-dom'; // Link'i de ekleyin
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext'; // YENİ EKLENEN SATIR
 
-const API_URL = 'http://127.0.0.1:8000';
+
 
 function BusinessDetailPage() {
   const [business, setBusiness] = useState(null); // Tek bir mekanı saklayacak

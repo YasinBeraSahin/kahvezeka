@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 
-const API_URL = 'http://127.0.0.1:8000';
+
 
 function ProfilePage() {
   const { token } = useAuth(); // Giriş jetonumuzu al

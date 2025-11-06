@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
 // API adresimiz (backend'in çalıştığı yer)
-const API_URL = 'http://127.0.0.1:8000';
+
 
 function BusinessPanelPage() {
   // AuthContext'ten hem 'token'ı hem de 'user' objesini (ID'si için) al

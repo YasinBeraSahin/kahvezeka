@@ -5,7 +5,7 @@ import axios from 'axios';
 import MapComponent from '../components/MapComponent.jsx';
 import { Link } from 'react-router-dom';
 
-const API_URL = 'http://127.0.0.1:8000';
+
 
 function HomePage() {
   const [businesses, setBusinesses] = useState([]);
