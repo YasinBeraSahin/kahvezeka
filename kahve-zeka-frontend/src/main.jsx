@@ -6,6 +6,7 @@ import App from './App.jsx';
 import './index.css';
 import 'leaflet/dist/leaflet.css'; // <-- YENİ EKLENEN SATIR
 import ProfilePage from './pages/ProfilePage.jsx';
+import AdminPage from './pages/AdminPage.jsx';
 
 // Context'imizi import edelim
 import { AuthProvider } from './context/AuthContext.jsx';
@@ -46,6 +47,10 @@ const router = createBrowserRouter([
         element: <ProfilePage />,
       },
       { path: '/panel', element: <BusinessPanelPage /> },
+      {
+    path: '/admin', // YENİ ADMİN YOLU
+    element: <AdminPage />,
+  },
       {
     path: '/isletme', // YENİ İŞLETME BAŞVURU YOLU
     element: <BusinessLandingPage />,

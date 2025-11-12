@@ -200,6 +200,32 @@ def approve_business(
     db.refresh(db_business)
     return db_business
 
+@app.delete("/admin/businesses/{business_id}", response_model=dict)
+def reject_business(
+    business_id: int,
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(get_current_admin_user)
+):
+    """
+    (Admin Yetkisi Gerekir)
+    Bir mekanı (onaylanmamış başvuruyu) sistemden tamamen siler.
+    """
+    db_business = db.query(models.Business).filter(
+        models.Business.id == business_id
+    ).first()
+
+    if db_business is None:
+        raise HTTPException(status_code=404, detail="Mekan bulunamadı.")
+
+    # (Opsiyonel: Zaten onaylanmış bir mekanı silmeyi engelleyedebiliriz)
+    # if db_business.is_approved:
+    #    raise HTTPException(status_code=400, detail="Onaylanmış mekan silinemez.")
+
+    db.delete(db_business)
+    db.commit()
+
+    return {"message": "Mekan başvurusu başarıyla reddedildi/silindi"}
+
 @app.get("/admin/all-businesses", response_model=List[schemas.Business])
 def get_all_businesses_for_admin(
     db: Session = Depends(get_db),

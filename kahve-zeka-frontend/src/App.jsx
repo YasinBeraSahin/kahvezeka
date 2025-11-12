@@ -55,6 +55,13 @@ function App() {
           {token ? (
             // Kullanıcı giriş yapmışsa
             <>
+            {/* --- YENİ ADMİN LİNKİ --- */}
+          {user && user.role === 'admin' && (
+            <MuiLink component={RouterLink} to="/admin" variant="button" sx={{ textDecoration: 'none', color: 'red', fontWeight: 'bold' }}>
+              Admin Paneli
+            </MuiLink>
+          )}
+          {/* --- ADMİN LİNKİ SONU --- */}
               {user && user.role === 'owner' && (
                 <MuiLink component={RouterLink} to="/panel" variant="button" sx={{ textDecoration: 'none', color: 'text.primary' }}>
                   İşletme Panelim
