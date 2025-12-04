@@ -1,16 +1,24 @@
+// src/components/BottomNavigation.js
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../constants/theme';
+import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 
-const BottomNavigation = ({ activeTab = 'home', onTabPress }) => {
+const BottomNavigation = ({ activeTab = 'home', onTabPress, isAdmin, isOwner }) => {
     const tabs = [
-        { id: 'home', icon: 'home', iconOutline: 'home-outline' },
-        { id: 'search', icon: 'search', iconOutline: 'search-outline' },
-        { id: 'favorites', icon: 'star', iconOutline: 'star-outline' },
-        { id: 'profile', icon: 'person', iconOutline: 'person-outline' },
-        { id: 'settings', icon: 'settings', iconOutline: 'settings-outline' },
+        { id: 'home', icon: 'home', iconOutline: 'home-outline', label: 'Ana Sayfa' },
+        { id: 'profile', icon: 'person', iconOutline: 'person-outline', label: 'Profil' },
     ];
+
+    // Admin ise Admin sekmesini ekle
+    if (isAdmin) {
+        tabs.splice(1, 0, { id: 'admin', icon: 'shield-checkmark', iconOutline: 'shield-checkmark-outline', label: 'Yönetici' });
+    }
+
+    // İşletme sahibi ise Panel sekmesini ekle
+    if (isOwner) {
+        tabs.splice(1, 0, { id: 'businessManagement', icon: 'briefcase', iconOutline: 'briefcase-outline', label: 'Panelim' });
+    }
 
     return (
         <View style={styles.container}>
@@ -25,8 +33,14 @@ const BottomNavigation = ({ activeTab = 'home', onTabPress }) => {
                         <Ionicons
                             name={isActive ? tab.icon : tab.iconOutline}
                             size={24}
-                            color={isActive ? THEME.colors.primaryBrown : THEME.colors.textLight}
+                            color={isActive ? COLORS.primary : COLORS.textSecondary}
                         />
+                        <Text style={[
+                            styles.label,
+                            { color: isActive ? COLORS.primary : COLORS.textSecondary }
+                        ]}>
+                            {tab.label}
+                        </Text>
                     </TouchableOpacity>
                 );
             })}
@@ -37,19 +51,26 @@ const BottomNavigation = ({ activeTab = 'home', onTabPress }) => {
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        backgroundColor: THEME.colors.cardBackground,
+        backgroundColor: COLORS.surface,
         borderTopWidth: 1,
-        borderTopColor: THEME.colors.border,
-        paddingBottom: 20, // Safe area için
-        paddingTop: THEME.spacing.sm,
-        ...THEME.shadows.medium,
+        borderTopColor: COLORS.border,
+        paddingBottom: 20, // Safe area
+        paddingTop: 10,
+        ...SHADOWS.medium,
+        justifyContent: 'space-around', // Tabları yay
     },
     tab: {
-        flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: THEME.spacing.sm,
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        minWidth: 60,
     },
+    label: {
+        fontSize: 10,
+        marginTop: 4,
+        fontWeight: '600',
+    }
 });
 
 export default BottomNavigation;

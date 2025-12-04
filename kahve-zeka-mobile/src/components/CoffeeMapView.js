@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../constants/theme';
+// src/components/CoffeeMapView.js
+import React, { useMemo } from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { WebView } from 'react-native-webview';
+import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 
 const CoffeeMapView = ({
     userLocation,
@@ -10,173 +11,135 @@ const CoffeeMapView = ({
     onBusinessPress
 }) => {
     if (!userLocation) {
-        return null;
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+            </View>
+        );
     }
+
+    const mapHTML = useMemo(() => `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <style>
+                body { margin: 0; padding: 0; }
+                #map { width: 100%; height: 100vh; }
+                .custom-popup .leaflet-popup-content-wrapper {
+                    border-radius: 8px;
+                    padding: 0;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+                }
+                .custom-popup .leaflet-popup-content {
+                    margin: 10px;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                }
+            </style>
+        </head>
+        <body>
+            <div id="map"></div>
+            <script>
+                var map = L.map('map', {zoomControl: false}).setView([${userLocation.latitude}, ${userLocation.longitude}], 14);
+
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                    subdomains: 'abcd',
+                    maxZoom: 20
+                }).addTo(map);
+
+                var userIcon = L.divIcon({
+                    className: 'user-marker',
+                    html: '<div style="background-color: ${COLORS.secondary}; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.4);"></div>',
+                    iconSize: [22, 22],
+                    iconAnchor: [11, 11]
+                });
+
+                L.marker([${userLocation.latitude}, ${userLocation.longitude}], {icon: userIcon}).addTo(map);
+
+                L.circle([${userLocation.latitude}, ${userLocation.longitude}], {
+                    color: '${COLORS.secondary}',
+                    fillColor: '${COLORS.secondary}',
+                    fillOpacity: 0.05,
+                    weight: 1,
+                    radius: ${radius * 1000}
+                }).addTo(map);
+
+                var businesses = ${JSON.stringify(businesses)};
+                
+                var coffeeIcon = L.divIcon({
+                    className: 'coffee-marker',
+                    html: '<div style="background-color: ${COLORS.primary}; width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; display: flex; justify-content: center; align-items: center; color: white; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">☕</div>',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 32],
+                    popupAnchor: [0, -32]
+                });
+
+                businesses.forEach(function(item) {
+                    var marker = L.marker([item.business.latitude, item.business.longitude], {icon: coffeeIcon})
+                        .addTo(map)
+                        .bindPopup('<b>' + item.business.name + '</b><br>⭐ ' + (item.business.average_rating ? item.business.average_rating.toFixed(1) : '0.0'), {
+                            className: 'custom-popup'
+                        });
+                    
+                    marker.on('popupopen', function() {
+                        var popupContent = document.querySelector('.leaflet-popup-content');
+                        popupContent.onclick = function() {
+                            window.ReactNativeWebView.postMessage(JSON.stringify(item.business));
+                        };
+                    });
+                });
+
+                if (businesses.length > 0) {
+                    var group = new L.featureGroup(businesses.map(b => L.marker([b.business.latitude, b.business.longitude])));
+                    map.fitBounds(group.getBounds().pad(0.1));
+                }
+            </script>
+        </body>
+        </html>
+    `, [userLocation, businesses, radius]);
+
+    const handleMessage = (event) => {
+        try {
+            const business = JSON.parse(event.nativeEvent.data);
+            if (business && onBusinessPress) {
+                onBusinessPress(business);
+            }
+        } catch (error) {
+            console.error('Harita mesaj hatası:', error);
+        }
+    };
 
     return (
         <View style={styles.container}>
-            <View style={styles.placeholder}>
-                <Ionicons name="map-outline" size={80} color={THEME.colors.primaryBrown} />
-                <Text style={styles.title}>Harita Görünümü</Text>
-
-                <View style={styles.statsContainer}>
-                    <View style={styles.statBox}>
-                        <Ionicons name="cafe" size={24} color={THEME.colors.lightCoffee} />
-                        <Text style={styles.statNumber}>{businesses.length}</Text>
-                        <Text style={styles.statLabel}>Mekan</Text>
-                    </View>
-
-                    <View style={styles.statDivider} />
-
-                    <View style={styles.statBox}>
-                        <Ionicons name="location" size={24} color={THEME.colors.lightCoffee} />
-                        <Text style={styles.statNumber}>{radius} km</Text>
-                        <Text style={styles.statLabel}>Yarıçap</Text>
-                    </View>
-                </View>
-
-                {businesses.length > 0 && (
-                    <ScrollView
-                        style={styles.businessList}
-                        showsVerticalScrollIndicator={false}
-                    >
-                        {businesses.slice(0, 3).map((item, index) => {
-                            const distance = item.distance_km || item.distance || 0;
-                            return (
-                                <View key={item.business.id} style={styles.businessItem}>
-                                    <View style={styles.businessIcon}>
-                                        <Ionicons name="cafe" size={16} color="#fff" />
-                                    </View>
-                                    <View style={styles.businessInfo}>
-                                        <Text style={styles.businessName} numberOfLines={1}>
-                                            {item.business.name}
-                                        </Text>
-                                        <Text style={styles.businessDistance}>
-                                            {distance.toFixed(2)} km uzaklıkta
-                                        </Text>
-                                    </View>
-                                </View>
-                            );
-                        })}
-                        {businesses.length > 3 && (
-                            <Text style={styles.moreText}>
-                                +{businesses.length - 3} mekan daha
-                            </Text>
-                        )}
-                    </ScrollView>
-                )}
-
-                <View style={styles.infoBox}>
-                    <Ionicons name="information-circle" size={20} color={THEME.colors.textLight} />
-                    <Text style={styles.infoText}>
-                        Harita özelliği için yeni build gereklidir
-                    </Text>
-                </View>
-            </View>
+            <WebView
+                originWhitelist={['*']}
+                source={{ html: mapHTML }}
+                style={styles.map}
+                onMessage={handleMessage}
+                scrollEnabled={false}
+            />
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        height: 400,
-        backgroundColor: THEME.colors.background,
-        marginHorizontal: THEME.spacing.md,
-        marginVertical: THEME.spacing.sm,
-    },
-    placeholder: {
         flex: 1,
-        backgroundColor: THEME.colors.cardBackground,
-        borderRadius: THEME.borderRadius.medium,
-        padding: THEME.spacing.lg,
-        ...THEME.shadows.small,
-        alignItems: 'center',
+        backgroundColor: COLORS.background,
+        overflow: 'hidden',
     },
-    title: {
-        ...THEME.typography.h2,
-        marginTop: THEME.spacing.md,
-        marginBottom: THEME.spacing.lg,
-    },
-    statsContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: THEME.spacing.lg,
-        paddingHorizontal: THEME.spacing.lg,
-    },
-    statBox: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    statDivider: {
-        width: 1,
-        height: 50,
-        backgroundColor: THEME.colors.textLight,
-        opacity: 0.2,
-        marginHorizontal: THEME.spacing.md,
-    },
-    statNumber: {
-        ...THEME.typography.h2,
-        color: THEME.colors.primaryBrown,
-        marginTop: THEME.spacing.xs,
-    },
-    statLabel: {
-        ...THEME.typography.caption,
-        color: THEME.colors.textSecondary,
-        marginTop: THEME.spacing.xs,
-    },
-    businessList: {
+    map: {
         width: '100%',
-        maxHeight: 150,
+        height: '100%',
     },
-    businessItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: THEME.colors.background,
-        padding: THEME.spacing.sm,
-        borderRadius: THEME.borderRadius.small,
-        marginBottom: THEME.spacing.xs,
-    },
-    businessIcon: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: THEME.colors.primaryBrown,
+    loadingContainer: {
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: THEME.spacing.sm,
-    },
-    businessInfo: {
-        flex: 1,
-    },
-    businessName: {
-        ...THEME.typography.body,
-        fontWeight: '600',
-        marginBottom: 2,
-    },
-    businessDistance: {
-        ...THEME.typography.caption,
-        color: THEME.colors.textSecondary,
-    },
-    moreText: {
-        ...THEME.typography.caption,
-        color: THEME.colors.textSecondary,
-        textAlign: 'center',
-        marginTop: THEME.spacing.xs,
-        fontStyle: 'italic',
-    },
-    infoBox: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: THEME.colors.background,
-        padding: THEME.spacing.sm,
-        borderRadius: THEME.borderRadius.small,
-        marginTop: THEME.spacing.md,
-    },
-    infoText: {
-        ...THEME.typography.caption,
-        color: THEME.colors.textLight,
-        marginLeft: THEME.spacing.xs,
-        flex: 1,
+        backgroundColor: COLORS.background,
     },
 });
 

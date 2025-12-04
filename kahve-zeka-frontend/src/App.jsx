@@ -1,21 +1,12 @@
 // src/App.jsx
 import './App.css';
-// Link'i 'RouterLink' olarak yeniden adlandırarak import ediyoruz
-import { Outlet, Link as RouterLink } from 'react-router-dom'; 
+import { Outlet, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-
-// --- YENİ MUI IMPORT'LARI ---
-import { Box, Button, Typography, Container, CircularProgress } from '@mui/material';
-// MUI Link'ini 'MuiLink' olarak import ediyoruz
-import { Link as MuiLink } from '@mui/material';
-// ---
+import { Box, Button, Typography, Container, CircularProgress, Link as MuiLink } from '@mui/material';
 
 function App() {
-  // loading state'ini de alıyoruz
-  const { token, user, loading, logout } = useAuth(); 
+  const { token, user, loading, logout } = useAuth();
 
-  // AuthContext veriyi doğrularken (sayfa ilk yüklendiğinde)
-  // bir "yükleniyor" ekranı gösteriyoruz.
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -25,69 +16,112 @@ function App() {
   }
 
   return (
-    // Tüm siteyi MUI Container'ı ile sararak daha düzenli hale getiriyoruz
-    <Container maxWidth="lg"> 
-      <Box 
-        component="header" 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          paddingY: 2, // dikey padding
-          borderBottom: '1px solid #eee'
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* Navbar */}
+      <Box
+        component="header"
+        sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 1100,
+          backdropFilter: 'blur(10px)',
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          borderBottom: '1px solid rgba(0,0,0,0.05)',
+          paddingY: 2,
         }}
       >
-        {/* Sol Taraf: Logo */}
-        {/* MUI Link'ini, react-router-dom'un Link'i olarak davranması için ayarlıyoruz */}
-        <MuiLink component={RouterLink} to="/" sx={{ textDecoration: 'none' }}>
-          <Typography variant="h4" component="h1" color="primary" sx={{ fontWeight: 'bold' }}>
-            Kahve Zeka
-          </Typography>
-        </MuiLink>
-        
-        {/* Sağ Taraf: Navigasyon */}
-        <Box component="nav" sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {(!user || user.role === 'customer') && (
-            <MuiLink component={RouterLink} to="/isletme" variant="button" sx={{ textDecoration: 'none', color: 'text.primary', mr: 1 }}>
-              İşletmenizi Ekleyin
-            </MuiLink>
-          )}
-          {token ? (
-            // Kullanıcı giriş yapmışsa
-            <>
-            {/* --- YENİ ADMİN LİNKİ --- */}
-          {user && user.role === 'admin' && (
-            <MuiLink component={RouterLink} to="/admin" variant="button" sx={{ textDecoration: 'none', color: 'red', fontWeight: 'bold' }}>
-              Admin Paneli
-            </MuiLink>
-          )}
-          {/* --- ADMİN LİNKİ SONU --- */}
-              {user && user.role === 'owner' && (
-                <MuiLink component={RouterLink} to="/panel" variant="button" sx={{ textDecoration: 'none', color: 'text.primary' }}>
-                  İşletme Panelim
-                </MuiLink>
-              )}
-              <MuiLink component={RouterLink} to="/profile" variant="button" sx={{ textDecoration: 'none', color: 'text.primary' }}>
-                Profilim
-              </MuiLink>
-              <Button variant="outlined" color="primary" onClick={logout}>
-                Çıkış Yap
+        <Container maxWidth={false} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3 }}>
+          {/* Logo */}
+          <MuiLink component={RouterLink} to="/" sx={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h5" component="div" color="primary" sx={{ fontWeight: 800, letterSpacing: '-0.5px' }}>
+              Kahve<Box component="span" sx={{ color: 'secondary.main' }}>Zeka</Box>
+            </Typography>
+          </MuiLink>
+
+          {/* Navigation */}
+          <Box component="nav" sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            {(!user || user.role === 'customer') && (
+              <Button component={RouterLink} to="/isletme" color="inherit" sx={{ fontWeight: 500 }}>
+                İşletme Ekle
               </Button>
-            </>
-          ) : (
-            // Kullanıcı giriş yapmamışsa
-            <Button variant="contained" color="primary" component={RouterLink} to="/login">
-              Giriş Yap
-            </Button>
-          )}
-        </Box>
+            )}
+
+            {token ? (
+              <>
+                {user?.role === 'admin' && (
+                  <Button component={RouterLink} to="/admin" color="error" sx={{ fontWeight: 700 }}>
+                    Admin
+                  </Button>
+                )}
+                {user?.role === 'owner' && (
+                  <Button component={RouterLink} to="/panel" color="inherit">
+                    Panel
+                  </Button>
+                )}
+                <Button component={RouterLink} to="/profile" color="inherit">
+                  Profil
+                </Button>
+                <Button variant="outlined" color="primary" onClick={logout} size="small">
+                  Çıkış
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button component={RouterLink} to="/login" color="inherit">
+                  Giriş Yap
+                </Button>
+                <Button component={RouterLink} to="/register" variant="contained" color="primary">
+                  Kayıt Ol
+                </Button>
+              </>
+            )}
+          </Box>
+        </Container>
       </Box>
-      
-      {/* Ana içerik (Sayfalar: HomePage, LoginPage, PanelPage vb.) */}
-      <Box component="main" sx={{ paddingTop: 4 }}>
+
+      {/* Main Content - FULL WIDTH (No Container wrapper) */}
+      <Box component="main" sx={{ flexGrow: 1 }}>
         <Outlet />
       </Box>
-    </Container>
+
+      {/* Footer */}
+      <Box component="footer" sx={{ backgroundColor: '#2D2D2D', color: '#fff', py: 6, mt: 'auto' }}>
+        <Container maxWidth="xl">
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 }}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                KahveZeka
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#aaa', maxWidth: 300 }}>
+                Kahve severler için en iyi mekanları keşfetme platformu.
+                Kendi zevkine uygun kahveyi bul, yorumla ve paylaş.
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'secondary.main' }}>
+                Keşfet
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <MuiLink component={RouterLink} to="/" color="inherit" underline="hover">Ana Sayfa</MuiLink>
+                <MuiLink component={RouterLink} to="/isletme" color="inherit" underline="hover">İşletmeler İçin</MuiLink>
+              </Box>
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'secondary.main' }}>
+                Hesap
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <MuiLink component={RouterLink} to="/login" color="inherit" underline="hover">Giriş Yap</MuiLink>
+                <MuiLink component={RouterLink} to="/register" color="inherit" underline="hover">Kayıt Ol</MuiLink>
+              </Box>
+            </Box>
+          </Box>
+          <Typography variant="body2" sx={{ textAlign: 'center', mt: 6, color: '#666' }}>
+            © {new Date().getFullYear()} KahveZeka. Tüm hakları saklıdır.
+          </Typography>
+        </Container>
+      </Box>
+    </Box>
   );
 }
 

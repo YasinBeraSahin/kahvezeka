@@ -3,20 +3,24 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { API_URL } from '../apiConfig.js';
-import { 
-  Container, Typography, Box, Paper, CircularProgress, 
-  Alert, List, ListItem, ListItemText, IconButton, Chip 
+import {
+  Container, Typography, Box, Paper, CircularProgress,
+  Alert, List, ListItem, ListItemText, IconButton, Chip,
+  Divider, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // Onay ikonu
-import CancelIcon from '@mui/icons-material/Cancel'; // Reddet ikonu
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import DeleteIcon from '@mui/icons-material/Delete';
+import BusinessIcon from '@mui/icons-material/Business';
 
 function AdminPage() {
   const { user, token, loading: authLoading } = useAuth();
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedBusiness, setSelectedBusiness] = useState(null);
 
-  // Veri çekme fonksiyonu
   const fetchBusinesses = async () => {
     try {
       const response = await axios.get(`${API_URL}/admin/all-businesses`, {
@@ -31,7 +35,6 @@ function AdminPage() {
     }
   };
 
-  // Sayfa yüklendiğinde mekanları çek
   useEffect(() => {
     if (token && user?.role === 'admin') {
       fetchBusinesses();
@@ -41,14 +44,12 @@ function AdminPage() {
     }
   }, [token, user, authLoading]);
 
-  // Onaylama fonksiyonu
   const handleApprove = async (id) => {
     try {
       await axios.put(`${API_URL}/admin/businesses/${id}/approve`, {}, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      // Listeyi anında güncelle
-      setBusinesses(businesses.map(b => 
+      setBusinesses(businesses.map(b =>
         b.id === id ? { ...b, is_approved: true } : b
       ));
     } catch (err) {
@@ -56,81 +57,158 @@ function AdminPage() {
     }
   };
 
-  // Reddetme/Silme fonksiyonu
-  const handleReject = async (id) => {
-    if (!window.confirm("Bu mekanı SİLMEK istediğinizden emin misiniz? (İşletme sahibi tekrar başvurmalı)")) return;
+  const handleRejectClick = (business) => {
+    setSelectedBusiness(business);
+    setOpenDialog(true);
+  };
+
+  const handleConfirmReject = async () => {
+    if (!selectedBusiness) return;
     try {
-      await axios.delete(`${API_URL}/admin/businesses/${id}`, {
+      await axios.delete(`${API_URL}/admin/businesses/${selectedBusiness.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      // Listeyi anında güncelle
-      setBusinesses(businesses.filter(b => b.id !== id));
+      setBusinesses(businesses.filter(b => b.id !== selectedBusiness.id));
+      setOpenDialog(false);
+      setSelectedBusiness(null);
     } catch (err) {
       setError("Reddetme işlemi başarısız oldu.");
+      setOpenDialog(false);
     }
   };
 
   if (loading || authLoading) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><CircularProgress /></Box>;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <CircularProgress />
+      </Box>
+    );
   }
-  
+
   if (error) {
-    return <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>;
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
+    );
   }
+
+  const pendingBusinesses = businesses.filter(b => !b.is_approved);
+  const approvedBusinesses = businesses.filter(b => b.is_approved);
 
   return (
-    <Container maxWidth="lg">
-      <Paper sx={{ padding: 4, marginTop: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Admin Paneli - İşletme Başvuruları
-        </Typography>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+      <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700, color: 'primary.main', mb: 4 }}>
+        Yönetici Paneli
+      </Typography>
 
-        {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
+      {/* PENDING APPROVALS */}
+      <Paper elevation={0} sx={{ p: 3, mb: 4, border: '1px solid #ffeebb', bgcolor: '#fffdf5', borderRadius: 2 }}>
+        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'warning.dark' }}>
+          <BusinessIcon /> Onay Bekleyen İşletmeler ({pendingBusinesses.length})
+        </Typography>
+        <Divider sx={{ mb: 2 }} />
+
+        {pendingBusinesses.length === 0 ? (
+          <Typography color="text.secondary" sx={{ fontStyle: 'italic' }}>Şu an onay bekleyen başvuru yok.</Typography>
+        ) : (
+          <List>
+            {pendingBusinesses.map(business => (
+              <ListItem
+                key={business.id}
+                sx={{
+                  bgcolor: 'white',
+                  mb: 1,
+                  borderRadius: 1,
+                  border: '1px solid #eee',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                }}
+                secondaryAction={
+                  <Box>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      size="small"
+                      startIcon={<CheckCircleIcon />}
+                      onClick={() => handleApprove(business.id)}
+                      sx={{ mr: 1 }}
+                    >
+                      Onayla
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      startIcon={<CancelIcon />}
+                      onClick={() => handleRejectClick(business)}
+                    >
+                      Reddet
+                    </Button>
+                  </Box>
+                }
+              >
+                <ListItemText
+                  primary={<Typography variant="subtitle1" fontWeight="bold">{business.name}</Typography>}
+                  secondary={
+                    <>
+                      <Typography variant="body2" component="span" display="block">{business.address}</Typography>
+                      <Typography variant="caption" color="text.secondary">Tel: {business.phone || 'Belirtilmemiş'}</Typography>
+                    </>
+                  }
+                />
+              </ListItem>
+            ))}
+          </List>
+        )}
+      </Paper>
+
+      {/* APPROVED BUSINESSES */}
+      <Paper elevation={0} sx={{ p: 3, border: '1px solid #eee', borderRadius: 2 }}>
+        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'success.dark' }}>
+          <CheckCircleIcon /> Onaylı İşletmeler ({approvedBusinesses.length})
+        </Typography>
+        <Divider sx={{ mb: 2 }} />
 
         <List>
-          {businesses.length === 0 && <Typography>Gösterilecek işletme başvurusu yok.</Typography>}
-          
-          {businesses.map(business => (
-            <ListItem 
-              key={business.id} 
+          {approvedBusinesses.map(business => (
+            <ListItem
+              key={business.id}
               divider
-              sx={{ 
-                backgroundColor: business.is_approved ? '#f1f8e9' : '#fffde7', // Onaylı/Onaysız rengi
-                mb: 1, 
-                borderRadius: '8px' 
-              }}
+              secondaryAction={
+                <IconButton edge="end" aria-label="delete" onClick={() => handleRejectClick(business)} color="error">
+                  <DeleteIcon />
+                </IconButton>
+              }
             >
-              <ListItemText 
-                primary={`${business.name} (ID: ${business.id})`}
-                secondary={`Adres: ${business.address} | Lat: ${business.latitude}, Lon: ${business.longitude}`}
+              <ListItemText
+                primary={business.name}
+                secondary={business.address}
               />
-              
-              {business.is_approved ? (
-                // Zaten onaylıysa
-                <Chip icon={<CheckCircleIcon />} label="Onaylandı" color="success" />
-              ) : (
-                // Onay bekliyorsa
-                <Box>
-                  <IconButton 
-                    color="success" 
-                    onClick={() => handleApprove(business.id)}
-                    title="Onayla"
-                  >
-                    <CheckCircleIcon />
-                  </IconButton>
-                  <IconButton 
-                    color="error" 
-                    onClick={() => handleReject(business.id)}
-                    title="Reddet/Sil"
-                  >
-                    <CancelIcon />
-                  </IconButton>
-                </Box>
-              )}
+              <Chip label="Aktif" color="success" size="small" variant="outlined" sx={{ mr: 2 }} />
             </ListItem>
           ))}
         </List>
       </Paper>
+
+      {/* CONFIRMATION DIALOG */}
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+      >
+        <DialogTitle>İşletmeyi Sil?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            <strong>{selectedBusiness?.name}</strong> adlı işletmeyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)}>İptal</Button>
+          <Button onClick={handleConfirmReject} color="error" autoFocus>
+            Sil
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </Container>
   );
 }

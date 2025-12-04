@@ -1,19 +1,19 @@
+// src/components/ReviewsTab.js
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../constants/theme';
+import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 import ReviewCard from './ReviewCard';
 import { useAuth } from '../contexts/AuthContext';
 
-const ReviewsTab = ({ businessId, reviews = [], navigate }) => {
+const ReviewsTab = ({ businessId, reviews = [], navigation }) => {
     const { isAuthenticated } = useAuth();
 
     const handleAddReview = () => {
         if (isAuthenticated) {
-            navigate('addReview', { businessId });
+            navigation.navigate('addReview', { businessId });
         } else {
-            // Giriş yapmamışsa login sayfasına yönlendir
-            navigate('login');
+            navigation.navigate('Login');
         }
     };
 
@@ -24,7 +24,7 @@ const ReviewsTab = ({ businessId, reviews = [], navigate }) => {
                 style={styles.addButton}
                 onPress={handleAddReview}
             >
-                <Ionicons name="add" size={20} color="#fff" />
+                <Ionicons name="add" size={20} color={COLORS.surface} />
                 <Text style={styles.addButtonText}>Yorum Yaz</Text>
             </TouchableOpacity>
         </View>
@@ -35,7 +35,7 @@ const ReviewsTab = ({ businessId, reviews = [], navigate }) => {
             <View style={styles.container}>
                 {renderHeader()}
                 <View style={styles.emptyContainer}>
-                    <Ionicons name="chatbubble-outline" size={48} color={THEME.colors.textLight} />
+                    <Ionicons name="chatbubble-outline" size={48} color={COLORS.textSecondary} />
                     <Text style={styles.emptyText}>Henüz yorum yapılmamış.</Text>
                     <Text style={styles.emptySubText}>İlk yorumu sen yap!</Text>
                 </View>
@@ -50,7 +50,8 @@ const ReviewsTab = ({ businessId, reviews = [], navigate }) => {
                 data={reviews}
                 renderItem={({ item }) => <ReviewCard review={item} />}
                 keyExtractor={(item) => item.id.toString()}
-                scrollEnabled={false} // Parent ScrollView handles scrolling
+                scrollEnabled={false}
+                contentContainerStyle={styles.listContent}
             />
         </View>
     );
@@ -64,39 +65,49 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: THEME.spacing.md,
+        marginBottom: SIZES.medium,
     },
     title: {
-        ...THEME.typography.h2,
+        fontSize: SIZES.large,
+        fontWeight: 'bold',
+        color: COLORS.text,
     },
     addButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: THEME.colors.primaryBrown,
-        paddingHorizontal: THEME.spacing.md,
-        paddingVertical: THEME.spacing.xs,
-        borderRadius: THEME.borderRadius.medium,
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: SIZES.medium,
+        paddingVertical: 8,
+        borderRadius: SIZES.radius,
+        ...SHADOWS.light,
     },
     addButtonText: {
-        ...THEME.typography.caption,
-        color: '#fff',
+        fontSize: SIZES.small,
+        color: COLORS.surface,
         fontWeight: 'bold',
         marginLeft: 4,
     },
     emptyContainer: {
-        padding: THEME.spacing.xl,
+        padding: SIZES.extraLarge,
         alignItems: 'center',
-        marginTop: THEME.spacing.lg,
+        backgroundColor: COLORS.surface,
+        borderRadius: SIZES.radius,
+        marginTop: SIZES.small,
+        ...SHADOWS.light,
     },
     emptyText: {
-        ...THEME.typography.h3,
-        color: THEME.colors.textSecondary,
-        marginTop: THEME.spacing.md,
+        fontSize: SIZES.medium,
+        fontWeight: 'bold',
+        color: COLORS.text,
+        marginTop: SIZES.medium,
     },
     emptySubText: {
-        ...THEME.typography.body,
-        color: THEME.colors.textLight,
+        fontSize: SIZES.font,
+        color: COLORS.textSecondary,
         marginTop: 4,
+    },
+    listContent: {
+        gap: SIZES.medium,
     },
 });
 

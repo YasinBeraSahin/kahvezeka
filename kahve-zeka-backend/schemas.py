@@ -13,6 +13,11 @@ class BusinessBase(BaseModel):
     phone: Optional[str] = None
     latitude: float
     longitude: float
+    has_wifi: bool = False
+    has_socket: bool = False
+    is_pet_friendly: bool = False
+    is_quiet: bool = False
+    serves_food: bool = False
 
 class BusinessSimple(BaseModel):
     id: int
@@ -60,6 +65,11 @@ class BusinessUpdate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     owner_id: Optional[int] = None
+    has_wifi: Optional[bool] = None
+    has_socket: Optional[bool] = None
+    is_pet_friendly: Optional[bool] = None
+    is_quiet: Optional[bool] = None
+    serves_food: Optional[bool] = None
 
 class UserCreate(UserBase):
     password: str
@@ -121,6 +131,7 @@ class Campaign(CampaignBase):
 class Business(BusinessBase):
     id: int
     average_rating: Optional[float] = 0.0
+    review_count: Optional[int] = 0
     is_approved: bool
     class Config:
         from_attributes = True

@@ -1,187 +1,147 @@
+// src/screens/AddReviewScreen.js
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../constants/theme';
-import { useAuth } from '../contexts/AuthContext';
+import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 import { addReview } from '../services/api';
 
-const AddReviewScreen = ({ navigate, goBack, params }) => {
-    const { businessId } = params || {};
+const AddReviewScreen = ({ navigation, route }) => {
+    const { businessId } = route.params || {};
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // Auth kontrolü
-    const { user } = useAuth();
-
     const handleSubmit = async () => {
         if (rating === 0) {
-            Alert.alert('Hata', 'Lütfen bir puan seçiniz.');
-            return;
-        }
-
-        if (!comment.trim()) {
-            Alert.alert('Hata', 'Lütfen bir yorum yazınız.');
+            Alert.alert('Hata', 'Lütfen puan veriniz.');
             return;
         }
 
         setLoading(true);
         try {
-            // API çağrısı
             await addReview(businessId, { rating, comment });
-
-            Alert.alert(
-                'Başarılı',
-                'Yorumunuz başarıyla eklendi!',
-                [{ text: 'Tamam', onPress: () => goBack() }]
-            );
+            Alert.alert('Başarılı', 'Yorumunuz eklendi.', [
+                { text: 'Tamam', onPress: () => navigation.goBack() }
+            ]);
         } catch (error) {
-            Alert.alert('Hata', 'Yorum eklenirken bir sorun oluştu.');
-            console.error(error);
+            Alert.alert('Hata', 'Yorum eklenirken bir hata oluştu.');
         } finally {
             setLoading(false);
         }
     };
 
-    const renderStars = () => {
-        const stars = [];
-        for (let i = 1; i <= 5; i++) {
-            stars.push(
-                <TouchableOpacity
-                    key={i}
-                    onPress={() => setRating(i)}
-                    style={styles.starButton}
-                >
-                    <Ionicons
-                        name={rating >= i ? "star" : "star-outline"}
-                        size={40}
-                        color={THEME.colors.warning}
-                    />
-                </TouchableOpacity>
-            );
-        }
-        return <View style={styles.starsContainer}>{stars}</View>;
-    };
-
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.container}
-        >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => goBack()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color={THEME.colors.primaryBrown} />
-                    </TouchableOpacity>
-                    <Text style={styles.title}>Yorum Yaz</Text>
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+                </TouchableOpacity>
+                <Text style={styles.title}>Yorum Yaz</Text>
+                <View style={{ width: 40 }} />
+            </View>
+
+            <View style={styles.content}>
+                <Text style={styles.label}>Puanınız</Text>
+                <View style={styles.starsContainer}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                            <Ionicons
+                                name={star <= rating ? "star" : "star-outline"}
+                                size={40}
+                                color={COLORS.warning}
+                            />
+                        </TouchableOpacity>
+                    ))}
                 </View>
 
-                <View style={styles.content}>
-                    <Text style={styles.label}>Puanınız</Text>
-                    {renderStars()}
-                    <Text style={styles.ratingText}>
-                        {rating > 0 ? `${rating} Yıldız` : 'Puanlamak için yıldızlara dokunun'}
-                    </Text>
+                <Text style={styles.label}>Yorumunuz</Text>
+                <TextInput
+                    style={styles.input}
+                    multiline
+                    numberOfLines={4}
+                    placeholder="Deneyiminizi paylaşın..."
+                    placeholderTextColor={COLORS.textSecondary}
+                    value={comment}
+                    onChangeText={setComment}
+                />
 
-                    <Text style={styles.label}>Yorumunuz</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Deneyiminizi paylaşın..."
-                        multiline
-                        numberOfLines={6}
-                        textAlignVertical="top"
-                        value={comment}
-                        onChangeText={setComment}
-                    />
-
-                    <TouchableOpacity
-                        style={[styles.submitButton, (loading || rating === 0) && styles.disabledButton]}
-                        onPress={handleSubmit}
-                        disabled={loading || rating === 0}
-                    >
-                        {loading ? (
-                            <ActivityIndicator color="#fff" />
-                        ) : (
-                            <Text style={styles.submitButtonText}>Yorumu Gönder</Text>
-                        )}
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                <TouchableOpacity
+                    style={styles.submitButton}
+                    onPress={handleSubmit}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator color={COLORS.surface} />
+                    ) : (
+                        <Text style={styles.submitButtonText}>Gönder</Text>
+                    )}
+                </TouchableOpacity>
+            </View>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: THEME.colors.background,
-    },
-    scrollContent: {
-        flexGrow: 1,
-        padding: THEME.spacing.lg,
+        backgroundColor: COLORS.background,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: THEME.spacing.xl,
-        marginTop: THEME.spacing.lg,
+        justifyContent: 'space-between',
+        paddingHorizontal: SIZES.medium,
+        paddingTop: 50,
+        paddingBottom: SIZES.medium,
+        backgroundColor: COLORS.surface,
+        ...SHADOWS.light,
     },
     backButton: {
-        padding: THEME.spacing.xs,
-        marginRight: THEME.spacing.md,
+        padding: SIZES.small,
     },
     title: {
-        ...THEME.typography.h2,
+        fontSize: SIZES.large,
+        fontWeight: 'bold',
+        color: COLORS.text,
     },
     content: {
-        flex: 1,
+        padding: SIZES.large,
     },
     label: {
-        ...THEME.typography.h3,
-        marginBottom: THEME.spacing.sm,
-        marginTop: THEME.spacing.md,
+        fontSize: SIZES.medium,
+        fontWeight: 'bold',
+        color: COLORS.text,
+        marginBottom: SIZES.small,
+        marginTop: SIZES.medium,
     },
     starsContainer: {
         flexDirection: 'row',
-        justifyContent: 'center',
-        marginBottom: THEME.spacing.xs,
-    },
-    starButton: {
-        padding: 4,
-    },
-    ratingText: {
-        ...THEME.typography.caption,
-        color: THEME.colors.textSecondary,
-        textAlign: 'center',
-        marginBottom: THEME.spacing.xl,
+        gap: SIZES.small,
+        marginBottom: SIZES.large,
     },
     input: {
-        backgroundColor: THEME.colors.cardBackground,
-        borderRadius: THEME.borderRadius.medium,
-        padding: THEME.spacing.md,
+        backgroundColor: COLORS.surface,
+        borderRadius: SIZES.radius,
+        padding: SIZES.medium,
+        height: 120,
+        textAlignVertical: 'top',
+        fontSize: SIZES.font,
+        color: COLORS.text,
         borderWidth: 1,
-        borderColor: THEME.colors.border,
-        minHeight: 120,
-        ...THEME.typography.body,
+        borderColor: COLORS.border,
     },
     submitButton: {
-        backgroundColor: THEME.colors.primaryBrown,
-        height: 50,
-        borderRadius: THEME.borderRadius.medium,
-        justifyContent: 'center',
+        backgroundColor: COLORS.primary,
+        paddingVertical: SIZES.medium,
+        borderRadius: SIZES.radius,
         alignItems: 'center',
-        marginTop: THEME.spacing.xl,
-        ...THEME.shadows.small,
-    },
-    disabledButton: {
-        backgroundColor: THEME.colors.textLight,
-        opacity: 0.7,
+        marginTop: SIZES.extraLarge,
+        ...SHADOWS.medium,
     },
     submitButtonText: {
-        ...THEME.typography.body,
-        color: '#fff',
+        color: COLORS.surface,
+        fontSize: SIZES.medium,
         fontWeight: 'bold',
-        fontSize: 16,
     },
 });
 

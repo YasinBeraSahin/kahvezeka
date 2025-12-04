@@ -1,27 +1,23 @@
+// src/components/SearchBar.js
 import React from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../constants/theme';
+import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 
 const SearchBar = ({ value, onChangeText, onFilterPress, placeholder = 'Kahve ara...' }) => {
     return (
         <View style={styles.container}>
             <View style={styles.searchBox}>
-                {/* Search Icon */}
-                <Ionicons name="search" size={20} color={THEME.colors.textLight} style={styles.searchIcon} />
-
-                {/* Input */}
+                <Ionicons name="search" size={20} color={COLORS.textSecondary} style={styles.searchIcon} />
                 <TextInput
                     style={styles.input}
                     placeholder={placeholder}
-                    placeholderTextColor={THEME.colors.textLight}
+                    placeholderTextColor={COLORS.textSecondary}
                     value={value}
                     onChangeText={onChangeText}
                 />
-
-                {/* Filter Button */}
                 <TouchableOpacity onPress={onFilterPress} style={styles.filterButton}>
-                    <Ionicons name="options" size={20} color={THEME.colors.primaryBrown} />
+                    <Ionicons name="options-outline" size={20} color={COLORS.primary} />
                 </TouchableOpacity>
             </View>
         </View>
@@ -30,29 +26,29 @@ const SearchBar = ({ value, onChangeText, onFilterPress, placeholder = 'Kahve ar
 
 const styles = StyleSheet.create({
     container: {
-        paddingHorizontal: THEME.spacing.md,
-        paddingVertical: THEME.spacing.sm,
-        backgroundColor: THEME.colors.background,
+        paddingHorizontal: SIZES.padding,
+        paddingBottom: SIZES.base,
     },
     searchBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: THEME.colors.cardBackground,
-        borderRadius: THEME.borderRadius.medium,
-        paddingHorizontal: THEME.spacing.md,
-        paddingVertical: THEME.spacing.sm,
-        ...THEME.shadows.small,
+        backgroundColor: COLORS.surface,
+        borderRadius: SIZES.radius,
+        paddingHorizontal: SIZES.medium,
+        height: 50,
+        ...SHADOWS.light,
     },
     searchIcon: {
-        marginRight: THEME.spacing.sm,
+        marginRight: SIZES.small,
     },
     input: {
         flex: 1,
-        ...THEME.typography.body,
-        paddingVertical: THEME.spacing.xs,
+        height: '100%',
+        color: COLORS.text,
+        fontSize: SIZES.font,
     },
     filterButton: {
-        padding: THEME.spacing.xs,
+        padding: SIZES.base,
     },
 });
 

@@ -1,32 +1,27 @@
+// src/components/RadiusFilter.js
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { THEME } from '../constants/theme';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { COLORS, SIZES } from '../constants/theme';
 
 const RADIUS_OPTIONS = [1, 3, 5, 10, 20];
 
 const RadiusFilter = ({ selectedRadius, onSelectRadius }) => {
     return (
         <View style={styles.container}>
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-            >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {RADIUS_OPTIONS.map((radius) => (
                     <TouchableOpacity
                         key={radius}
                         style={[
                             styles.chip,
-                            selectedRadius === radius && styles.chipSelected,
+                            selectedRadius === radius && styles.selectedChip
                         ]}
                         onPress={() => onSelectRadius(radius)}
                     >
-                        <Text
-                            style={[
-                                styles.chipText,
-                                selectedRadius === radius && styles.chipTextSelected,
-                            ]}
-                        >
+                        <Text style={[
+                            styles.chipText,
+                            selectedRadius === radius && styles.selectedChipText
+                        ]}>
                             {radius} km
                         </Text>
                     </TouchableOpacity>
@@ -38,31 +33,31 @@ const RadiusFilter = ({ selectedRadius, onSelectRadius }) => {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: THEME.colors.background,
-        paddingVertical: THEME.spacing.xs,
+        marginBottom: SIZES.base,
     },
     scrollContent: {
-        paddingHorizontal: THEME.spacing.md,
-        gap: THEME.spacing.sm,
+        paddingHorizontal: SIZES.padding,
+        gap: SIZES.base,
     },
     chip: {
-        paddingHorizontal: THEME.spacing.md,
-        paddingVertical: THEME.spacing.sm,
-        borderRadius: THEME.borderRadius.large,
-        borderWidth: 1.5,
-        borderColor: THEME.colors.primaryBrown,
-        backgroundColor: THEME.colors.cardBackground,
+        paddingHorizontal: SIZES.medium,
+        paddingVertical: 6,
+        borderRadius: 20,
+        backgroundColor: COLORS.surface,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
-    chipSelected: {
-        backgroundColor: THEME.colors.primaryBrown,
+    selectedChip: {
+        backgroundColor: COLORS.primary,
+        borderColor: COLORS.primary,
     },
     chipText: {
-        ...THEME.typography.caption,
-        color: THEME.colors.primaryBrown,
+        color: COLORS.text,
+        fontSize: SIZES.small,
         fontWeight: '600',
     },
-    chipTextSelected: {
-        color: THEME.colors.cardBackground,
+    selectedChipText: {
+        color: COLORS.surface,
     },
 });
 

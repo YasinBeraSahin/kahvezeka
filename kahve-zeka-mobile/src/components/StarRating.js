@@ -1,35 +1,35 @@
+// src/components/StarRating.js
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../constants/theme';
+import { COLORS } from '../constants/theme';
 
-const StarRating = ({ rating, size = 16, color = THEME.colors.warning }) => {
+const StarRating = ({ rating, size = 14 }) => {
     const stars = [];
-
     for (let i = 1; i <= 5; i++) {
-        let iconName = 'star-outline';
-        if (rating >= i) {
-            iconName = 'star';
-        } else if (rating >= i - 0.5) {
-            iconName = 'star-half';
+        let name = 'star';
+        if (i > rating) {
+            name = 'star-outline';
+        } else if (i - 0.5 === rating) {
+            name = 'star-half';
         }
-
         stars.push(
-            <Ionicons key={i} name={iconName} size={size} color={color} style={{ marginRight: 2 }} />
+            <Ionicons
+                key={i}
+                name={name}
+                size={size}
+                color={COLORS.warning}
+                style={{ marginRight: 2 }}
+            />
         );
     }
 
-    return (
-        <View style={styles.container}>
-            {stars}
-        </View>
-    );
+    return <View style={styles.container}>{stars}</View>;
 };
 
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        alignItems: 'center',
     },
 });
 

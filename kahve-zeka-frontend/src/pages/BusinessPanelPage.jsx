@@ -1,28 +1,25 @@
 // src/pages/BusinessPanelPage.jsx
 import { API_URL } from '../apiConfig.js';
-import { 
-  Container, Typography, Button, TextField, Box, Paper, 
-  CircularProgress, Alert, List, ListItem, ListItemText, 
-  IconButton, Divider 
+import {
+  Container, Typography, Button, TextField, Box, Paper,
+  CircularProgress, Alert, List, ListItem, ListItemText,
+  IconButton, Divider
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
-// API adresimiz (backend'in çalıştığı yer)
-
-
 function BusinessPanelPage() {
   // AuthContext'ten hem 'token'ı hem de 'user' objesini (ID'si için) al
-  const { token, user } = useAuth(); 
-  
+  const { token, user } = useAuth();
+
   // 'null' = bilinmiyor, 'true' = mekan var, 'false' = mekan yok
-  const [hasBusiness, setHasBusiness] = useState(null); 
-  
+  const [hasBusiness, setHasBusiness] = useState(null);
+
   // API'den dönen tüm business objesini saklar (is_approved dahil)
-  const [businessData, setBusinessData] = useState(null); 
-  
+  const [businessData, setBusinessData] = useState(null);
+
   // Bu state, hem 'Güncelleme' hem de 'Yeni Oluşturma' formu için kullanılacak
   const [formData, setFormData] = useState({
     name: '',
@@ -31,11 +28,11 @@ function BusinessPanelPage() {
     latitude: 0.0,
     longitude: 0.0
   });
-  
+
   // Menü ve Kampanya listeleri için state'ler
   const [menuItems, setMenuItems] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
-  
+
   // Yeni öğe ekleme formları için state'ler
   const [newMenuItem, setNewMenuItem] = useState({ name: '', description: '', price: '' });
   const [newCampaign, setNewCampaign] = useState({ title: '', description: '' });
@@ -53,36 +50,36 @@ function BusinessPanelPage() {
       axios.get(`${API_URL}/businesses/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
-      .then(response => {
-        // BAŞARILI: Mekan bulundu
-        const data = response.data;
-        setBusinessData(data); // Gelen tüm objeyi sakla
-        setFormData({ 
-          name: data.name, 
-          address: data.address, 
-          phone: data.phone, 
-          latitude: data.latitude, 
-          longitude: data.longitude 
+        .then(response => {
+          // BAŞARILI: Mekan bulundu
+          const data = response.data;
+          setBusinessData(data); // Gelen tüm objeyi sakla
+          setFormData({
+            name: data.name,
+            address: data.address,
+            phone: data.phone,
+            latitude: data.latitude,
+            longitude: data.longitude
+          });
+          setMenuItems(data.menu_items || []);
+          setCampaigns(data.campaigns || []);
+          setHasBusiness(true); // Mekanı var
+          setPageLoading(false);
+        })
+        .catch(err => {
+          // Hata 404 ise (Mekan bulunamadı), bu "yeni sahip" durumudur.
+          if (err.response && err.response.status === 404) {
+            setHasBusiness(false); // Mekanı yok, "Oluştur" formu gösterilecek
+          } else {
+            // Başka bir hata (örn: 500 veya 401)
+            console.error("Mekan bilgileri yüklenemedi:", err.response);
+            setError("Mekan bilgileri yüklenemedi.");
+          }
+          setPageLoading(false);
         });
-        setMenuItems(data.menu_items || []);
-        setCampaigns(data.campaigns || []);
-        setHasBusiness(true); // Mekanı var
-        setPageLoading(false);
-      })
-      .catch(err => {
-        // Hata 404 ise (Mekan bulunamadı), bu "yeni sahip" durumudur.
-        if (err.response && err.response.status === 404) {
-          setHasBusiness(false); // Mekanı yok, "Oluştur" formu gösterilecek
-        } else {
-          // Başka bir hata (örn: 500 veya 401)
-          console.error("Mekan bilgileri yüklenemedi:", err.response);
-          setError("Mekan bilgileri yüklenemedi.");
-        }
-        setPageLoading(false);
-      });
     }
   }, [token]);
-  
+
   // Form alanı değiştiğinde çalışır (hem yeni hem güncelleme için ortak)
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -104,9 +101,9 @@ function BusinessPanelPage() {
       const response = await axios.post(
         `${API_URL}/businesses/`,
         { ...formData, owner_id: user.id }, // 'user' objesini context'ten aldık
-        { headers: { 'Authorization': `Bearer ${token}` }}
+        { headers: { 'Authorization': `Bearer ${token}` } }
       );
-      
+
       const data = response.data;
       setBusinessData(data); // Gelen yeni mekanı sakla
       setMenuItems([]); // Yeni mekanın menüsü boştur
@@ -128,16 +125,16 @@ function BusinessPanelPage() {
     try {
       const response = await axios.put(
         `${API_URL}/businesses/me`,
-        formData, 
+        formData,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       const data = response.data;
       setFormData({ // Sadece form verisini güncelle
-          name: data.name, address: data.address, phone: data.phone, 
-          latitude: data.latitude, longitude: data.longitude 
+        name: data.name, address: data.address, phone: data.phone,
+        latitude: data.latitude, longitude: data.longitude
       });
       // 'businessData'yı da güncelle (örn: admin onayladıktan sonra F5 atmadan görmek için)
-      setBusinessData(prev => ({...prev, ...data}));
+      setBusinessData(prev => ({ ...prev, ...data }));
       setSuccess('Mekan bilgileri başarıyla güncellendi!');
       setFormLoading(false);
     } catch (err) {
@@ -160,7 +157,7 @@ function BusinessPanelPage() {
       const response = await axios.post(
         `${API_URL}/businesses/me/menu-items/`,
         { ...newMenuItem, price: parseFloat(newMenuItem.price) },
-        { headers: { 'Authorization': `Bearer ${token}` }}
+        { headers: { 'Authorization': `Bearer ${token}` } }
       );
       setMenuItems([...menuItems, response.data]);
       setNewMenuItem({ name: '', description: '', price: '' });
@@ -177,7 +174,7 @@ function BusinessPanelPage() {
     try {
       await axios.delete(
         `${API_URL}/businesses/me/menu-items/${itemId}`,
-        { headers: { 'Authorization': `Bearer ${token}` }}
+        { headers: { 'Authorization': `Bearer ${token}` } }
       );
       setMenuItems(menuItems.filter(item => item.id !== itemId));
       setSuccess('Menü öğesi silindi!');
@@ -200,8 +197,8 @@ function BusinessPanelPage() {
     try {
       const response = await axios.post(
         `${API_URL}/businesses/me/campaigns/`,
-        newCampaign, 
-        { headers: { 'Authorization': `Bearer ${token}` }}
+        newCampaign,
+        { headers: { 'Authorization': `Bearer ${token}` } }
       );
       setCampaigns([...campaigns, response.data]);
       setNewCampaign({ title: '', description: '' });
@@ -218,7 +215,7 @@ function BusinessPanelPage() {
     try {
       await axios.delete(
         `${API_URL}/businesses/me/campaigns/${campaignId}`,
-        { headers: { 'Authorization': `Bearer ${token}` }}
+        { headers: { 'Authorization': `Bearer ${token}` } }
       );
       setCampaigns(campaigns.filter(campaign => campaign.id !== campaignId));
       setSuccess('Kampanya silindi!');
@@ -240,13 +237,13 @@ function BusinessPanelPage() {
   // --- ARAYÜZ ÇİZİMİ ---
   return (
     <Container maxWidth="md">
-      
+
       {/* Genel Hata/Başarı Mesajları */}
       <Box sx={{ mt: 2, mb: 4, position: 'fixed', bottom: 0, right: 16, zIndex: 9999 }}>
         {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
         {success && <Alert severity="success" onClose={() => setSuccess(null)}>{success}</Alert>}
       </Box>
-      
+
       {hasBusiness === false && (
         // --- DURUM 1: MEKANI YOK (YENİ OLUŞTURMA MODU) ---
         <Paper sx={{ padding: 4, marginTop: 4 }}>
@@ -255,7 +252,7 @@ function BusinessPanelPage() {
           </Typography>
           <Typography variant="h6">Mekanınız Henüz Kayıtlı Değil</Typography>
           <Typography>Lütfen sistemde görünebilmek için mekanınızın bilgilerini girin.</Typography>
-          
+
           <Box component="form" onSubmit={handleCreateBusiness} noValidate sx={{ mt: 2 }}>
             <TextField fullWidth label="Mekan Adı" name="name" value={formData.name} onChange={handleFormChange} margin="normal" required />
             <TextField fullWidth label="Adres" name="address" value={formData.address} onChange={handleFormChange} margin="normal" required />
@@ -290,12 +287,12 @@ function BusinessPanelPage() {
           ) : (
             // --- DURUM 2b: MEKAN ONAYLANMIŞ ---
             // Onaylanmışsa özel bir mesaj göstermeye gerek yok, direkt paneli göster
-            null 
+            null
           )}
-          
+
           {/* Mekan onay bekliyor olsa BİLE bu panelleri gösteriyoruz ki
               admin onaylayana kadar menüsünü vb. doldurabilsin. */}
-              
+
           <Paper sx={{ padding: 4, marginTop: 4 }}>
             <Typography variant="h4" component="h1" gutterBottom>
               İşletme Panelim: {formData.name}
@@ -305,14 +302,13 @@ function BusinessPanelPage() {
               <TextField fullWidth label="Mekan Adı" name="name" value={formData.name} onChange={handleFormChange} margin="normal" required />
               <TextField fullWidth label="Adres" name="address" value={formData.address} onChange={handleFormChange} margin="normal" required />
               <TextField fullWidth label="Telefon" name="phone" value={formData.phone || ''} onChange={handleFormChange} margin="normal" />
-              <TextField fullWidth label="Enlem" name="latitude" type="number" value={formData.latitude} onChange={handleFormChange} margin="normal" required />
-              <TextField fullWidth label="Boylam" name="longitude" type="number" value={formData.longitude} onChange={handleFormChange} margin="normal" required />
+              {/* ENLEM VE BOYLAM ALANLARI BURADAN KALDIRILDI */}
               <Button type="submit" variant="contained" color="primary" size="large" sx={{ mt: 2 }} disabled={formLoading}>
                 {formLoading ? <CircularProgress size={24} color="inherit" /> : 'Bilgileri Güncelle'}
               </Button>
             </Box>
           </Paper>
-          
+
           <Paper sx={{ padding: 4, marginTop: 4 }}>
             <Typography variant="h6">Menü Yönetimi</Typography>
             <Box component="form" onSubmit={handleAddMenuItem} sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -326,7 +322,7 @@ function BusinessPanelPage() {
             {menuItems.length === 0 ? (<Typography>Henüz menü öğesi eklenmemiş.</Typography>) : (
               <List>
                 {menuItems.map(item => (
-                  <ListItem key={item.id} secondaryAction={ <IconButton edge="end" onClick={() => handleDeleteMenuItem(item.id)}><DeleteIcon /></IconButton> }>
+                  <ListItem key={item.id} secondaryAction={<IconButton edge="end" onClick={() => handleDeleteMenuItem(item.id)}><DeleteIcon /></IconButton>}>
                     <ListItemText primary={item.name} secondary={`${item.description || ''} - ${item.price} TL`} />
                   </ListItem>
                 ))}
@@ -346,7 +342,7 @@ function BusinessPanelPage() {
             {campaigns.length === 0 ? (<Typography>Henüz kampanya eklenmemiş.</Typography>) : (
               <List>
                 {campaigns.map(campaign => (
-                  <ListItem key={campaign.id} secondaryAction={ <IconButton edge="end" onClick={() => handleDeleteCampaign(campaign.id)}><DeleteIcon /></IconButton> }>
+                  <ListItem key={campaign.id} secondaryAction={<IconButton edge="end" onClick={() => handleDeleteCampaign(campaign.id)}><DeleteIcon /></IconButton>}>
                     <ListItemText primary={campaign.title} secondary={campaign.description} />
                   </ListItem>
                 ))}

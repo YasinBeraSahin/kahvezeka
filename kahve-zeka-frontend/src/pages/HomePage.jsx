@@ -3,9 +3,28 @@ import { API_URL } from '../apiConfig.js';
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import MapComponent from '../components/MapComponent.jsx';
-import { Link } from 'react-router-dom';
-
-
+import { Link as RouterLink } from 'react-router-dom';
+import {
+  Box,
+  Typography,
+  Grid,
+  Card,
+  CardActionArea,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  InputAdornment,
+  Chip,
+  Rating,
+  CircularProgress,
+  Paper,
+  useMediaQuery,
+  useTheme
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 function HomePage() {
   const [businesses, setBusinesses] = useState([]);
@@ -13,144 +32,191 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // --- YENİ EKLENEN STATE ---
-  // Kullanıcının seçtiği yarıçapı tutar. Varsayılan olarak 5km.
-  const [radius, setRadius] = useState(5); 
+  const [radius, setRadius] = useState(5);
 
-  // 1. ADIM: Konum alma 'useEffect'i
-  // Bu kanca, sayfa yüklendiğinde SADECE BİR KEZ çalışır.
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // 1. ADIM: Konum alma
   useEffect(() => {
-    setLoading(true); // Yüklemeyi başlat
+    setLoading(true);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation([latitude, longitude]);
-          // Konum alındı, ancak veri çekme işini burada YAPMIYORUZ.
-          // Bu, bir sonraki useEffect'i tetikleyecek.
         },
         (err) => {
-          console.error('Konum alınamadı:', err);
-          setError('Konum izni alınamadı. Lütfen tarayıcı ayarlarınızı kontrol edin.');
+          console.error('Konum alınamadı, varsayılan konum (İstanbul) kullanılıyor:', err);
+          setUserLocation([40.9882, 29.0223]); // Kadıköy
+          setError(null);
           setLoading(false);
         }
       );
     } else {
-      setError('Tarayıcınız konum servisini desteklemiyor.');
+      console.error('Tarayıcı konum desteklemiyor.');
+      setUserLocation([40.9882, 29.0223]);
       setLoading(false);
     }
-  }, []); // Boş dizi '[]', 1 kez çalışmasını sağlar.
+  }, []);
 
-  // 2. ADIM: Veri çekme 'useEffect'i
-  // BU KANCA, 'userLocation' VEYA 'radius' DEĞİŞTİĞİNDE ÇALIŞIR.
+  // 2. ADIM: Veri çekme
   useEffect(() => {
-    // Eğer konum bilgisi henüz gelmediyse, bu kancadan çık.
-    if (!userLocation) {
-      return;
-    }
-    
-    // Konum var, şimdi veri çek
-    setLoading(true); // Yüklemeyi başlat (radius değiştiğinde de)
-    setError(null);   // Eski hataları temizle
-    
+    if (!userLocation) return;
+
+    setLoading(true);
+    setError(null);
+
     axios.get(`${API_URL}/businesses/nearby/`, {
       params: {
         lat: userLocation[0],
         lon: userLocation[1],
-        radius_km: radius // <-- HARD-CODED '5' YERİNE 'radius' STATE'İNİ KULLAN
+        radius_km: radius
       }
     })
-    .then(response => {
-      setBusinesses(response.data);
-      setLoading(false);
-    })
-    .catch(err => {
-      console.error('Yakındaki mekanları çekerken hata:', err);
-      setError('Yakındaki mekanlar yüklenemedi.');
-      setLoading(false);
-    });
-    
-  }, [userLocation, radius]); // <-- BAĞIMLILIKLAR: userLocation veya radius değişirse çalış!
+      .then(response => {
+        setBusinesses(response.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Hata:', err);
+        setError('Mekanlar yüklenemedi.');
+        setLoading(false);
+      });
 
-  // 3. ADIM: Filtreleme 'useMemo'su (Bu aynı kaldı)
+  }, [userLocation, radius]);
+
+  // 3. ADIM: Filtreleme
   const filteredBusinesses = useMemo(() => {
-    if (!searchTerm) {
-      return businesses;
-    }
-    return businesses.filter(b => 
+    if (!searchTerm) return businesses;
+    return businesses.filter(b =>
       b.business.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [businesses, searchTerm]);
-  
-  // 4. ADIM: JSX (Arayüz)
-  if (!userLocation && loading) return <p>Konumunuz alınıyor...</p>;
-  if (error) return <p style={{ color: 'red' }}>{error}</p>;
+
+  if (!userLocation && loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <div className="home-page">
-      <h2>Yakındaki Kahve Noktaları</h2>
+    <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: 'calc(100vh - 64px)', width: '100%', overflow: 'hidden' }}>
 
-      {/* Arama ve Yarıçap Filtreleri */}
-      <div className="filters" style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-        <input
-          type="text"
-          placeholder="Yakındaki mekanlarda ara..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ flex: 3, padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
-        />
-        
-        {/* --- YENİ EKLENEN AÇILIR MENÜ --- */}
-        <select
-          value={radius}
-          onChange={(e) => setRadius(Number(e.target.value))} // Seçilen değeri state'e at
-          style={{ flex: 1, padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
-        >
-          <option value={1}>1 km</option>
-          <option value={3}>3 km</option>
-          <option value={5}>5 km</option>
-          <option value={10}>10 km</option>
-          <option value={20}>20 km</option>
-        </select>
-        {/* --- YENİ BÖLÜM SONU --- */}
-      </div>
+      {/* SOL TARAF: LİSTE (Masaüstünde) / ALT TARAF (Mobilde) */}
+      <Box
+        sx={{
+          width: isMobile ? '100%' : '450px',
+          minWidth: isMobile ? '100%' : '450px',
+          height: isMobile ? '50%' : '100%',
+          overflowY: 'auto',
+          borderRight: '1px solid #eee',
+          backgroundColor: '#fff',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        {/* Arama ve Filtreler */}
+        <Box sx={{ p: 2, borderBottom: '1px solid #eee', position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 10 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, color: 'primary.main' }}>
+            Yakındaki Mekanlar
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <TextField
+              fullWidth
+              placeholder="Mekan ara..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              size="small"
+            />
+            <FormControl sx={{ minWidth: 100 }} size="small">
+              <InputLabel>Mesafe</InputLabel>
+              <Select
+                value={radius}
+                label="Mesafe"
+                onChange={(e) => setRadius(Number(e.target.value))}
+              >
+                <MenuItem value={1}>1 km</MenuItem>
+                <MenuItem value={3}>3 km</MenuItem>
+                <MenuItem value={5}>5 km</MenuItem>
+                <MenuItem value={10}>10 km</MenuItem>
+                <MenuItem value={20}>20 km</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </Box>
 
-      {/* Harita ve Yükleme Durumu */}
-      {userLocation && (
-        <MapComponent 
-          businesses={filteredBusinesses}
-          center={userLocation} 
-          radius={radius}
-        />
-      )}
-      
-      {/* Yüklenme göstergesi (sadece veri çekilirken) */}
-      {loading && <p>Yakındaki mekanlar yükleniyor...</p>}
-      
-      {/* Liste */}
-      <div className="nearby-list">
-        <h3>Yakındakiler (Liste) - {radius}km</h3>
-        {filteredBusinesses.length === 0 && !loading ? (
-          <p>
-            {searchTerm 
-              ? `"${searchTerm}" ile eşleşen mekan bulunamadı.` 
-              : `Seçili yarıçapta (${radius}km) kayıtlı mekan bulunamadı.`
-            }
-          </p>
-        ) : (
-          <ul>
-            {filteredBusinesses.map(b => (
-              <Link to={`/business/${b.business.id}`} key={b.business.id} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <li className="list-item-hover">
-                  {b.business.name} ({b.distance_km.toFixed(2)} km)
-                </li>
-              </Link>
-            ))}
-          </ul>
+        {/* Liste İçeriği */}
+        <Box sx={{ p: 2, flexGrow: 1 }}>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : filteredBusinesses.length === 0 ? (
+            <Typography align="center" color="text.secondary" sx={{ mt: 4 }}>
+              Bu alanda mekan bulunamadı.
+            </Typography>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {filteredBusinesses.map(b => (
+                <Card key={b.business.id} elevation={0} sx={{ border: '1px solid #eee', '&:hover': { borderColor: 'primary.main', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' } }}>
+                  <CardActionArea component={RouterLink} to={`/business/${b.business.id}`} sx={{ p: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                      <Typography variant="h6" component="div" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                        {b.business.name}
+                      </Typography>
+                      <Chip
+                        label={`${b.distance_km.toFixed(1)} km`}
+                        size="small"
+                        color="primary"
+                        variant="soft"
+                        sx={{ fontWeight: 'bold', height: 24 }}
+                      />
+                    </Box>
+
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <LocationOnIcon fontSize="inherit" />
+                      {b.business.address}
+                    </Typography>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Rating value={b.business.average_rating || 0} readOnly size="small" precision={0.5} />
+                      <Typography variant="body2" sx={{ ml: 0.5, fontWeight: 'bold', color: 'text.primary' }}>
+                        {b.business.average_rating ? b.business.average_rating.toFixed(1) : '0.0'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
+                        ({b.business.review_count} yorum)
+                      </Typography>
+                    </Box>
+                  </CardActionArea>
+                </Card>
+              ))}
+            </Box>
+          )}
+        </Box>
+      </Box>
+
+      {/* SAĞ TARAF: HARİTA (Masaüstünde) / ÜST TARAF (Mobilde) */}
+      <Box sx={{ flexGrow: 1, height: isMobile ? '50%' : '100%', position: 'relative' }}>
+        {userLocation && (
+          <MapComponent
+            businesses={filteredBusinesses}
+            center={userLocation}
+            radius={radius}
+          />
         )}
-      </div>
-    </div>
+      </Box>
+
+    </Box>
   );
 }
 

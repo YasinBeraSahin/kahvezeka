@@ -21,9 +21,21 @@ class User(Base):
     
     # 'owner' rolündeki kullanıcının sahip olduğu mekanlar
     businesses = relationship("Business", back_populates="owner")
+    
+    # Favori mekanlar (Many-to-Many)
+    favorites = relationship("Business", secondary="favorites", back_populates="favorited_by")
     # --- YENİ SATIRLAR SONU ---
 
     reviews = relationship("Review", back_populates="owner")
+
+# Many-to-Many ilişki için ara tablo
+from sqlalchemy import Table
+favorites = Table(
+    "favorites",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("business_id", Integer, ForeignKey("businesses.id"), primary_key=True),
+)
 
 # ... (User sınıfının bittiği yer)
 
@@ -60,6 +72,13 @@ class Business(Base):
     latitude = Column(Float)
     longitude = Column(Float)
     
+    # Filtreleme Özellikleri
+    has_wifi = Column(Boolean, default=False)
+    has_socket = Column(Boolean, default=False)  # Priz var mı?
+    is_pet_friendly = Column(Boolean, default=False)
+    is_quiet = Column(Boolean, default=False)    # Sessiz/Çalışmaya uygun mu?
+    serves_food = Column(Boolean, default=False) # Yemek servisi var mı?
+    
     # --- YENİ SATIRLAR ---
     # Bu mekanın sahibinin 'users' tablosundaki ID'si
     # nullable=True, bir mekanın sahibi olmayabileceği anlamına gelir (Admin eklemişse)
@@ -71,10 +90,23 @@ class Business(Base):
     campaigns = relationship("Campaign", back_populates="business", cascade="all, delete-orphan")
     # Python kodunda business.owner yazarak User objesine ulaşmayı sağlar
     owner = relationship("User", back_populates="businesses")
+    
+    # Bu mekanı favorileyen kullanıcılar
+    favorited_by = relationship("User", secondary="favorites", back_populates="favorites")
     # --- YENİ SATIRLAR SONU ---
 
     reviews = relationship("Review", back_populates="business")
-    # --- YENİ BÖLÜM SONU ---
+
+    @hybrid_property
+    def average_rating(self):
+        if not self.reviews:
+            return 0.0
+        total_rating = sum(r.rating for r in self.reviews)
+        return total_rating / len(self.reviews)
+
+    @hybrid_property
+    def review_count(self):
+        return len(self.reviews)
 
 # --- YENİ MENÜ ÖĞESİ MODELİ ---
 class MenuItem(Base):

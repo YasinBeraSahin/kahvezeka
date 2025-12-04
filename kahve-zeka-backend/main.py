@@ -119,7 +119,7 @@ def get_distance_between_points(lat1, lon1, lat2, lon2) -> float:
 # --- ANA ENDPOINT ---
 @app.get("/")
 def read_root():
-    return {"message": "Kahve Zeka API'sine hoş geldiniz!"}
+    return {"message": "Kahve Zeka API'sine hoş geldiniz! (Local Mode)"}
 
 # --- KULLANICI VE GİRİŞ ENDPOINT'LERİ (ÖZEL) ---
 @app.post("/token", response_model=schemas.Token)
@@ -180,6 +180,48 @@ def get_my_reviews(
         joinedload(models.Review.business)
     ).filter(models.Review.user_id == current_user.id).order_by(models.Review.id.desc()).all()
     return reviews
+
+# --- FAVORİLER ENDPOINT'LERİ ---
+@app.post("/users/me/favorites/{business_id}", response_model=dict)
+def add_favorite(
+    business_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    business = db.query(models.Business).filter(models.Business.id == business_id).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Mekan bulunamadı")
+    
+    if business in current_user.favorites:
+        return {"message": "Zaten favorilerde"}
+    
+    current_user.favorites.append(business)
+    db.commit()
+    return {"message": "Favorilere eklendi"}
+
+@app.delete("/users/me/favorites/{business_id}", response_model=dict)
+def remove_favorite(
+    business_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    business = db.query(models.Business).filter(models.Business.id == business_id).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Mekan bulunamadı")
+    
+    if business not in current_user.favorites:
+        return {"message": "Favorilerde değil"}
+    
+    current_user.favorites.remove(business)
+    db.commit()
+    return {"message": "Favorilerden çıkarıldı"}
+
+@app.get("/users/me/favorites", response_model=List[schemas.Business])
+def get_my_favorites(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return current_user.favorites
 
 # --- ADMİN ENDPOINT'LERİ ---
 @app.put("/admin/businesses/{business_id}/approve", response_model=schemas.Business)
@@ -414,14 +456,33 @@ def get_nearby_businesses(
     lat: float, 
     lon: float, 
     radius_km: float = 5.0,
+    has_wifi: bool = False,
+    has_socket: bool = False,
+    is_pet_friendly: bool = False,
+    is_quiet: bool = False,
+    serves_food: bool = False,
     db: Session = Depends(get_db)
 ):
     """
     Verilen enlem/boylama ve yarıçapa (km) göre ONAYLI mekanları listeler.
+    Ayrıca filtreleme seçenekleri sunar.
     """
-    all_businesses = db.query(models.Business).options(
+    query = db.query(models.Business).options(
         joinedload(models.Business.reviews)
-    ).filter(models.Business.is_approved == True).all() # <-- GÜVENLİK KİLİDİ
+    ).filter(models.Business.is_approved == True)
+    
+    if has_wifi:
+        query = query.filter(models.Business.has_wifi == True)
+    if has_socket:
+        query = query.filter(models.Business.has_socket == True)
+    if is_pet_friendly:
+        query = query.filter(models.Business.is_pet_friendly == True)
+    if is_quiet:
+        query = query.filter(models.Business.is_quiet == True)
+    if serves_food:
+        query = query.filter(models.Business.serves_food == True)
+        
+    all_businesses = query.all()
     
     nearby_businesses = []
     

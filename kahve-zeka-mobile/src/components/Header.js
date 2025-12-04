@@ -1,32 +1,28 @@
+// src/components/Header.js
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../constants/theme';
+import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 
-const Header = ({ onMenuPress, onProfilePress, location }) => {
+const Header = ({ title, onBackPress, rightIcon, onRightPress }) => {
     return (
         <View style={styles.container}>
-            <View style={styles.topRow}>
-                {/* Hamburger Menu */}
-                <TouchableOpacity onPress={onMenuPress} style={styles.iconButton}>
-                    <Ionicons name="menu" size={28} color={THEME.colors.primaryBrown} />
+            {onBackPress ? (
+                <TouchableOpacity onPress={onBackPress} style={styles.button}>
+                    <Ionicons name="arrow-back" size={24} color={COLORS.text} />
                 </TouchableOpacity>
+            ) : (
+                <View style={styles.placeholder} />
+            )}
 
-                {/* Logo */}
-                <Text style={styles.logo}>Kahve Zeka</Text>
+            <Text style={styles.title}>{title}</Text>
 
-                {/* Profile Icon */}
-                <TouchableOpacity onPress={onProfilePress} style={styles.iconButton}>
-                    <Ionicons name="person-circle-outline" size={28} color={THEME.colors.primaryBrown} />
+            {rightIcon ? (
+                <TouchableOpacity onPress={onRightPress} style={styles.button}>
+                    <Ionicons name={rightIcon} size={24} color={COLORS.primary} />
                 </TouchableOpacity>
-            </View>
-
-            {/* Location */}
-            {location && (
-                <View style={styles.locationRow}>
-                    <Ionicons name="location" size={16} color={THEME.colors.textSecondary} />
-                    <Text style={styles.locationText}>{location}</Text>
-                </View>
+            ) : (
+                <View style={styles.placeholder} />
             )}
         </View>
     );
@@ -34,35 +30,24 @@ const Header = ({ onMenuPress, onProfilePress, location }) => {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: THEME.colors.cardBackground,
-        paddingTop: 50, // Status bar için
-        paddingHorizontal: THEME.spacing.md,
-        paddingBottom: THEME.spacing.sm,
-        borderBottomWidth: 1,
-        borderBottomColor: THEME.colors.border,
-    },
-    topRow: {
+        height: 60,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: THEME.spacing.xs,
+        paddingHorizontal: SIZES.medium,
+        backgroundColor: COLORS.surface,
+        ...SHADOWS.light,
     },
-    iconButton: {
-        padding: THEME.spacing.xs,
+    title: {
+        fontSize: SIZES.large,
+        fontWeight: 'bold',
+        color: COLORS.text,
     },
-    logo: {
-        ...THEME.typography.h2,
-        fontSize: 24,
+    button: {
+        padding: SIZES.small,
     },
-    locationRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: THEME.spacing.xs,
-    },
-    locationText: {
-        ...THEME.typography.caption,
-        marginLeft: 4,
+    placeholder: {
+        width: 40,
     },
 });
 

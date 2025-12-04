@@ -1,11 +1,28 @@
+// src/screens/LoginScreen.js
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    StyleSheet,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    ImageBackground,
+    Dimensions
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
-import { loginUser, getUserProfile } from '../services/api';
-import { THEME } from '../constants/theme';
+import { loginUser } from '../services/api';
+import { COLORS, FONTS, SIZES, SHADOWS } from '../constants/theme';
 
-const LoginScreen = ({ navigate, goBack }) => {
+
+const { width, height } = Dimensions.get('window');
+
+const LoginScreen = ({ navigation }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -21,222 +38,214 @@ const LoginScreen = ({ navigate, goBack }) => {
 
         setLoading(true);
         try {
-            // 1. Token al
             const data = await loginUser(username, password);
             const token = data.access_token;
 
-            // 2. Token'ı kaydet (AuthContext içinde yapılacak ama önce profil alalım)
-            // Not: AuthContext.login fonksiyonu token ve user objesi bekliyor
-            // Ancak api.js'deki interceptor henüz token'ı bilmiyor olabilir, bu yüzden manuel ekleyelim veya
-            // AuthContext içinde login fonksiyonunu güncellememiz gerekebilir.
-            // En iyisi: AuthContext.login'e sadece token verip, orada profil çekmek.
-            // Ama şimdilik basitçe:
+            // Login fonksiyonu artık user objesini döndürüyor
+            const user = await login(token);
 
-            // Token'ı geçici olarak kaydet ki getUserProfile çalışsın (api.js interceptor kullanıyor)
-            // Ancak api.js interceptor'ı AsyncStorage'dan okuyor.
-            // Bu yüzden önce login fonksiyonunu çağırıp token'ı kaydetmeliyiz.
-
-            // Profil bilgisini almak için token'ı header'a ekleyerek istek atmamız lazım.
-            // api.js'de interceptor var ama token henüz storage'da değil.
-            // Bu yüzden login fonksiyonunu çağırıp token'ı kaydedelim, sonra profil çekelim.
-
-            // AuthContext login fonksiyonunu güncelleyelim: sadece token ve user alıyor.
-            // Biz burada manuel olarak profil çekemeyiz çünkü token henüz storage'da değil.
-
-            // Çözüm: Login fonksiyonuna token verelim, o kaydetsin. Sonra profil çekip user'ı güncelleyelim.
-
-            // Şimdilik basit bir user objesi oluşturalım
-            const tempUser = { username: username };
-
-            const success = await login(tempUser, token);
-
-            if (success) {
+            if (user) {
                 // Başarılı giriş
-                Alert.alert('Başarılı', 'Giriş yapıldı!', [
-                    { text: 'Tamam', onPress: () => navigate('profile') }
-                ]);
-
-                // Arka planda gerçek profil bilgisini çekip güncelleyebiliriz
-                try {
-                    const profile = await getUserProfile();
-                    // AuthContext'te updateUser var mı? Evet.
-                    // Ama şu an erişemiyoruz (login fonksiyonu içinde değil).
-                    // Neyse, bir sonraki açılışta güncel profil gelecek.
-                } catch (e) {
-                    console.log('Profil çekme hatası (önemsiz):', e);
+                if (user.role === 'admin') {
+                    navigation.navigate('admin');
+                } else if (user.role === 'owner') {
+                    navigation.navigate('businessManagement');
+                } else {
+                    navigation.navigate('home');
                 }
             } else {
-                Alert.alert('Hata', 'Giriş yapılamadı.');
+                Alert.alert('Hata', 'Giriş yapılamadı. Profil bilgileri alınamadı.');
             }
         } catch (error) {
             Alert.alert('Hata', 'Kullanıcı adı veya şifre hatalı.');
-            console.error(error);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.container}
+        <ImageBackground
+            source={{ uri: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=1000&auto=format&fit=crop' }} // Kahve temalı arka plan
+            style={styles.backgroundImage}
+            resizeMode="cover"
         >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => goBack()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color={THEME.colors.primaryBrown} />
-                    </TouchableOpacity>
-                    <Text style={styles.title}>Giriş Yap</Text>
-                </View>
+            <View style={styles.overlay} />
 
-                <View style={styles.logoContainer}>
-                    <View style={styles.logoCircle}>
-                        <Ionicons name="cafe" size={50} color="#fff" />
-                    </View>
-                    <Text style={styles.appName}>Kahve Zeka</Text>
-                </View>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={styles.container}
+            >
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-                <View style={styles.form}>
-                    <View style={styles.inputContainer}>
-                        <Ionicons name="person-outline" size={20} color={THEME.colors.textSecondary} style={styles.inputIcon} />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Kullanıcı Adı"
-                            value={username}
-                            onChangeText={setUsername}
-                            autoCapitalize="none"
-                        />
+                    {/* Logo ve Başlık */}
+                    <View style={styles.headerContainer}>
+                        <View style={styles.logoCircle}>
+                            <Ionicons name="cafe" size={40} color={COLORS.secondary} />
+                        </View>
+                        <Text style={styles.appName}>Kahve<Text style={{ color: COLORS.secondary }}>Zeka</Text></Text>
+                        <Text style={styles.welcomeText}>Tekrar Hoşgeldiniz!</Text>
                     </View>
 
-                    <View style={styles.inputContainer}>
-                        <Ionicons name="lock-closed-outline" size={20} color={THEME.colors.textSecondary} style={styles.inputIcon} />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Şifre"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry={!showPassword}
-                        />
-                        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                            <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={THEME.colors.textSecondary} />
+                    {/* Giriş Kartı */}
+                    <View style={styles.card}>
+                        <Text style={styles.cardTitle}>Giriş Yap</Text>
+
+                        <View style={styles.inputContainer}>
+                            <Ionicons name="person-outline" size={20} color={COLORS.primary} style={styles.inputIcon} />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Kullanıcı Adı"
+                                placeholderTextColor={COLORS.textSecondary}
+                                value={username}
+                                onChangeText={setUsername}
+                                autoCapitalize="none"
+                            />
+                        </View>
+
+                        <View style={styles.inputContainer}>
+                            <Ionicons name="lock-closed-outline" size={20} color={COLORS.primary} style={styles.inputIcon} />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Şifre"
+                                placeholderTextColor={COLORS.textSecondary}
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry={!showPassword}
+                            />
+                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={COLORS.textSecondary} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity
+                            style={styles.loginButton}
+                            onPress={handleLogin}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={styles.loginButtonText}>Giriş Yap</Text>
+                            )}
                         </TouchableOpacity>
+
+                        <View style={styles.footer}>
+                            <Text style={styles.footerText}>Hesabınız yok mu? </Text>
+                            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                                <Text style={styles.linkText}>Kayıt Ol</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
-                    <TouchableOpacity
-                        style={styles.loginButton}
-                        onPress={handleLogin}
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <ActivityIndicator color="#fff" />
-                        ) : (
-                            <Text style={styles.loginButtonText}>Giriş Yap</Text>
-                        )}
-                    </TouchableOpacity>
-
-                    <View style={styles.footer}>
-                        <Text style={styles.footerText}>Hesabınız yok mu? </Text>
-                        <TouchableOpacity onPress={() => navigate('register')}>
-                            <Text style={styles.linkText}>Kayıt Ol</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </ImageBackground>
     );
 };
 
 const styles = StyleSheet.create({
+    backgroundImage: {
+        flex: 1,
+        width: width,
+        height: height,
+    },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)', // Karartma
+    },
     container: {
         flex: 1,
-        backgroundColor: THEME.colors.background,
     },
     scrollContent: {
         flexGrow: 1,
-        padding: THEME.spacing.lg,
+        justifyContent: 'center',
+        padding: SIZES.padding * 2,
     },
-    header: {
-        flexDirection: 'row',
+    headerContainer: {
         alignItems: 'center',
-        marginBottom: THEME.spacing.xl,
-        marginTop: THEME.spacing.lg,
-    },
-    backButton: {
-        padding: THEME.spacing.xs,
-        marginRight: THEME.spacing.md,
-    },
-    title: {
-        ...THEME.typography.h2,
-    },
-    logoContainer: {
-        alignItems: 'center',
-        marginBottom: THEME.spacing.xl,
+        marginBottom: SIZES.extraLarge * 1.5,
     },
     logoCircle: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        backgroundColor: THEME.colors.primaryBrown,
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: THEME.spacing.md,
-        ...THEME.shadows.medium,
+        marginBottom: SIZES.base,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 179, 0, 0.3)',
     },
     appName: {
-        ...THEME.typography.h1,
-        color: THEME.colors.primaryBrown,
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: COLORS.surface,
+        marginBottom: SIZES.base,
     },
-    form: {
-        width: '100%',
+    welcomeText: {
+        fontSize: SIZES.medium,
+        color: 'rgba(255, 255, 255, 0.8)',
+    },
+    card: {
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: SIZES.radius * 1.5,
+        padding: SIZES.padding * 1.5,
+        ...SHADOWS.medium,
+    },
+    cardTitle: {
+        fontSize: SIZES.extraLarge,
+        fontWeight: 'bold',
+        color: COLORS.primary,
+        marginBottom: SIZES.large,
+        textAlign: 'center',
     },
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: THEME.colors.cardBackground,
-        borderRadius: THEME.borderRadius.medium,
-        paddingHorizontal: THEME.spacing.md,
-        marginBottom: THEME.spacing.md,
-        height: 50,
+        backgroundColor: COLORS.background,
+        borderRadius: SIZES.radius,
+        paddingHorizontal: SIZES.medium,
+        marginBottom: SIZES.medium,
+        height: 55,
         borderWidth: 1,
-        borderColor: THEME.colors.border,
+        borderColor: COLORS.border,
     },
     inputIcon: {
-        marginRight: THEME.spacing.sm,
+        marginRight: SIZES.small,
     },
     input: {
         flex: 1,
         height: '100%',
-        ...THEME.typography.body,
+        color: COLORS.text,
+        fontSize: SIZES.font,
     },
     loginButton: {
-        backgroundColor: THEME.colors.primaryBrown,
-        height: 50,
-        borderRadius: THEME.borderRadius.medium,
+        backgroundColor: COLORS.primary,
+        height: 55,
+        borderRadius: SIZES.radius,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: THEME.spacing.md,
-        marginBottom: THEME.spacing.lg,
-        ...THEME.shadows.small,
+        marginTop: SIZES.small,
+        marginBottom: SIZES.large,
+        ...SHADOWS.light,
     },
     loginButtonText: {
-        ...THEME.typography.body,
-        color: '#fff',
+        color: COLORS.surface,
         fontWeight: 'bold',
-        fontSize: 16,
+        fontSize: SIZES.medium,
     },
     footer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginTop: THEME.spacing.md,
     },
     footerText: {
-        ...THEME.typography.body,
-        color: THEME.colors.textSecondary,
+        color: COLORS.textSecondary,
+        fontSize: SIZES.font,
     },
     linkText: {
-        ...THEME.typography.body,
-        color: THEME.colors.primaryBrown,
+        color: COLORS.secondary,
         fontWeight: 'bold',
+        fontSize: SIZES.font,
     },
 });
 

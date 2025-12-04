@@ -1,108 +1,113 @@
+// src/components/NearbyList.js
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../constants/theme';
+import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 
 const NearbyList = ({ businesses = [], onBusinessPress }) => {
     if (businesses.length === 0) {
-        return null;
+        return (
+            <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>Yakında mekan bulunamadı.</Text>
+            </View>
+        );
     }
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.title}>Yakındakiler ({businesses.length})</Text>
-            </View>
+        <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+        >
+            {businesses.map((item) => (
+                <TouchableOpacity
+                    key={item.business.id}
+                    style={styles.card}
+                    onPress={() => onBusinessPress && onBusinessPress(item.business)}
+                >
+                    {/* Görsel Alanı (Şimdilik İkon) */}
+                    <View style={styles.imageContainer}>
+                        <Ionicons name="cafe" size={40} color={COLORS.secondary} />
+                    </View>
 
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-            >
-                {businesses.map((item) => (
-                    <TouchableOpacity
-                        key={item.business.id}
-                        style={styles.card}
-                        onPress={() => onBusinessPress && onBusinessPress(item.business)}
-                    >
-                        {/* Coffee Icon */}
-                        <View style={styles.iconContainer}>
-                            <Ionicons name="cafe" size={32} color={THEME.colors.primaryBrown} />
-                        </View>
-
-                        {/* Business Name */}
+                    {/* Bilgi Alanı */}
+                    <View style={styles.infoContainer}>
                         <Text style={styles.businessName} numberOfLines={1}>
                             {item.business.name}
                         </Text>
 
-                        {/* Rating & Distance */}
-                        <View style={styles.infoRow}>
-                            <View style={styles.rating}>
-                                <Ionicons name="star" size={14} color={THEME.colors.lightCoffee} />
-                                <Text style={styles.ratingText}>
-                                    {item.business.average_rating ? item.business.average_rating.toFixed(1) : '0.0'}
-                                </Text>
-                            </View>
-                            <Text style={styles.distance}>• {(item.distance_km || item.distance || 0).toFixed(2)} km</Text>
+                        <View style={styles.ratingRow}>
+                            <Ionicons name="star" size={14} color={COLORS.secondary} />
+                            <Text style={styles.ratingText}>
+                                {item.business.average_rating ? item.business.average_rating.toFixed(1) : '0.0'}
+                            </Text>
+                            <Text style={styles.distanceText}>
+                                • {(item.distance_km || item.distance || 0).toFixed(1)} km
+                            </Text>
                         </View>
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
-        </View>
+                    </View>
+                </TouchableOpacity>
+            ))}
+        </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        backgroundColor: THEME.colors.background,
-        paddingVertical: THEME.spacing.md,
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    header: {
-        paddingHorizontal: THEME.spacing.md,
-        marginBottom: THEME.spacing.sm,
-    },
-    title: {
-        ...THEME.typography.h3,
+    emptyText: {
+        color: COLORS.textSecondary,
     },
     scrollContent: {
-        paddingHorizontal: THEME.spacing.md,
-        gap: THEME.spacing.md,
+        paddingHorizontal: SIZES.padding,
+        paddingVertical: SIZES.base,
+        gap: SIZES.medium,
     },
     card: {
-        width: 160,
-        backgroundColor: THEME.colors.cardBackground,
-        borderRadius: THEME.borderRadius.medium,
-        padding: THEME.spacing.md,
-        ...THEME.shadows.small,
+        width: 180,
+        height: 160,
+        backgroundColor: COLORS.surface,
+        borderRadius: SIZES.radius,
+        padding: SIZES.padding,
+        ...SHADOWS.medium,
+        justifyContent: 'space-between',
     },
-    iconContainer: {
+    imageContainer: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: COLORS.background,
+        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: THEME.spacing.sm,
+        alignSelf: 'center',
+        marginBottom: SIZES.small,
+    },
+    infoContainer: {
+        alignItems: 'center',
     },
     businessName: {
-        ...THEME.typography.body,
-        fontWeight: '600',
-        color: THEME.colors.lightCoffee,
-        marginBottom: THEME.spacing.xs,
+        fontSize: SIZES.medium,
+        fontWeight: 'bold',
+        color: COLORS.text,
         textAlign: 'center',
+        marginBottom: 4,
     },
-    infoRow: {
+    ratingRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-    },
-    rating: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 2,
+        gap: 4,
     },
     ratingText: {
-        ...THEME.typography.small,
-        fontWeight: '600',
+        fontSize: SIZES.small,
+        fontWeight: 'bold',
+        color: COLORS.text,
     },
-    distance: {
-        ...THEME.typography.small,
-        marginLeft: 4,
+    distanceText: {
+        fontSize: SIZES.small,
+        color: COLORS.textSecondary,
     },
 });
 

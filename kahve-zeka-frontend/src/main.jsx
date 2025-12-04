@@ -48,33 +48,24 @@ const router = createBrowserRouter([
       },
       { path: '/panel', element: <BusinessPanelPage /> },
       {
-    path: '/admin', // YENİ ADMİN YOLU
-    element: <AdminPage />,
-  },
+        path: '/admin', // YENİ ADMİN YOLU
+        element: <AdminPage />,
+      },
       {
-    path: '/isletme', // YENİ İŞLETME BAŞVURU YOLU
-    element: <BusinessLandingPage />,
-  },
+        path: '/isletme', // YENİ İŞLETME BAŞVURU YOLU
+        element: <BusinessLandingPage />,
+      },
     ],
   },
 ]);
 
 // Basit bir kahve teması oluşturalım
-const kahveTheme = createTheme({
-  palette: {
-    primary: {
-      main: '#8b4513', // Koyu Kahve
-    },
-    secondary: {
-      main: '#c7a17a', // Açık Kahve
-    },
-  },
-});
+import theme from './theme'; // Yeni temayı import et
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     {/* Tüm uygulamayı MUI Tema Sağlayıcısı ile sarıyoruz */}
-    <ThemeProvider theme={kahveTheme}>
+    <ThemeProvider theme={theme}>
       {/* CssBaseline, tarayıcı varsayılanlarını sıfırlar (güzel görünüm için şart) */}
       <CssBaseline />
       <AuthProvider>

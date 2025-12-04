@@ -1,6 +1,7 @@
+// src/contexts/AuthContext.js
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { getToken, getUser, saveToken, saveUser, clearAuth } from '../utils/storage';
-import { api } from '../services/api'; // We'll update api.js to export 'api' instance
+import { api, getUserProfile } from '../services/api';
 
 export const AuthContext = createContext();
 
@@ -23,8 +24,6 @@ export const AuthProvider = ({ children }) => {
                 if (token && savedUser) {
                     setUser(savedUser);
                     setIsAuthenticated(true);
-                    // API header'ına token ekle (api.js güncellendiğinde bu çalışacak)
-                    // api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 }
             } catch (error) {
                 console.error('Auth loading error:', error);
@@ -36,16 +35,18 @@ export const AuthProvider = ({ children }) => {
         loadAuth();
     }, []);
 
-    const login = async (userData, token) => {
+    const login = async (token) => {
         try {
             await saveToken(token);
-            await saveUser(userData);
-            setUser(userData);
+            const userProfile = await getUserProfile();
+            await saveUser(userProfile);
+
+            setUser(userProfile);
             setIsAuthenticated(true);
-            return true;
+            return userProfile; // Return user profile instead of boolean
         } catch (error) {
             console.error('Login error:', error);
-            return false;
+            return null;
         }
     };
 

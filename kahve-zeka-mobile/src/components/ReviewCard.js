@@ -1,7 +1,8 @@
+// src/components/ReviewCard.js
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../constants/theme';
+import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 import StarRating from './StarRating';
 
 const ReviewCard = ({ review }) => {
@@ -16,7 +17,7 @@ const ReviewCard = ({ review }) => {
             <View style={styles.header}>
                 <View style={styles.userInfo}>
                     <View style={styles.avatar}>
-                        <Ionicons name="person" size={20} color="#fff" />
+                        <Ionicons name="person" size={20} color={COLORS.surface} />
                     </View>
                     <View>
                         <Text style={styles.username}>{review.owner?.username || 'Anonim'}</Text>
@@ -33,18 +34,17 @@ const ReviewCard = ({ review }) => {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: THEME.colors.cardBackground,
-        padding: THEME.spacing.md,
-        borderRadius: THEME.borderRadius.medium,
-        marginBottom: THEME.spacing.md,
-        borderWidth: 1,
-        borderColor: THEME.colors.border,
+        backgroundColor: COLORS.surface,
+        padding: SIZES.medium,
+        borderRadius: SIZES.radius,
+        marginBottom: SIZES.medium,
+        ...SHADOWS.light,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: THEME.spacing.sm,
+        marginBottom: SIZES.small,
     },
     userInfo: {
         flexDirection: 'row',
@@ -54,21 +54,23 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: THEME.colors.primaryBrown,
+        backgroundColor: COLORS.primary,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: THEME.spacing.sm,
+        marginRight: SIZES.small,
     },
     username: {
-        ...THEME.typography.h3,
         fontSize: 14,
+        fontWeight: 'bold',
+        color: COLORS.text,
     },
     date: {
-        ...THEME.typography.caption,
-        color: THEME.colors.textSecondary,
+        fontSize: 12,
+        color: COLORS.textSecondary,
     },
     comment: {
-        ...THEME.typography.body,
+        fontSize: 14,
+        color: COLORS.text,
         lineHeight: 20,
     },
 });

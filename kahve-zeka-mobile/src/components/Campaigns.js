@@ -1,21 +1,26 @@
+// src/components/Campaigns.js
 import React from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../constants/theme';
+import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 
 const Campaigns = ({ campaigns = [] }) => {
     if (!campaigns || campaigns.length === 0) {
-        return null;
+        return (
+            <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>Aktif kampanya bulunmuyor.</Text>
+            </View>
+        );
     }
 
     const renderItem = ({ item }) => (
         <View style={styles.card}>
             <View style={styles.iconContainer}>
-                <Ionicons name="pricetag" size={24} color="#fff" />
+                <Ionicons name="pricetag" size={24} color={COLORS.surface} />
             </View>
             <View style={styles.info}>
                 <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.description}>{item.description}</Text>
+                <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
                 <Text style={styles.date}>Son Gün: {new Date(item.end_date).toLocaleDateString('tr-TR')}</Text>
             </View>
         </View>
@@ -23,13 +28,11 @@ const Campaigns = ({ campaigns = [] }) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.headerTitle}>Kampanyalar</Text>
             <FlatList
                 data={campaigns}
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id.toString()}
-                horizontal
-                showsHorizontalScrollIndicator={false}
+                scrollEnabled={false} // Dikey scroll parent'ta
                 contentContainerStyle={styles.listContent}
             />
         </View>
@@ -38,52 +41,57 @@ const Campaigns = ({ campaigns = [] }) => {
 
 const styles = StyleSheet.create({
     container: {
-        marginBottom: THEME.spacing.lg,
+        marginBottom: SIZES.medium,
     },
-    headerTitle: {
-        ...THEME.typography.h3,
-        marginBottom: THEME.spacing.sm,
-        paddingHorizontal: THEME.spacing.lg,
+    emptyContainer: {
+        padding: SIZES.large,
+        alignItems: 'center',
+        backgroundColor: COLORS.surface,
+        borderRadius: SIZES.radius,
+        ...SHADOWS.light,
+    },
+    emptyText: {
+        color: COLORS.textSecondary,
+        fontSize: SIZES.font,
     },
     listContent: {
-        paddingHorizontal: THEME.spacing.lg,
+        gap: SIZES.medium,
     },
     card: {
         flexDirection: 'row',
-        backgroundColor: THEME.colors.primaryBrown,
-        borderRadius: THEME.borderRadius.medium,
-        padding: THEME.spacing.md,
-        marginRight: THEME.spacing.md,
-        width: 280,
+        backgroundColor: COLORS.primary, // Koyu kahve arka plan
+        borderRadius: SIZES.radius,
+        padding: SIZES.medium,
         alignItems: 'center',
-        ...THEME.shadows.small,
+        ...SHADOWS.medium,
     },
     iconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         backgroundColor: 'rgba(255,255,255,0.2)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: THEME.spacing.md,
+        marginRight: SIZES.medium,
     },
     info: {
         flex: 1,
     },
     title: {
-        ...THEME.typography.h3,
-        color: '#fff',
-        marginBottom: 2,
-    },
-    description: {
-        ...THEME.typography.caption,
-        color: 'rgba(255,255,255,0.9)',
+        fontSize: SIZES.medium,
+        fontWeight: 'bold',
+        color: COLORS.secondary, // Altın sarısı başlık
         marginBottom: 4,
     },
+    description: {
+        fontSize: SIZES.small,
+        color: 'rgba(255,255,255,0.9)',
+        marginBottom: 6,
+    },
     date: {
-        ...THEME.typography.caption,
-        color: 'rgba(255,255,255,0.7)',
         fontSize: 10,
+        color: 'rgba(255,255,255,0.6)',
+        fontStyle: 'italic',
     },
 });
 

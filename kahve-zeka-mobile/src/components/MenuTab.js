@@ -1,6 +1,7 @@
+// src/components/MenuTab.js
 import React from 'react';
 import { View, Text, StyleSheet, Image, FlatList } from 'react-native';
-import { THEME } from '../constants/theme';
+import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 
 const MenuTab = ({ business }) => {
     const menuItems = business?.menu_items || [];
@@ -22,11 +23,15 @@ const MenuTab = ({ business }) => {
                 </Text>
                 <Text style={styles.itemPrice}>{item.price} ₺</Text>
             </View>
-            {item.image_url && (
+            {item.image_url ? (
                 <Image
                     source={{ uri: item.image_url }}
                     style={styles.itemImage}
                 />
+            ) : (
+                <View style={[styles.itemImage, { backgroundColor: COLORS.border, justifyContent: 'center', alignItems: 'center' }]}>
+                    <Text style={{ fontSize: 24 }}>☕</Text>
+                </View>
             )}
         </View>
     );
@@ -37,7 +42,7 @@ const MenuTab = ({ business }) => {
                 data={menuItems}
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id.toString()}
-                scrollEnabled={false} // Parent ScrollView handles scrolling
+                scrollEnabled={false}
                 ItemSeparatorComponent={() => <View style={styles.separator} />}
             />
         </View>
@@ -47,46 +52,54 @@ const MenuTab = ({ business }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: COLORS.surface,
+        borderRadius: SIZES.radius,
+        padding: SIZES.medium,
+        ...SHADOWS.light,
     },
     emptyContainer: {
-        padding: THEME.spacing.xl,
+        padding: SIZES.extraLarge,
         alignItems: 'center',
+        backgroundColor: COLORS.surface,
+        borderRadius: SIZES.radius,
     },
     emptyText: {
-        ...THEME.typography.body,
-        color: THEME.colors.textSecondary,
+        color: COLORS.textSecondary,
+        fontSize: SIZES.font,
     },
     menuItem: {
         flexDirection: 'row',
-        paddingVertical: THEME.spacing.md,
+        paddingVertical: SIZES.medium,
         alignItems: 'center',
     },
     itemInfo: {
         flex: 1,
-        paddingRight: THEME.spacing.md,
+        paddingRight: SIZES.medium,
     },
     itemName: {
-        ...THEME.typography.h3,
+        fontSize: SIZES.medium,
+        fontWeight: 'bold',
+        color: COLORS.text,
         marginBottom: 4,
     },
     itemDescription: {
-        ...THEME.typography.caption,
-        color: THEME.colors.textSecondary,
+        fontSize: SIZES.small,
+        color: COLORS.textSecondary,
         marginBottom: 8,
     },
     itemPrice: {
-        ...THEME.typography.h3,
-        color: THEME.colors.primaryBrown,
+        fontSize: SIZES.medium,
+        fontWeight: 'bold',
+        color: COLORS.primary,
     },
     itemImage: {
         width: 80,
         height: 80,
-        borderRadius: THEME.borderRadius.small,
-        backgroundColor: '#eee',
+        borderRadius: SIZES.radius,
     },
     separator: {
         height: 1,
-        backgroundColor: THEME.colors.border,
+        backgroundColor: COLORS.border,
     },
 });
 
