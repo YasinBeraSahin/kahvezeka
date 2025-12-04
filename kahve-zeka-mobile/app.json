@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "kahve-zeka-mobile",
+    "slug": "kahve-zeka-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kahvezeka.mobile",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Kahve Zeka yakınındaki kahve mekanlarını göstermek için konumunuza erişmek istiyor."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.kahvezeka.mobile",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5d0a21eb-a6bd-4259-8b30-16befa864a71"
+      }
+    }
+  }
+}
