@@ -546,3 +546,50 @@ def get_reviews_for_business(business_id: int, db: Session = Depends(get_db)):
         joinedload(models.Review.owner)
     ).filter(models.Review.business_id == business_id).all()
     return reviews
+
+# --- DEBUG / SYSTEM ENDPOINTS ---
+@app.post("/debug/reset-db")
+def reset_database(db: Session = Depends(get_db)):
+    """
+    Veritabanını sıfırlar ve yeni şemayı uygular.
+    DİKKAT: Tüm veriler silinir!
+    """
+    # Tabloları sil
+    Base.metadata.drop_all(bind=engine)
+    # Tabloları yeniden oluştur
+    Base.metadata.create_all(bind=engine)
+    
+    # Örnek veri ekle (Opsiyonel, boş kalmasın diye)
+    # Admin kullanıcısı
+    admin_user = models.User(
+        email="admin@kahvezeka.com",
+        username="admin",
+        hashed_password=get_password_hash("admin123"),
+        role="admin",
+        is_active=True
+    )
+    db.add(admin_user)
+    
+    # Örnek İşletme
+    sample_business = models.Business(
+        name="Kahve Zeka Merkez",
+        address="Alsancak, İzmir",
+        phone="05551112233",
+        latitude=38.4381,
+        longitude=27.1418,
+        has_wifi=True,
+        has_socket=True,
+        is_pet_friendly=True,
+        is_quiet=True,
+        serves_food=True,
+        owner_id=1,
+        is_approved=True
+    )
+    db.add(sample_business)
+    
+    db.commit()
+    return {"message": "Veritabanı sıfırlandı ve güncellendi."}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

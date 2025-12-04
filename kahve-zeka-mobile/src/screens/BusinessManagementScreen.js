@@ -38,7 +38,7 @@ const BusinessManagementScreen = ({ navigation }) => {
         address: '',
         phone: '',
         latitude: '',
-        latitude: '',
+
         longitude: '',
         has_wifi: false,
         has_socket: false,
