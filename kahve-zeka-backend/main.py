@@ -25,7 +25,12 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Veritabanında tablolarımızı oluşturuyoruz
-Base.metadata.create_all(bind=engine)
+db_connection_error = None
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"Veritabanı bağlantı hatası: {e}")
+    db_connection_error = str(e)
 
 app = FastAPI(
     title="Kahve Zeka API",
@@ -120,6 +125,24 @@ def get_distance_between_points(lat1, lon1, lat2, lon2) -> float:
 @app.get("/")
 def read_root():
     return {"message": "Kahve Zeka API'sine hoş geldiniz! (Local Mode)"}
+
+@app.get("/health")
+def health_check():
+    if db_connection_error:
+        return {
+            "status": "error",
+            "database_error": db_connection_error,
+            "message": "Veritabanına bağlanılamadı. Lütfen bağlantı ayarlarını kontrol edin."
+        }
+    
+    # Aktif bir bağlantı testi yapalım
+    try:
+        db = SessionLocal()
+        db.execute("SELECT 1")
+        db.close()
+        return {"status": "ok", "database": "connected"}
+    except Exception as e:
+        return {"status": "error", "database_error": str(e)}
 
 # --- KULLANICI VE GİRİŞ ENDPOINT'LERİ (ÖZEL) ---
 @app.post("/token", response_model=schemas.Token)
