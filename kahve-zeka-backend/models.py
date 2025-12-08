@@ -80,6 +80,7 @@ class Business(Base):
     is_pet_friendly = Column(Boolean, default=False)
     is_quiet = Column(Boolean, default=False)    # Sessiz/Çalışmaya uygun mu?
     serves_food = Column(Boolean, default=False) # Yemek servisi var mı?
+    has_board_games = Column(Boolean, default=False) # Masa/Kutu oyunları var mı?
     
     # --- YENİ SATIRLAR ---
     # Bu mekanın sahibinin 'users' tablosundaki ID'si

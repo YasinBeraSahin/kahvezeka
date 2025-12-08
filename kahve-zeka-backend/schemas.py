@@ -19,6 +19,7 @@ class BusinessBase(BaseModel):
     is_quiet: bool = False
     serves_food: bool = False
     image_url: Optional[str] = None # <-- Yeni alan
+    has_board_games: bool = False
 
 class BusinessSimple(BaseModel):
     id: int
@@ -73,6 +74,7 @@ class BusinessUpdate(BaseModel):
     is_quiet: Optional[bool] = None
     serves_food: Optional[bool] = None
     image_url: Optional[str] = None # <-- Yeni alan
+    has_board_games: Optional[bool] = None
 
 class UserCreate(UserBase):
     password: str

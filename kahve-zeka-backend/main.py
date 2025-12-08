@@ -487,6 +487,7 @@ def get_nearby_businesses(
     is_pet_friendly: bool = False,
     is_quiet: bool = False,
     serves_food: bool = False,
+    has_board_games: bool = False,
     db: Session = Depends(get_db)
 ):
     """
@@ -511,6 +512,8 @@ def get_nearby_businesses(
         query = query.filter(models.Business.is_quiet == True)
     if serves_food:
         query = query.filter(models.Business.serves_food == True)
+    if has_board_games:
+        query = query.filter(models.Business.has_board_games == True)
         
     all_businesses = query.all()
     
@@ -639,6 +642,7 @@ def reset_database(db: Session = Depends(get_db)):
         is_pet_friendly=True,
         is_quiet=True,
         serves_food=True,
+        has_board_games=True,
         owner_id=1,
         is_approved=True
     )

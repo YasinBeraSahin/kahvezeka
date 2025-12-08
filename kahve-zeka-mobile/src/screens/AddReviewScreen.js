@@ -4,6 +4,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 import { addReview } from '../services/api';
+import Toast from 'react-native-toast-message';
 
 const AddReviewScreen = ({ navigation, route }) => {
     const { businessId } = route.params || {};
@@ -13,7 +14,11 @@ const AddReviewScreen = ({ navigation, route }) => {
 
     const handleSubmit = async () => {
         if (rating === 0) {
-            Alert.alert('Hata', 'Lütfen puan veriniz.');
+            Toast.show({
+                type: 'error',
+                text1: 'Hata',
+                text2: 'Lütfen puan veriniz.'
+            });
             return;
         }
 
@@ -24,12 +29,22 @@ const AddReviewScreen = ({ navigation, route }) => {
                 comment
             });
 
-            Alert.alert('Başarılı', 'Yorumunuz eklendi.', [
-                { text: 'Tamam', onPress: () => navigation.goBack() }
-            ]);
+            Toast.show({
+                type: 'success',
+                text1: 'Başarılı',
+                text2: 'Yorumunuz eklendi.'
+            });
+            setTimeout(() => {
+                navigation.goBack();
+            }, 1000);
+
         } catch (error) {
             console.error(error);
-            Alert.alert('Hata', 'Yorum eklenirken bir hata oluştu.');
+            Toast.show({
+                type: 'error',
+                text1: 'Hata',
+                text2: 'Yorum eklenirken bir hata oluştu.'
+            });
         } finally {
             setLoading(false);
         }

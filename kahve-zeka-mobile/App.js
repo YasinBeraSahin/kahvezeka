@@ -1,6 +1,7 @@
 // App.js
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { COLORS } from './src/constants/theme';
 
 // Screens
@@ -117,6 +118,7 @@ function AppContent() {
           isAdmin={user?.role === 'admin'}
         />
       )}
+      <Toast />
     </View>
   );
 }

@@ -77,6 +77,7 @@ const FilterModal = ({ visible, onClose, filters, setFilters, onApply }) => {
                             {renderChip('Hayvan', 'is_pet_friendly', 'paw')}
                             {renderChip('Sessiz', 'is_quiet', 'library')}
                             {renderChip('Yemek', 'serves_food', 'restaurant')}
+                            {renderChip('Masa Oyunları', 'has_board_games', 'game-controller')}
                         </View>
 
                         <View style={styles.divider} />
@@ -100,6 +101,7 @@ const FilterModal = ({ visible, onClose, filters, setFilters, onApply }) => {
                                 is_pet_friendly: false,
                                 is_quiet: false,
                                 serves_food: false,
+                                has_board_games: false,
                                 sortBy: 'distance'
                             })}
                         >

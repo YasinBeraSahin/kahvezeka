@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { loginUser } from '../services/api';
 import { COLORS, FONTS, SIZES, SHADOWS } from '../constants/theme';
+import Toast from 'react-native-toast-message';
 
 
 const { width, height } = Dimensions.get('window');
@@ -32,7 +33,11 @@ const LoginScreen = ({ navigation }) => {
 
     const handleLogin = async () => {
         if (!username || !password) {
-            Alert.alert('Hata', 'Lütfen kullanıcı adı ve şifre giriniz.');
+            Toast.show({
+                type: 'error',
+                text1: 'Hata',
+                text2: 'Lütfen kullanıcı adı ve şifre giriniz.'
+            });
             return;
         }
 
@@ -45,6 +50,12 @@ const LoginScreen = ({ navigation }) => {
             const user = await login(token);
 
             if (user) {
+                Toast.show({
+                    type: 'success',
+                    text1: 'Hoşgeldiniz',
+                    text2: `Merhaba, ${user.username}!`
+                });
+
                 // Başarılı giriş
                 if (user.role === 'admin') {
                     navigation.navigate('admin');
@@ -54,10 +65,18 @@ const LoginScreen = ({ navigation }) => {
                     navigation.navigate('home');
                 }
             } else {
-                Alert.alert('Hata', 'Giriş yapılamadı. Profil bilgileri alınamadı.');
+                Toast.show({
+                    type: 'error',
+                    text1: 'Hata',
+                    text2: 'Giriş yapılamadı. Profil bilgileri alınamadı.'
+                });
             }
         } catch (error) {
-            Alert.alert('Hata', 'Kullanıcı adı veya şifre hatalı.');
+            Toast.show({
+                type: 'error',
+                text1: 'Hata',
+                text2: 'Kullanıcı adı veya şifre hatalı.'
+            });
         } finally {
             setLoading(false);
         }

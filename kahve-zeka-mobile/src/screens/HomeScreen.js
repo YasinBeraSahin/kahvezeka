@@ -26,6 +26,7 @@ const HomeScreen = ({ navigation }) => {
         is_pet_friendly: false,
         is_quiet: false,
         serves_food: false,
+        has_board_games: false,
         sortBy: 'distance' // Default sort
     });
 
