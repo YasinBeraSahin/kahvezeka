@@ -1,6 +1,6 @@
 // src/components/ReviewCard.js
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 import StarRating from './StarRating';
@@ -28,6 +28,14 @@ const ReviewCard = ({ review }) => {
             </View>
 
             <Text style={styles.comment}>{review.comment}</Text>
+
+            {review.image_url && (
+                <Image
+                    source={{ uri: `https://kahve-zeka-api.onrender.com${review.image_url}` }}
+                    style={styles.reviewImage}
+                    resizeMode="cover"
+                />
+            )}
         </View>
     );
 };
@@ -72,6 +80,13 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: COLORS.text,
         lineHeight: 20,
+        marginBottom: SIZES.small,
+    },
+    reviewImage: {
+        width: '100%',
+        height: 200,
+        borderRadius: SIZES.radius,
+        marginTop: SIZES.medium,
     },
 });
 

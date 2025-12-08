@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { THEME, COLORS, SIZES, SHADOWS } from '../constants/theme';
 import { getUserReviews, getFavorites } from '../services/api';
+import ReviewCard from '../components/ReviewCard'; // <-- Import added
 
 const ProfileScreen = ({ navigation }) => {
     const { user, isAuthenticated, logout } = useAuth();
@@ -101,26 +102,6 @@ const ProfileScreen = ({ navigation }) => {
         );
     }
 
-    const renderReviewItem = (review) => (
-        <View key={review.id} style={styles.reviewCard}>
-            <View style={styles.reviewHeader}>
-                <View style={styles.businessInfo}>
-                    <View style={styles.businessIcon}>
-                        <Ionicons name="cafe" size={20} color={COLORS.surface} />
-                    </View>
-                    <View>
-                        <Text style={styles.businessName}>{review.business?.name || 'Bilinmeyen Mekan'}</Text>
-                        <Text style={styles.reviewDate}>{new Date(review.created_at).toLocaleDateString('tr-TR')}</Text>
-                    </View>
-                </View>
-                <View style={styles.ratingBadge}>
-                    <Ionicons name="star" size={12} color={COLORS.secondary} />
-                    <Text style={styles.ratingText}>{review.rating}</Text>
-                </View>
-            </View>
-            <Text style={styles.reviewComment}>{review.comment}</Text>
-        </View>
-    );
 
     return (
         <View style={styles.container}>
@@ -182,7 +163,9 @@ const ProfileScreen = ({ navigation }) => {
                             {loadingReviews ? (
                                 <ActivityIndicator color={COLORS.primary} style={{ marginTop: 20 }} />
                             ) : reviews.length > 0 ? (
-                                reviews.map(renderReviewItem)
+                                reviews.map((review) => (
+                                    <ReviewCard key={review.id} review={review} />
+                                ))
                             ) : (
                                 <View style={styles.emptyState}>
                                     <Ionicons name="chatbubble-outline" size={48} color={COLORS.textSecondary} />

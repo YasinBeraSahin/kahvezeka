@@ -46,6 +46,7 @@ class Review(Base):
     id = Column(Integer, primary_key=True, index=True)
     rating = Column(Integer, index=True) # 1-5 arası puan
     comment = Column(Text, nullable=True) # Yorum metni (opsiyonel)
+    image_url = Column(String, nullable=True) # <-- Yeni alan
     
     # --- İlişkiler (Relationships) ---
     # Bu, "reviews" tablosundaki "user_id" sütununun,
@@ -71,6 +72,7 @@ class Business(Base):
     phone = Column(String, nullable=True)
     latitude = Column(Float)
     longitude = Column(Float)
+    image_url = Column(String, nullable=True) # <-- Yeni alan
     
     # Filtreleme Özellikleri
     has_wifi = Column(Boolean, default=False)

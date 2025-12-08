@@ -18,6 +18,7 @@ class BusinessBase(BaseModel):
     is_pet_friendly: bool = False
     is_quiet: bool = False
     serves_food: bool = False
+    image_url: Optional[str] = None # <-- Yeni alan
 
 class BusinessSimple(BaseModel):
     id: int
@@ -32,6 +33,7 @@ class UserBase(BaseModel):
 class ReviewBase(BaseModel):
     rating: int
     comment: Optional[str] = None
+    image_url: Optional[str] = None # <-- Yeni alan
 
 class MenuItemBase(BaseModel):
     name: str
@@ -70,6 +72,7 @@ class BusinessUpdate(BaseModel):
     is_pet_friendly: Optional[bool] = None
     is_quiet: Optional[bool] = None
     serves_food: Optional[bool] = None
+    image_url: Optional[str] = None # <-- Yeni alan
 
 class UserCreate(UserBase):
     password: str

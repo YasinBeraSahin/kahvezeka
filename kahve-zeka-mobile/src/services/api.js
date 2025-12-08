@@ -249,6 +249,8 @@ export const deleteCampaign = async (campaignId) => {
     }
 };
 
+// Image upload removed.
+
 // --- ADMIN ENDPOINTS ---
 
 export const getAllBusinessesForAdmin = async () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Switch, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 
@@ -12,20 +12,44 @@ const FilterModal = ({ visible, onClose, filters, setFilters, onApply }) => {
         }));
     };
 
-    const renderFilterItem = (label, key, icon) => (
-        <View style={styles.filterItem}>
-            <View style={styles.filterLabelContainer}>
-                <Ionicons name={icon} size={24} color={COLORS.text} style={styles.filterIcon} />
-                <Text style={styles.filterLabel}>{label}</Text>
-            </View>
-            <Switch
-                value={filters[key]}
-                onValueChange={() => toggleFilter(key)}
-                trackColor={{ false: COLORS.border, true: COLORS.primary }}
-                thumbColor={COLORS.surface}
-            />
-        </View>
-    );
+    const setSort = (key) => {
+        setFilters(prev => ({
+            ...prev,
+            sortBy: key
+        }));
+    };
+
+    const renderChip = (label, key, icon) => {
+        const isActive = filters[key];
+        return (
+            <TouchableOpacity
+                style={[styles.chip, isActive && styles.activeChip]}
+                onPress={() => toggleFilter(key)}
+            >
+                <Ionicons
+                    name={icon}
+                    size={20}
+                    color={isActive ? COLORS.primary : COLORS.textSecondary}
+                />
+                <Text style={[styles.chipText, isActive && styles.activeChipText]}>{label}</Text>
+            </TouchableOpacity>
+        );
+    };
+
+    const renderSortOption = (label, key) => {
+        const isSelected = (filters.sortBy || 'distance') === key;
+        return (
+            <TouchableOpacity
+                style={[styles.sortOption, isSelected && styles.activeSortOption]}
+                onPress={() => setSort(key)}
+            >
+                <View style={styles.radioButton}>
+                    {isSelected && <View style={styles.radioButtonInner} />}
+                </View>
+                <Text style={[styles.sortText, isSelected && styles.activeSortText]}>{label}</Text>
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <Modal
@@ -37,18 +61,34 @@ const FilterModal = ({ visible, onClose, filters, setFilters, onApply }) => {
             <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
                     <View style={styles.header}>
-                        <Text style={styles.title}>Filtrele</Text>
-                        <TouchableOpacity onPress={onClose}>
+                        <Text style={styles.title}>Filtrele & Sırala</Text>
+                        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                             <Ionicons name="close" size={24} color={COLORS.text} />
                         </TouchableOpacity>
                     </View>
 
-                    <ScrollView style={styles.scrollView}>
-                        {renderFilterItem('Wi-Fi Var', 'has_wifi', 'wifi')}
-                        {renderFilterItem('Priz Var', 'has_socket', 'battery-charging')}
-                        {renderFilterItem('Hayvan Dostu', 'is_pet_friendly', 'paw')}
-                        {renderFilterItem('Sessiz Ortam', 'is_quiet', 'library')}
-                        {renderFilterItem('Yemek Servisi', 'serves_food', 'restaurant')}
+                    <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+
+                        {/* Özellikler Bölümü */}
+                        <Text style={styles.sectionTitle}>Mekan Özellikleri</Text>
+                        <View style={styles.chipContainer}>
+                            {renderChip('Wi-Fi', 'has_wifi', 'wifi')}
+                            {renderChip('Priz', 'has_socket', 'battery-charging')}
+                            {renderChip('Hayvan', 'is_pet_friendly', 'paw')}
+                            {renderChip('Sessiz', 'is_quiet', 'library')}
+                            {renderChip('Yemek', 'serves_food', 'restaurant')}
+                        </View>
+
+                        <View style={styles.divider} />
+
+                        {/* Sıralama Bölümü */}
+                        <Text style={styles.sectionTitle}>Sıralama</Text>
+                        <View style={styles.sortContainer}>
+                            {renderSortOption('En Yakın', 'distance')}
+                            {renderSortOption('En Yüksek Puan', 'rating')}
+                            {renderSortOption('En Çok Yorum', 'reviews')}
+                        </View>
+
                     </ScrollView>
 
                     <View style={styles.footer}>
@@ -59,7 +99,8 @@ const FilterModal = ({ visible, onClose, filters, setFilters, onApply }) => {
                                 has_socket: false,
                                 is_pet_friendly: false,
                                 is_quiet: false,
-                                serves_food: false
+                                serves_food: false,
+                                sortBy: 'distance'
                             })}
                         >
                             <Text style={styles.resetButtonText}>Sıfırla</Text>
@@ -89,10 +130,10 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         backgroundColor: COLORS.background,
-        borderTopLeftRadius: SIZES.large,
-        borderTopRightRadius: SIZES.large,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
         padding: SIZES.large,
-        maxHeight: '70%',
+        maxHeight: '85%',
         ...SHADOWS.medium,
     },
     header: {
@@ -106,52 +147,110 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: COLORS.text,
     },
+    closeButton: {
+        padding: 4,
+    },
     scrollView: {
         marginBottom: SIZES.large,
     },
-    filterItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: SIZES.medium,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
-    },
-    filterLabelContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    filterIcon: {
-        marginRight: SIZES.medium,
-        width: 30,
-        textAlign: 'center'
-    },
-    filterLabel: {
+    sectionTitle: {
         fontSize: SIZES.medium,
+        fontWeight: 'bold',
+        color: COLORS.text,
+        marginBottom: SIZES.medium,
+    },
+    chipContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: SIZES.small,
+        marginBottom: SIZES.small,
+    },
+    chip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 25,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.surface,
+        gap: 6,
+    },
+    activeChip: {
+        borderColor: COLORS.primary,
+        backgroundColor: '#FFF0E0', // Light orange
+    },
+    chipText: {
+        fontSize: SIZES.font,
+        color: COLORS.textSecondary,
+        fontWeight: '500',
+    },
+    activeChipText: {
+        color: COLORS.primary,
+        fontWeight: 'bold',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: COLORS.border,
+        marginVertical: SIZES.large,
+    },
+    sortContainer: {
+        gap: SIZES.medium,
+    },
+    sortOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 4,
+    },
+    activeSortOption: {
+
+    },
+    radioButton: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        borderWidth: 2,
+        borderColor: COLORS.textSecondary,
+        marginRight: SIZES.small,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    radioButtonInner: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: COLORS.primary,
+    },
+    activeSortText: {
+        fontWeight: 'bold',
+        color: COLORS.primary,
+    },
+    sortText: {
+        fontSize: SIZES.font,
         color: COLORS.text,
     },
     footer: {
         flexDirection: 'row',
         gap: SIZES.medium,
-        paddingTop: SIZES.medium,
+        marginTop: SIZES.small,
     },
     resetButton: {
         flex: 1,
-        paddingVertical: 15,
+        paddingVertical: 16,
         borderRadius: SIZES.radius,
         borderWidth: 1,
-        borderColor: COLORS.primary,
+        borderColor: COLORS.border,
         alignItems: 'center',
     },
     resetButtonText: {
-        color: COLORS.primary,
+        color: COLORS.textSecondary,
         fontWeight: 'bold',
         fontSize: SIZES.medium,
     },
     applyButton: {
         flex: 2,
         backgroundColor: COLORS.primary,
-        paddingVertical: 15,
+        paddingVertical: 16,
         borderRadius: SIZES.radius,
         alignItems: 'center',
         ...SHADOWS.light,

@@ -95,7 +95,7 @@ const BusinessDetailScreen = ({ navigation, route }) => {
                 {/* Header Image & Info */}
                 <View style={styles.headerContainer}>
                     <Image
-                        source={{ uri: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80' }}
+                        source={{ uri: business.image_url || 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80' }}
                         style={styles.coverImage}
                     />
                     <View style={styles.overlay} />
@@ -120,6 +120,34 @@ const BusinessDetailScreen = ({ navigation, route }) => {
                         <Text style={styles.address} numberOfLines={2}>
                             <Ionicons name="location-outline" size={16} color={COLORS.secondary} /> {business.address}
                         </Text>
+
+                        {/* Amenities Icons Row - IMPROVED */}
+                        <View style={styles.amenitiesRow}>
+                            {business.has_wifi && (
+                                <View style={styles.amenityBadge}>
+                                    <Ionicons name="wifi" size={14} color={COLORS.surface} />
+                                    <Text style={styles.amenityText}>Wi-Fi</Text>
+                                </View>
+                            )}
+                            {business.has_socket && (
+                                <View style={styles.amenityBadge}>
+                                    <Ionicons name="battery-charging" size={14} color={COLORS.surface} />
+                                    <Text style={styles.amenityText}>Priz</Text>
+                                </View>
+                            )}
+                            {business.is_pet_friendly && (
+                                <View style={styles.amenityBadge}>
+                                    <Ionicons name="paw" size={14} color={COLORS.surface} />
+                                    <Text style={styles.amenityText}>Dost</Text>
+                                </View>
+                            )}
+                            {business.is_quiet && (
+                                <View style={styles.amenityBadge}>
+                                    <Ionicons name="library" size={14} color={COLORS.surface} />
+                                    <Text style={styles.amenityText}>Sessiz</Text>
+                                </View>
+                            )}
+                        </View>
                     </View>
                 </View>
 
@@ -305,6 +333,26 @@ const styles = StyleSheet.create({
         padding: SIZES.padding,
         minHeight: 500,
         backgroundColor: COLORS.background,
+    },
+    amenitiesRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginTop: 12,
+    },
+    amenityBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 15,
+        gap: 5,
+    },
+    amenityText: {
+        color: COLORS.surface,
+        fontSize: 12,
+        fontWeight: 'bold',
     },
 });
 

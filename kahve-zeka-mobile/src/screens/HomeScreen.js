@@ -1,11 +1,12 @@
 // src/screens/HomeScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, ActivityIndicator, Text, StatusBar, SafeAreaView } from 'react-native';
+import { View, StyleSheet, Alert, ActivityIndicator, Text, StatusBar, SafeAreaView, RefreshControl, ScrollView } from 'react-native';
 import SearchBar from '../components/SearchBar';
 import RadiusFilter from '../components/RadiusFilter';
 import CoffeeMapView from '../components/CoffeeMapView';
 import NearbyList from '../components/NearbyList';
 import FilterModal from '../components/FilterModal';
+import BusinessCardSkeleton from '../components/BusinessCardSkeleton';
 import { getCurrentLocation } from '../utils/location';
 import { getNearbyBusinesses, getBusinessDetail } from '../services/api';
 import { COLORS, SIZES } from '../constants/theme';
@@ -17,13 +18,15 @@ const HomeScreen = ({ navigation }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRadius, setSelectedRadius] = useState(5);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [filters, setFilters] = useState({
         has_wifi: false,
         has_socket: false,
         is_pet_friendly: false,
         is_quiet: false,
-        serves_food: false
+        serves_food: false,
+        sortBy: 'distance' // Default sort
     });
 
     useEffect(() => {
@@ -31,21 +34,15 @@ const HomeScreen = ({ navigation }) => {
     }, []);
 
     useEffect(() => {
-        if (userLocation) {
-            loadNearbyBusinesses();
-        }
-    }, [userLocation, selectedRadius]);
+        const delayDebounceFn = setTimeout(() => {
+            if (userLocation) {
+                loadNearbyBusinesses();
+            }
+        }, 500); // Debounce search by 500ms
 
-    useEffect(() => {
-        if (searchTerm.trim() === '') {
-            setFilteredBusinesses(businesses);
-        } else {
-            const filtered = businesses.filter((item) =>
-                item.business.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            setFilteredBusinesses(filtered);
-        }
-    }, [searchTerm, businesses]);
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchTerm, userLocation, selectedRadius, filters.sortBy]); // Add filters.sortBy to dependency if we want immediate sort, but onApply handles it too. 
+    // Actually, onApply calls loadNearbyBusinesses which uses current filters.
 
     const loadUserLocation = async () => {
         try {
@@ -58,18 +55,25 @@ const HomeScreen = ({ navigation }) => {
         }
     };
 
-    const loadNearbyBusinesses = async () => {
+    const loadNearbyBusinesses = async (isPullRefresh = false, retryCount = 0) => {
         try {
-            setLoading(true);
+            if (isPullRefresh) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
+
+            // Backend call (filters only has boolean flags + query)
+            // We pass filters as is, backend ignores 'sortBy' if not expecting it, which is fine.
             const data = await getNearbyBusinesses(
                 userLocation.latitude,
                 userLocation.longitude,
                 selectedRadius,
-                filters
+                { ...filters, search_query: searchTerm }
             );
 
             // Production API fix: Fetch details for each business to get reviews and calculate rating
-            const enrichedData = await Promise.all(data.map(async (item) => {
+            let enrichedData = await Promise.all(data.map(async (item) => {
                 try {
                     const detail = await getBusinessDetail(item.business.id);
                     let average_rating = 0;
@@ -95,14 +99,46 @@ const HomeScreen = ({ navigation }) => {
                 }
             }));
 
+            // --- CLIENT SIDE SORTING ---
+            if (filters.sortBy === 'rating') {
+                enrichedData.sort((a, b) => b.business.average_rating - a.business.average_rating);
+            } else if (filters.sortBy === 'reviews') {
+                enrichedData.sort((a, b) => b.business.review_count - a.business.review_count);
+            } else {
+                // Default 'distance' - Backend already returns sorted by distance, but let's ensure
+                enrichedData.sort((a, b) => a.distance_km - b.distance_km);
+            }
+
             setBusinesses(enrichedData);
             setFilteredBusinesses(enrichedData);
         } catch (error) {
             console.log('İşletmeler yüklenemedi', error);
-            Alert.alert('Hata', 'İşletmeler yüklenirken bir sorun oluştu. Lütfen internet bağlantınızı kontrol edin.');
+
+            // Retry logic for Render cold start
+            if (retryCount < 2 && (error.code === 'ECONNABORTED' || error.response?.status >= 500)) {
+                console.log(`Retrying... (${retryCount + 1}/2)`);
+                setTimeout(() => {
+                    loadNearbyBusinesses(isPullRefresh, retryCount + 1);
+                }, 3000); // Wait 3 seconds before retry
+                return; // Don't show error yet
+            }
+
+            Alert.alert(
+                'Bağlantı Hatası',
+                'Sunucu uyanıyor, lütfen birkaç saniye bekleyip tekrar deneyin. (Pull-to-refresh ile yenileyebilirsiniz)',
+                [
+                    { text: 'Tamam' },
+                    { text: 'Tekrar Dene', onPress: () => loadNearbyBusinesses(true) }
+                ]
+            );
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        loadNearbyBusinesses(true);
     };
 
     const handleBusinessPress = (business) => {
@@ -147,13 +183,29 @@ const HomeScreen = ({ navigation }) => {
 
             {/* Alt Liste (Yatay) */}
             <View style={styles.listContainer}>
-                {loading ? (
-                    <ActivityIndicator size="small" color={COLORS.primary} />
+                {loading && !refreshing ? (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal: SIZES.medium }}>
+                        <BusinessCardSkeleton />
+                        <BusinessCardSkeleton />
+                        <BusinessCardSkeleton />
+                    </ScrollView>
                 ) : (
-                    <NearbyList
-                        businesses={filteredBusinesses}
-                        onBusinessPress={handleBusinessPress}
-                    />
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={refreshing}
+                                onRefresh={onRefresh}
+                                tintColor={COLORS.primary}
+                            />
+                        }
+                    >
+                        <NearbyList
+                            businesses={filteredBusinesses}
+                            onBusinessPress={handleBusinessPress}
+                        />
+                    </ScrollView>
                 )}
             </View>
 

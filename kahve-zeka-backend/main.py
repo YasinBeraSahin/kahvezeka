@@ -1,57 +1,48 @@
 # main.py
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload, selectinload
 from typing import List, Optional
 from passlib.context import CryptContext
 
 from datetime import datetime, timedelta, timezone
 from math import radians, cos, sin, asin, sqrt
+import os
 
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-# Kendi oluşturduğumuz modülleri import ediyoruz
-import models
-import schemas 
-# 'Base' ve 'engine'i de import et (Kritik Düzeltme)
-from database import SessionLocal, engine, Base 
+from database import SessionLocal, engine, Base
+import models, schemas
+from fastapi.staticfiles import StaticFiles
+from fastapi import UploadFile, File
+import shutil
+import uuid # unique dosya isimleri için
 
-# Şifreleme için context oluşturuyoruz
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Veritabanı tablolarını oluştur (Dev ortamı için)
+models.Base.metadata.create_all(bind=engine)
 
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+app = FastAPI(title="Kahve Zeka API")
 
-# Veritabanında tablolarımızı oluşturuyoruz
-db_connection_error = None
-try:
-    Base.metadata.create_all(bind=engine)
-except Exception as e:
-    print(f"Veritabanı bağlantı hatası: {e}")
-    db_connection_error = str(e)
-
-app = FastAPI(
-    title="Kahve Zeka API",
-    description="Kahve severler için kişiselleştirilmiş bir keşif platformu.",
-    version="1.0.0"
-)
-
-# --- CORS AYARLARI (Tüm sitelere izin ver) ---
-origins = ["*"]
-
+# CORS Ayarları
+# Tüm originlere izin veriyoruz (Geliştirme aşaması için)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Güvenlik Konfigürasyonu
+SECRET_KEY = os.environ.get("SECRET_KEY", "gizli-anahtar-degistirin-lutfen")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # 1 gün
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# --- VERİTABANI BAĞIMLILIĞI ---
+# DB Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -59,12 +50,23 @@ def get_db():
     finally:
         db.close()
 
-# --- GÜVENLİK VE YARDIMCI FONKSİYONLAR ---
-def get_password_hash(password):
-    return pwd_context.hash(password)
+# Global DB connection error variable (used in health check)
+db_connection_error = None
+try:
+    # Basit bir bağlantı testi
+    # (database.py içinde engine=None ise zaten oradan anlaşılır)
+    if engine is None:
+        db_connection_error = "Engine could not be created."
+except Exception as e:
+    db_connection_error = str(e)
 
+
+# Yardımcı Fonksiyonlar
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
 
 def authenticate_user(db: Session, username: str, password: str):
     user = db.query(models.User).filter(models.User.username == username).first()
@@ -479,6 +481,7 @@ def get_nearby_businesses(
     lat: float, 
     lon: float, 
     radius_km: float = 5.0,
+    search_query: Optional[str] = None, # <-- YENİ PARAMETRE
     has_wifi: bool = False,
     has_socket: bool = False,
     is_pet_friendly: bool = False,
@@ -488,12 +491,16 @@ def get_nearby_businesses(
 ):
     """
     Verilen enlem/boylama ve yarıçapa (km) göre ONAYLI mekanları listeler.
-    Ayrıca filtreleme seçenekleri sunar.
+    Ayrıca filtreleme ve arama seçenekleri sunar.
     """
     query = db.query(models.Business).options(
         joinedload(models.Business.reviews)
     ).filter(models.Business.is_approved == True)
     
+    # İsim ile arama (Case-insensitive)
+    if search_query:
+        query = query.filter(models.Business.name.ilike(f"%{search_query}%"))
+
     if has_wifi:
         query = query.filter(models.Business.has_wifi == True)
     if has_socket:
@@ -570,6 +577,33 @@ def get_reviews_for_business(business_id: int, db: Session = Depends(get_db)):
     ).filter(models.Review.business_id == business_id).all()
     return reviews
 
+# --- DOSYA YÜKLEME VE STATİK DOSYA SERVİSİ ---
+
+# Uploads klasörünü oluştur
+os.makedirs("uploads", exist_ok=True)
+
+# /uploads path'ini dışarı aç (Resimlere erişim için)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+@app.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    # Dosya uzantısını al
+    extension = file.filename.split(".")[-1]
+    # Unique isim oluştur
+    filename = f"{uuid.uuid4()}.{extension}"
+    file_path = f"uploads/{filename}"
+    
+    # Dosyayı kaydet
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    # URL'i döndür (Prod ortamında domain değişebilir, şimdilik relatif veya tam yol)
+    # Backend URL'i mobil tarafta bilindiği için sadece path döndürmek yeterli olabilir,
+    # ama tam URL vermek daha güvenli.
+    # Şimdilik static path verelim:
+    return {"url": f"/uploads/{filename}"}
+
+
 # --- DEBUG / SYSTEM ENDPOINTS ---
 @app.post("/debug/reset-db")
 def reset_database(db: Session = Depends(get_db)):
@@ -612,6 +646,52 @@ def reset_database(db: Session = Depends(get_db)):
     
     db.commit()
     return {"message": "Veritabanı sıfırlandı ve güncellendi."}
+
+@app.get("/debug/fix-schema")
+def fix_schema(db: Session = Depends(get_db)):
+    """
+    Mevcut veritabanı şemasını verileri SİLMEDEN günceller.
+    Eksik sütunları ekler.
+    """
+    from sqlalchemy import text
+    try:
+        # 1. Users tablosuna 'role' ekle
+        try:
+            db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR DEFAULT 'customer'"))
+        except Exception as e:
+            print(f"Role column error (might exist): {e}")
+
+        # 2. Reviews tablosuna 'image_url' ekle
+        try:
+            db.execute(text("ALTER TABLE reviews ADD COLUMN IF NOT EXISTS image_url VARCHAR"))
+        except Exception as e:
+            print(f"Review image_url error: {e}")
+
+        # 3. Businesses tablosuna 'image_url', 'owner_id', 'is_approved' ekle
+        cols = [
+            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS image_url VARCHAR",
+            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS owner_id INTEGER",
+            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS has_wifi BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS has_socket BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_pet_friendly BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_quiet BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS serves_food BOOLEAN DEFAULT FALSE"
+        ]
+        for col_sql in cols:
+            try:
+                db.execute(text(col_sql))
+            except Exception as e:
+                print(f"Business col error: {e}")
+
+        # 4. Eksik tabloları oluştur (Campaigns, MenuItems vb.)
+        models.Base.metadata.create_all(bind=engine)
+        
+        db.commit()
+        return {"message": "Şema güncellemesi başarıyla tamamlandı. Eksik sütunlar eklendi."}
+        
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
