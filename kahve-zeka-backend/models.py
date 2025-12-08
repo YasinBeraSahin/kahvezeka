@@ -119,6 +119,7 @@ class MenuItem(Base):
     name = Column(String, index=True, nullable=False) # örn: "Espresso"
     description = Column(String, nullable=True)     # örn: "İtalyan usulü"
     price = Column(Float, nullable=False)           # örn: 50.0
+    image_url = Column(String, nullable=True)       # <-- Yeni alan
     
     # Bu öğenin hangi mekana ait olduğunu belirten ilişki
     business_id = Column(Integer, ForeignKey("businesses.id"))

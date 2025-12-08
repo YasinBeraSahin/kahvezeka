@@ -40,6 +40,7 @@ class MenuItemBase(BaseModel):
     name: str
     description: Optional[str] = None
     price: float
+    image_url: Optional[str] = None # <-- Yeni alan
 
 # --- KAMPANYA TEMEL ŞEMASI (BURAYA TAŞINDI) ---
 class CampaignBase(BaseModel):
