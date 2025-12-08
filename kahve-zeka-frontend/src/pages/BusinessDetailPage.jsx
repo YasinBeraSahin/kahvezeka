@@ -315,252 +315,270 @@ function BusinessDetailPage() {
                 ) : (
                   <List>
                     {business.menu_items.map((item, index) => (
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography variant="h6" component="span">{item.name}</Typography>
-                            <Typography variant="h6" component="span" color="primary.main">{item.price} TL</Typography>
-                          </Box>
-                        }
-                        secondary={
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                            {item.description}
-                          </Typography>
-                        }
-                      />
+                      <div key={item.id}>
+                        <ListItem alignItems="flex-start" sx={{ py: 3, borderBottom: '1px solid #f0f0f0' }}>
+                          {item.image_url && (
+                            <Box
+                              component="img"
+                              src={getImageUrl(item.image_url)}
+                              alt={item.name}
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                              sx={{
+                                width: 140,
+                                height: 140,
+                                objectFit: 'cover',
+                                borderRadius: 3,
+                                mr: 3,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                              }}
+                            />
+                          )}
+                          <ListItemText
+                            primary={
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Typography variant="h6" component="span">{item.name}</Typography>
+                                <Typography variant="h6" component="span" color="primary.main">{item.price} TL</Typography>
+                              </Box>
+                            }
+                            secondary={
+                              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                {item.description}
+                              </Typography>
+                            }
+                          />
                         </ListItem>
                         {index < business.menu_items.length - 1 && <Divider component="li" />}
-              </div>
+                      </div>
                     ))}
-            </List>
+                  </List>
                 )}
-          </TabPanel>
+              </TabPanel>
 
-          {/* REVIEWS TAB */}
-          <TabPanel value={tabValue} index={1}>
-            {/* Review Form */}
-            {token ? (
-              <Paper variant="outlined" sx={{ p: 3, mb: 4, bgcolor: 'grey.50' }}>
-                <Typography variant="h6" gutterBottom>Deneyimini Paylaş</Typography>
-                <Box component="form" onSubmit={handleReviewSubmit}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography component="legend">Puanınız</Typography>
-                    <Rating
-                      name="simple-controlled"
-                      value={newRating}
-                      onChange={(event, newValue) => {
-                        setNewRating(newValue);
-                      }}
-                      size="large"
-                    />
-                  </Box>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={3}
-                    placeholder="Bu mekan hakkında ne düşünüyorsunuz?"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    sx={{ mb: 2, bgcolor: 'white' }}
-                  />
-
-                  <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      startIcon={<PhotoCamera />}
-                    >
-                      Fotoğraf Ekle
-                      <input
-                        hidden
-                        accept="image/*"
-                        type="file"
-                        onChange={handleImageSelect}
+              {/* REVIEWS TAB */}
+              <TabPanel value={tabValue} index={1}>
+                {/* Review Form */}
+                {token ? (
+                  <Paper variant="outlined" sx={{ p: 3, mb: 4, bgcolor: 'grey.50' }}>
+                    <Typography variant="h6" gutterBottom>Deneyimini Paylaş</Typography>
+                    <Box component="form" onSubmit={handleReviewSubmit}>
+                      <Box sx={{ mb: 2 }}>
+                        <Typography component="legend">Puanınız</Typography>
+                        <Rating
+                          name="simple-controlled"
+                          value={newRating}
+                          onChange={(event, newValue) => {
+                            setNewRating(newValue);
+                          }}
+                          size="large"
+                        />
+                      </Box>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={3}
+                        placeholder="Bu mekan hakkında ne düşünüyorsunuz?"
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        sx={{ mb: 2, bgcolor: 'white' }}
                       />
-                    </Button>
-                    {imagePreview && (
-                      <Box sx={{ position: 'relative' }}>
-                        <Avatar
-                          src={imagePreview}
-                          variant="rounded"
-                          sx={{ width: 56, height: 56 }}
-                        />
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setSelectedImage(null);
-                            setImagePreview(null);
-                          }}
-                          sx={{
-                            position: 'absolute',
-                            top: -10,
-                            right: -10,
-                            bgcolor: 'background.paper',
-                            boxShadow: 1,
-                            '&:hover': { bgcolor: 'grey.100' }
-                          }}
+
+                      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Button
+                          variant="outlined"
+                          component="label"
+                          startIcon={<PhotoCamera />}
                         >
-                          x
-                        </IconButton>
+                          Fotoğraf Ekle
+                          <input
+                            hidden
+                            accept="image/*"
+                            type="file"
+                            onChange={handleImageSelect}
+                          />
+                        </Button>
+                        {imagePreview && (
+                          <Box sx={{ position: 'relative' }}>
+                            <Avatar
+                              src={imagePreview}
+                              variant="rounded"
+                              sx={{ width: 56, height: 56 }}
+                            />
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                setSelectedImage(null);
+                                setImagePreview(null);
+                              }}
+                              sx={{
+                                position: 'absolute',
+                                top: -10,
+                                right: -10,
+                                bgcolor: 'background.paper',
+                                boxShadow: 1,
+                                '&:hover': { bgcolor: 'grey.100' }
+                              }}
+                            >
+                              x
+                            </IconButton>
+                          </Box>
+                        )}
                       </Box>
-                    )}
-                  </Box>
 
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={submitting || uploading}
-                  >
-                    {submitting || uploading ? 'Gönderiliyor...' : 'Yorum Yap'}
-                  </Button>
-                  {formError && <Typography color="error" sx={{ mt: 1 }}>{formError}</Typography>}
-                </Box>
-              </Paper>
-            ) : (
-              <Alert severity="info" sx={{ mb: 4 }}>
-                Yorum yapmak için lütfen <RouterLink to="/login">giriş yapın</RouterLink>.
-              </Alert>
-            )}
-
-            {/* Reviews List */}
-            {business.reviews.length === 0 ? (
-              <Typography color="text.secondary" align="center">Henüz yorum yapılmamış. İlk yorumu siz yapın!</Typography>
-            ) : (
-              <List>
-                {business.reviews.map((review) => (
-                  <Paper key={review.id} elevation={0} sx={{ p: 2, mb: 2, border: '1px solid #eee', borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <Avatar sx={{ bgcolor: 'primary.light', mr: 2 }}>
-                        <PersonIcon />
-                      </Avatar>
-                      <Box>
-                        <Typography variant="subtitle1" fontWeight="bold">
-                          {review.owner.username}
-                        </Typography>
-                        <Rating value={review.rating} readOnly size="small" />
-                      </Box>
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        disabled={submitting || uploading}
+                      >
+                        {submitting || uploading ? 'Gönderiliyor...' : 'Yorum Yap'}
+                      </Button>
+                      {formError && <Typography color="error" sx={{ mt: 1 }}>{formError}</Typography>}
                     </Box>
-                    <Typography variant="body1" color="text.secondary" sx={{ ml: 7 }}>
-                      {review.comment}
-                    </Typography>
-                    {review.image_url && (
-                      <Box sx={{ ml: 7, mt: 2 }}>
-                        <img
-                          src={getImageUrl(review.image_url)}
-                          alt="Review attachment"
-                          onError={(e) => { e.target.src = 'https://via.placeholder.com/300x200?text=Resim+Silinmis'; }} // Placeholder göster
-                          style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px' }}
-                        />
-                      </Box>
-                    )}
                   </Paper>
-                ))}
-              </List>
-            )}
-          </TabPanel>
+                ) : (
+                  <Alert severity="info" sx={{ mb: 4 }}>
+                    Yorum yapmak için lütfen <RouterLink to="/login">giriş yapın</RouterLink>.
+                  </Alert>
+                )}
 
-          {/* CAMPAIGNS TAB */}
-          <TabPanel value={tabValue} index={2}>
-            {business.campaigns && business.campaigns.length > 0 ? (
-              <Grid container spacing={2}>
-                {business.campaigns.map(campaign => (
-                  <Grid item xs={12} key={campaign.id}>
-                    <Card sx={{ border: '2px dashed #c7a17a', bgcolor: '#fffaf0' }} elevation={0}>
-                      <CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                          <LocalOfferIcon color="secondary" />
-                          <Typography variant="h6" color="primary.main">
-                            {campaign.title}
-                          </Typography>
+                {/* Reviews List */}
+                {business.reviews.length === 0 ? (
+                  <Typography color="text.secondary" align="center">Henüz yorum yapılmamış. İlk yorumu siz yapın!</Typography>
+                ) : (
+                  <List>
+                    {business.reviews.map((review) => (
+                      <Paper key={review.id} elevation={0} sx={{ p: 2, mb: 2, border: '1px solid #eee', borderRadius: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <Avatar sx={{ bgcolor: 'primary.light', mr: 2 }}>
+                            <PersonIcon />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle1" fontWeight="bold">
+                              {review.owner.username}
+                            </Typography>
+                            <Rating value={review.rating} readOnly size="small" />
+                          </Box>
                         </Box>
-                        <Typography variant="body1">
-                          {campaign.description}
+                        <Typography variant="body1" color="text.secondary" sx={{ ml: 7 }}>
+                          {review.comment}
                         </Typography>
-                      </CardContent>
-                    </Card>
+                        {review.image_url && (
+                          <Box sx={{ ml: 7, mt: 2 }}>
+                            <img
+                              src={getImageUrl(review.image_url)}
+                              alt="Review attachment"
+                              onError={(e) => { e.target.src = 'https://via.placeholder.com/300x200?text=Resim+Silinmis'; }} // Placeholder göster
+                              style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px' }}
+                            />
+                          </Box>
+                        )}
+                      </Paper>
+                    ))}
+                  </List>
+                )}
+              </TabPanel>
+
+              {/* CAMPAIGNS TAB */}
+              <TabPanel value={tabValue} index={2}>
+                {business.campaigns && business.campaigns.length > 0 ? (
+                  <Grid container spacing={2}>
+                    {business.campaigns.map(campaign => (
+                      <Grid item xs={12} key={campaign.id}>
+                        <Card sx={{ border: '2px dashed #c7a17a', bgcolor: '#fffaf0' }} elevation={0}>
+                          <CardContent>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                              <LocalOfferIcon color="secondary" />
+                              <Typography variant="h6" color="primary.main">
+                                {campaign.title}
+                              </Typography>
+                            </Box>
+                            <Typography variant="body1">
+                              {campaign.description}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
                   </Grid>
-                ))}
-              </Grid>
-            ) : (
-              <Typography color="text.secondary" align="center">Şu an aktif bir kampanya bulunmuyor.</Typography>
-            )}
-          </TabPanel>
-        </Paper>
-      </Grid>
+                ) : (
+                  <Typography color="text.secondary" align="center">Şu an aktif bir kampanya bulunmuyor.</Typography>
+                )}
+              </TabPanel>
+            </Paper>
+          </Grid>
 
-      {/* RIGHT COLUMN - INFO CARD */}
-      <Grid item xs={12} md={4}>
-        <Paper sx={{ p: 3, borderRadius: 2, position: 'sticky', top: 100 }}>
-          <Typography variant="h6" gutterBottom fontWeight="bold">
-            Mekan Bilgileri
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-            <LocationOnIcon color="action" />
-            <Typography variant="body2" color="text.secondary">
-              {business.address}
-            </Typography>
-          </Box>
+          {/* RIGHT COLUMN - INFO CARD */}
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ p: 3, borderRadius: 2, position: 'sticky', top: 100 }}>
+              <Typography variant="h6" gutterBottom fontWeight="bold">
+                Mekan Bilgileri
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                <LocationOnIcon color="action" />
+                <Typography variant="body2" color="text.secondary">
+                  {business.address}
+                </Typography>
+              </Box>
 
-          <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {business.has_wifi && (
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <WifiIcon fontSize="small" color="primary" />
-                <Typography variant="body2">Wi-Fi Var</Typography>
+              <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {business.has_wifi && (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <WifiIcon fontSize="small" color="primary" />
+                    <Typography variant="body2">Wi-Fi Var</Typography>
+                  </Box>
+                )}
+                {business.has_socket && (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <PowerIcon fontSize="small" color="primary" />
+                    <Typography variant="body2">Priz Mevcut</Typography>
+                  </Box>
+                )}
+                {business.has_board_games && (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <CasinoIcon fontSize="small" color="primary" />
+                    <Typography variant="body2">Masa Oyunları</Typography>
+                  </Box>
+                )}
+                {business.serves_food && (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <FastfoodIcon fontSize="small" color="primary" />
+                    <Typography variant="body2">Yemek Servisi</Typography>
+                  </Box>
+                )}
+                {business.is_pet_friendly && (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <PetsIcon fontSize="small" color="primary" />
+                    <Typography variant="body2">Hayvan Dostu</Typography>
+                  </Box>
+                )}
+                {business.is_quiet && (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <VolumeOffIcon fontSize="small" color="primary" />
+                    <Typography variant="body2">Sessiz Ortam</Typography>
+                  </Box>
+                )}
               </Box>
-            )}
-            {business.has_socket && (
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <PowerIcon fontSize="small" color="primary" />
-                <Typography variant="body2">Priz Mevcut</Typography>
-              </Box>
-            )}
-            {business.has_board_games && (
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <CasinoIcon fontSize="small" color="primary" />
-                <Typography variant="body2">Masa Oyunları</Typography>
-              </Box>
-            )}
-            {business.serves_food && (
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <FastfoodIcon fontSize="small" color="primary" />
-                <Typography variant="body2">Yemek Servisi</Typography>
-              </Box>
-            )}
-            {business.is_pet_friendly && (
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <PetsIcon fontSize="small" color="primary" />
-                <Typography variant="body2">Hayvan Dostu</Typography>
-              </Box>
-            )}
-            {business.is_quiet && (
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <VolumeOffIcon fontSize="small" color="primary" />
-                <Typography variant="body2">Sessiz Ortam</Typography>
-              </Box>
-            )}
-          </Box>
 
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Çalışma Saatleri
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Hergün: 08:00 - 23:00
-            </Typography>
-          </Box>
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Çalışma Saatleri
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Hergün: 08:00 - 23:00
+                </Typography>
+              </Box>
 
-          <Button
-            variant="outlined"
-            fullWidth
-            sx={{ mt: 3 }}
-            startIcon={<LocationOnIcon />}
-          >
-            Yol Tarifi Al
-          </Button>
-        </Paper>
-      </Grid>
-    </Grid>
+              <Button
+                variant="outlined"
+                fullWidth
+                sx={{ mt: 3 }}
+                startIcon={<LocationOnIcon />}
+              >
+                Yol Tarifi Al
+              </Button>
+            </Paper>
+          </Grid>
+        </Grid>
       </Container >
     </Box >
   );
