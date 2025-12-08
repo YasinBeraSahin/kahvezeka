@@ -401,7 +401,7 @@ function BusinessPanelPage() {
                     {item.image_url && (
                       <Box
                         component="img"
-                        src={`${API_URL}${item.image_url}`}
+                        src={item.image_url.startsWith('http') ? item.image_url : `${API_URL}${item.image_url}`}
                         sx={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 1, mr: 2 }}
                       />
                     )}

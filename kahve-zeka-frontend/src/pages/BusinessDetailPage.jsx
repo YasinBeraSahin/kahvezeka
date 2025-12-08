@@ -448,7 +448,7 @@ function BusinessDetailPage() {
                         {review.image_url && (
                           <Box sx={{ ml: 7, mt: 2 }}>
                             <img
-                              src={`${API_URL}${review.image_url}`}
+                              src={review.image_url.startsWith('http') ? review.image_url : `${API_URL}${review.image_url}`}
                               alt="Review attachment"
                               style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px' }}
                             />
