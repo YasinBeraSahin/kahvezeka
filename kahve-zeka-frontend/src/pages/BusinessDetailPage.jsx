@@ -331,7 +331,10 @@ function BusinessDetailPage() {
                               component="img"
                               src={getImageUrl(item.image_url)}
                               alt={item.name}
-                              onError={(e) => { e.target.style.display = 'none'; }}
+                              onError={(e) => {
+                                console.log('Image load error for:', item.name, item.image_url);
+                                e.target.src = 'https://via.placeholder.com/140?text=No+Image';
+                              }}
                               sx={{
                                 width: 140,
                                 height: 140,
