@@ -43,6 +43,15 @@ import { toast } from 'react-toastify';
 import IconButton from '@mui/material/IconButton';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 
+const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  // API_URL sonunda slash varsa ve path başında slash varsa birini temizle
+  const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${baseUrl}${cleanPath}`;
+};
+
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
