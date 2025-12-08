@@ -33,6 +33,14 @@ function HomePage() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [radius, setRadius] = useState(5);
+  const [filters, setFilters] = useState({
+    has_wifi: false,
+    has_socket: false,
+    is_pet_friendly: false,
+    is_quiet: false,
+    serves_food: false,
+    has_board_games: false
+  });
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -71,7 +79,8 @@ function HomePage() {
       params: {
         lat: userLocation[0],
         lon: userLocation[1],
-        radius_km: radius
+        radius_km: radius,
+        ...filters
       }
     })
       .then(response => {
@@ -84,7 +93,7 @@ function HomePage() {
         setLoading(false);
       });
 
-  }, [userLocation, radius]);
+  }, [userLocation, radius, filters]);
 
   // 3. ADIM: Filtreleme
   const filteredBusinesses = useMemo(() => {
@@ -152,6 +161,51 @@ function HomePage() {
                 <MenuItem value={20}>20 km</MenuItem>
               </Select>
             </FormControl>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 2 }}>
+            <Chip
+              icon={<LocationOnIcon />}
+              label="Masa Oyunları"
+              clickable
+              color={filters.has_board_games ? "primary" : "default"}
+              variant={filters.has_board_games ? "filled" : "outlined"}
+              onClick={() => setFilters({ ...filters, has_board_games: !filters.has_board_games })}
+            />
+            <Chip
+              label="Wi-Fi"
+              clickable
+              color={filters.has_wifi ? "primary" : "default"}
+              variant={filters.has_wifi ? "filled" : "outlined"}
+              onClick={() => setFilters({ ...filters, has_wifi: !filters.has_wifi })}
+            />
+            <Chip
+              label="Priz"
+              clickable
+              color={filters.has_socket ? "primary" : "default"}
+              variant={filters.has_socket ? "filled" : "outlined"}
+              onClick={() => setFilters({ ...filters, has_socket: !filters.has_socket })}
+            />
+            <Chip
+              label="Hayvan Dostu"
+              clickable
+              color={filters.is_pet_friendly ? "primary" : "default"}
+              variant={filters.is_pet_friendly ? "filled" : "outlined"}
+              onClick={() => setFilters({ ...filters, is_pet_friendly: !filters.is_pet_friendly })}
+            />
+            <Chip
+              label="Sessiz"
+              clickable
+              color={filters.is_quiet ? "primary" : "default"}
+              variant={filters.is_quiet ? "filled" : "outlined"}
+              onClick={() => setFilters({ ...filters, is_quiet: !filters.is_quiet })}
+            />
+            <Chip
+              label="Yemek"
+              clickable
+              color={filters.serves_food ? "primary" : "default"}
+              variant={filters.serves_food ? "filled" : "outlined"}
+              onClick={() => setFilters({ ...filters, serves_food: !filters.serves_food })}
+            />
           </Box>
         </Box>
 

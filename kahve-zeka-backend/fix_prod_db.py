@@ -44,7 +44,10 @@ def fix_production_database():
             "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_pet_friendly BOOLEAN DEFAULT FALSE;",
             "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_quiet BOOLEAN DEFAULT FALSE;",
             "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS serves_food BOOLEAN DEFAULT FALSE;",
-            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS has_board_games BOOLEAN DEFAULT FALSE;"
+            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS has_board_games BOOLEAN DEFAULT FALSE;",
+            
+            # --- VERİ GÜNCELLEME (Mevcut işletmelerin hepsine masa oyunu var diyelim şimdilik) ---
+            "UPDATE businesses SET has_board_games = TRUE;"
         ]
 
         trans = connection.begin()
