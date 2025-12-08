@@ -247,7 +247,7 @@ function BusinessDetailPage() {
         sx={{
           height: '400px',
           position: 'relative',
-          backgroundImage: 'url(https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80)',
+          backgroundImage: `url(${business.image_url ? (business.image_url.startsWith('http') ? business.image_url : `${API_URL}${business.image_url}`) : 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80'})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           display: 'flex',
@@ -317,6 +317,14 @@ function BusinessDetailPage() {
                     {business.menu_items.map((item, index) => (
                       <div key={item.id}>
                         <ListItem alignItems="flex-start">
+                          {item.image_url && (
+                            <Box
+                              component="img"
+                              src={item.image_url.startsWith('http') ? item.image_url : `${API_URL}${item.image_url}`}
+                              alt={item.name}
+                              sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 2, mr: 2 }}
+                            />
+                          )}
                           <ListItemText
                             primary={
                               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
