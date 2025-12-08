@@ -18,6 +18,7 @@ import {
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { toast } from 'react-toastify';
 
 function LoginPage() {
   const [username, setUsername] = useState('');
@@ -35,7 +36,10 @@ function LoginPage() {
     setLoading(false);
 
     if (success) {
+      toast.success(`Hoşgeldiniz!`);
       navigate('/');
+    } else {
+      toast.error('Giriş başarısız. Lütfen bilgilerinizi kontrol edin.');
     }
   };
 
@@ -137,11 +141,7 @@ function LoginPage() {
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Giriş Yap'}
             </Button>
 
-            {error && (
-              <Typography color="error" variant="body2" align="center" sx={{ mt: 1, mb: 2 }}>
-                {error}
-              </Typography>
-            )}
+
 
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
               <Typography variant="body2" color="text.secondary">

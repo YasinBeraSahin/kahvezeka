@@ -37,6 +37,11 @@ import PetsIcon from '@mui/icons-material/Pets';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import CasinoIcon from '@mui/icons-material/Casino'; // Masa Oyunları için
 import FastfoodIcon from '@mui/icons-material/Fastfood'; // Yemek için
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import { toast } from 'react-toastify';
+import IconButton from '@mui/material/IconButton';
+import PhotoCamera from '@mui/icons-material/PhotoCamera';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -70,6 +75,11 @@ function BusinessDetailPage() {
   const [newComment, setNewComment] = useState('');
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     axios.get(`${API_URL}/businesses/${businessId}`)
@@ -84,8 +94,64 @@ function BusinessDetailPage() {
       });
   }, [businessId]);
 
+  useEffect(() => {
+    if (token && businessId) {
+      checkFavoriteStatus();
+    }
+  }, [token, businessId]);
+
+  const checkFavoriteStatus = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/users/favorites`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const favorites = response.data;
+      const isFav = favorites.some(fav => fav.id === businessId);
+      setIsFavorite(isFav);
+    } catch (error) {
+      console.error('Favori kontrolü hatası:', error);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!token) {
+      toast.info('Favorilere eklemek için giriş yapmalısınız.');
+      return;
+    }
+
+    setFavLoading(true);
+    try {
+      if (isFavorite) {
+        await axios.delete(`${API_URL}/users/favorites/${businessId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setIsFavorite(false);
+        toast.info('Favorilerden kaldırıldı.');
+      } else {
+        await axios.post(`${API_URL}/users/favorites/${businessId}`, {}, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setIsFavorite(true);
+        toast.success('Favorilere eklendi! ❤️');
+      }
+    } catch (error) {
+      console.error('Favori işlem hatası:', error);
+      toast.error('İşlem sırasında bir hata oluştu.');
+    } finally {
+      setFavLoading(false);
+    }
+  };
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+  };
+
+  const handleImageSelect = (event) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
   };
 
   const handleReviewSubmit = async (e) => {
@@ -99,12 +165,38 @@ function BusinessDetailPage() {
       return;
     }
 
+    let imageUrl = null;
+
+    // Fotoğraf varsa önce yükle
+    if (selectedImage) {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('file', selectedImage);
+
+      try {
+        const uploadResponse = await axios.post(`${API_URL}/upload`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        imageUrl = uploadResponse.data.url;
+      } catch (uploadErr) {
+        console.error('Fotoğraf yükleme hatası:', uploadErr);
+        toast.error('Fotoğraf yüklenirken bir hata oluştu.');
+        setUploading(false);
+        setSubmitting(false);
+        return;
+      }
+      setUploading(false);
+    }
+
     try {
       const response = await axios.post(
         `${API_URL}/businesses/${businessId}/reviews/`,
         {
           rating: newRating,
-          comment: newComment
+          comment: newComment,
+          image_url: imageUrl
         },
         {
           headers: {
@@ -120,7 +212,10 @@ function BusinessDetailPage() {
 
       setNewRating(5);
       setNewComment('');
+      setSelectedImage(null);
+      setImagePreview(null);
       setSubmitting(false);
+      toast.success('Yorumunuz başarıyla eklendi!');
 
     } catch (err) {
       console.error('Yorum gönderme hatası:', err);
@@ -179,6 +274,17 @@ function BusinessDetailPage() {
               color="secondary"
               sx={{ fontWeight: 'bold' }}
             />
+            <IconButton
+              onClick={handleToggleFavorite}
+              disabled={favLoading}
+              sx={{
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                '&:hover': { backgroundColor: 'white' },
+                ml: 2
+              }}
+            >
+              {isFavorite ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
+            </IconButton>
           </Box>
         </Container>
       </Box>
@@ -259,12 +365,55 @@ function BusinessDetailPage() {
                         onChange={(e) => setNewComment(e.target.value)}
                         sx={{ mb: 2, bgcolor: 'white' }}
                       />
+
+                      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Button
+                          variant="outlined"
+                          component="label"
+                          startIcon={<PhotoCamera />}
+                        >
+                          Fotoğraf Ekle
+                          <input
+                            hidden
+                            accept="image/*"
+                            type="file"
+                            onChange={handleImageSelect}
+                          />
+                        </Button>
+                        {imagePreview && (
+                          <Box sx={{ position: 'relative' }}>
+                            <Avatar
+                              src={imagePreview}
+                              variant="rounded"
+                              sx={{ width: 56, height: 56 }}
+                            />
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                setSelectedImage(null);
+                                setImagePreview(null);
+                              }}
+                              sx={{
+                                position: 'absolute',
+                                top: -10,
+                                right: -10,
+                                bgcolor: 'background.paper',
+                                boxShadow: 1,
+                                '&:hover': { bgcolor: 'grey.100' }
+                              }}
+                            >
+                              x
+                            </IconButton>
+                          </Box>
+                        )}
+                      </Box>
+
                       <Button
                         type="submit"
                         variant="contained"
-                        disabled={submitting}
+                        disabled={submitting || uploading}
                       >
-                        {submitting ? 'Gönderiliyor...' : 'Yorum Yap'}
+                        {submitting || uploading ? 'Gönderiliyor...' : 'Yorum Yap'}
                       </Button>
                       {formError && <Typography color="error" sx={{ mt: 1 }}>{formError}</Typography>}
                     </Box>
@@ -296,6 +445,15 @@ function BusinessDetailPage() {
                         <Typography variant="body1" color="text.secondary" sx={{ ml: 7 }}>
                           {review.comment}
                         </Typography>
+                        {review.image_url && (
+                          <Box sx={{ ml: 7, mt: 2 }}>
+                            <img
+                              src={`${API_URL}${review.image_url}`}
+                              alt="Review attachment"
+                              style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px' }}
+                            />
+                          </Box>
+                        )}
                       </Paper>
                     ))}
                   </List>
@@ -404,8 +562,8 @@ function BusinessDetailPage() {
             </Paper>
           </Grid>
         </Grid>
-      </Container >
-    </Box >
+      </Container>
+    </Box>
   );
 }
 

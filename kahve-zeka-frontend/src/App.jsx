@@ -3,6 +3,8 @@ import './App.css';
 import { Outlet, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { Box, Button, Typography, Container, CircularProgress, Link as MuiLink } from '@mui/material';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const { token, user, loading, logout } = useAuth();
@@ -17,6 +19,7 @@ function App() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <ToastContainer position="top-right" autoClose={3000} />
       {/* Navbar */}
       <Box
         component="header"
