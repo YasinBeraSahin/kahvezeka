@@ -31,6 +31,12 @@ import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import PersonIcon from '@mui/icons-material/Person';
+import WifiIcon from '@mui/icons-material/Wifi';
+import PowerIcon from '@mui/icons-material/Power';
+import PetsIcon from '@mui/icons-material/Pets';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import CasinoIcon from '@mui/icons-material/Casino'; // Masa Oyunları için
+import FastfoodIcon from '@mui/icons-material/Fastfood'; // Yemek için
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -332,12 +338,50 @@ function BusinessDetailPage() {
                 Mekan Bilgileri
               </Typography>
               <Divider sx={{ mb: 2 }} />
-
               <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                 <LocationOnIcon color="action" />
                 <Typography variant="body2" color="text.secondary">
                   {business.address}
                 </Typography>
+              </Box>
+
+              <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {business.has_wifi && (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <WifiIcon fontSize="small" color="primary" />
+                    <Typography variant="body2">Wi-Fi Var</Typography>
+                  </Box>
+                )}
+                {business.has_socket && (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <PowerIcon fontSize="small" color="primary" />
+                    <Typography variant="body2">Priz Mevcut</Typography>
+                  </Box>
+                )}
+                {business.has_board_games && (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <CasinoIcon fontSize="small" color="primary" />
+                    <Typography variant="body2">Masa Oyunları</Typography>
+                  </Box>
+                )}
+                {business.serves_food && (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <FastfoodIcon fontSize="small" color="primary" />
+                    <Typography variant="body2">Yemek Servisi</Typography>
+                  </Box>
+                )}
+                {business.is_pet_friendly && (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <PetsIcon fontSize="small" color="primary" />
+                    <Typography variant="body2">Hayvan Dostu</Typography>
+                  </Box>
+                )}
+                {business.is_quiet && (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <VolumeOffIcon fontSize="small" color="primary" />
+                    <Typography variant="body2">Sessiz Ortam</Typography>
+                  </Box>
+                )}
               </Box>
 
               <Box sx={{ mt: 3 }}>
@@ -360,8 +404,8 @@ function BusinessDetailPage() {
             </Paper>
           </Grid>
         </Grid>
-      </Container>
-    </Box>
+      </Container >
+    </Box >
   );
 }
 

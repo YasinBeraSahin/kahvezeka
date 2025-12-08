@@ -147,6 +147,18 @@ const BusinessDetailScreen = ({ navigation, route }) => {
                                     <Text style={styles.amenityText}>Sessiz</Text>
                                 </View>
                             )}
+                            {business.serves_food && (
+                                <View style={styles.amenityBadge}>
+                                    <Ionicons name="restaurant" size={14} color={COLORS.surface} />
+                                    <Text style={styles.amenityText}>Yemek</Text>
+                                </View>
+                            )}
+                            {business.has_board_games && (
+                                <View style={styles.amenityBadge}>
+                                    <Ionicons name="game-controller" size={14} color={COLORS.surface} />
+                                    <Text style={styles.amenityText}>Oyun</Text>
+                                </View>
+                            )}
                         </View>
                     </View>
                 </View>
