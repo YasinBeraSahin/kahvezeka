@@ -80,7 +80,7 @@ function ProfilePage() {
 
     const fetchMyFavorites = async () => {
       try {
-        const response = await axios.get(`${API_URL}/users/favorites`, {
+        const response = await axios.get(`${API_URL}/users/me/favorites`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         setFavorites(response.data);

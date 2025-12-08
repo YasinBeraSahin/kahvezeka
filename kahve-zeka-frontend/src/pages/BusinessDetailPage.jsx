@@ -102,7 +102,7 @@ function BusinessDetailPage() {
 
   const checkFavoriteStatus = async () => {
     try {
-      const response = await axios.get(`${API_URL}/users/favorites`, {
+      const response = await axios.get(`${API_URL}/users/me/favorites`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const favorites = response.data;
@@ -122,13 +122,13 @@ function BusinessDetailPage() {
     setFavLoading(true);
     try {
       if (isFavorite) {
-        await axios.delete(`${API_URL}/users/favorites/${businessId}`, {
+        await axios.delete(`${API_URL}/users/me/favorites/${businessId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         setIsFavorite(false);
         toast.info('Favorilerden kaldırıldı.');
       } else {
-        await axios.post(`${API_URL}/users/favorites/${businessId}`, {}, {
+        await axios.post(`${API_URL}/users/me/favorites/${businessId}`, {}, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         setIsFavorite(true);
