@@ -1,66 +1,15 @@
 // src/screens/AddReviewScreen.js
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image } from 'react-native';
-// import * as ImagePicker from 'expo-image-picker'; // TEMPORARILY DISABLED - requires dev build
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES, SHADOWS } from '../constants/theme';
-import { addReview, api } from '../services/api';
+import { addReview } from '../services/api';
 
 const AddReviewScreen = ({ navigation, route }) => {
     const { businessId } = route.params || {};
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [uploading, setUploading] = useState(false);
     const [loading, setLoading] = useState(false);
-
-    const pickImage = async () => {
-        // TEMPORARILY DISABLED - requires development build
-        Alert.alert('Yakında', 'Fotoğraf yükleme özelliği development build ile aktif olacak!');
-        return;
-
-        /* 
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri erişimi gerekiyor.');
-            return;
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0.8,
-        });
-
-        if (!result.canceled) {
-            setSelectedImage(result.assets[0].uri);
-        }
-        */
-    };
-
-    const uploadImage = async () => {
-        if (!selectedImage) return null;
-
-        const formData = new FormData();
-        formData.append('file', {
-            uri: selectedImage,
-            type: 'image/jpeg',
-            name: 'review.jpg',
-        });
-
-        try {
-            const response = await api.post('/upload', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-            return response.data.url;
-        } catch (error) {
-            console.error('Upload error:', error);
-            throw error;
-        }
-    };
 
     const handleSubmit = async () => {
         if (rating === 0) {
@@ -70,19 +19,9 @@ const AddReviewScreen = ({ navigation, route }) => {
 
         setLoading(true);
         try {
-            let imageUrl = null;
-
-            // Upload image if selected
-            if (selectedImage) {
-                setUploading(true);
-                imageUrl = await uploadImage();
-                setUploading(false);
-            }
-
             await addReview(businessId, {
                 rating,
-                comment,
-                image_url: imageUrl
+                comment
             });
 
             Alert.alert('Başarılı', 'Yorumunuz eklendi.', [
@@ -93,7 +32,6 @@ const AddReviewScreen = ({ navigation, route }) => {
             Alert.alert('Hata', 'Yorum eklenirken bir hata oluştu.');
         } finally {
             setLoading(false);
-            setUploading(false);
         }
     };
 
@@ -132,39 +70,13 @@ const AddReviewScreen = ({ navigation, route }) => {
                     onChangeText={setComment}
                 />
 
-                <Text style={styles.label}>Fotoğraf (Opsiyonel)</Text>
-                <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
-                    {selectedImage ? (
-                        <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
-                    ) : (
-                        <View style={styles.imagePlaceholder}>
-                            <Ionicons name="camera-outline" size={40} color={COLORS.textSecondary} />
-                            <Text style={styles.imagePlaceholderText}>Fotoğraf Ekle</Text>
-                        </View>
-                    )}
-                </TouchableOpacity>
-                {selectedImage && (
-                    <TouchableOpacity
-                        style={styles.removeImageButton}
-                        onPress={() => setSelectedImage(null)}
-                    >
-                        <Ionicons name="close-circle" size={24} color={COLORS.error} />
-                        <Text style={styles.removeImageText}>Fotoğrafı Kaldır</Text>
-                    </TouchableOpacity>
-                )}
-
                 <TouchableOpacity
                     style={styles.submitButton}
                     onPress={handleSubmit}
-                    disabled={loading || uploading}
+                    disabled={loading}
                 >
-                    {loading || uploading ? (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                            <ActivityIndicator color={COLORS.surface} />
-                            <Text style={styles.submitButtonText}>
-                                {uploading ? 'Fotoğraf yükleniyor...' : 'Gönderiliyor...'}
-                            </Text>
-                        </View>
+                    {loading ? (
+                        <ActivityIndicator color={COLORS.surface} />
                     ) : (
                         <Text style={styles.submitButtonText}>Gönder</Text>
                     )}
@@ -235,41 +147,6 @@ const styles = StyleSheet.create({
         color: COLORS.surface,
         fontSize: SIZES.medium,
         fontWeight: 'bold',
-    },
-    imagePickerButton: {
-        backgroundColor: COLORS.surface,
-        borderRadius: SIZES.radius,
-        borderWidth: 2,
-        borderColor: COLORS.border,
-        borderStyle: 'dashed',
-        overflow: 'hidden',
-        marginBottom: SIZES.medium,
-    },
-    imagePlaceholder: {
-        height: 200,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    imagePlaceholderText: {
-        marginTop: SIZES.small,
-        color: COLORS.textSecondary,
-        fontSize: SIZES.medium,
-    },
-    imagePreview: {
-        width: '100%',
-        height: 200,
-        resizeMode: 'cover',
-    },
-    removeImageButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: SIZES.small,
-        marginBottom: SIZES.medium,
-    },
-    removeImageText: {
-        color: COLORS.error,
-        fontSize: SIZES.font,
     },
 });
 

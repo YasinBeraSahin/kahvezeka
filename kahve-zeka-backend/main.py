@@ -647,52 +647,6 @@ def reset_database(db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Veritabanı sıfırlandı ve güncellendi."}
 
-@app.get("/debug/fix-schema")
-def fix_schema(db: Session = Depends(get_db)):
-    """
-    Mevcut veritabanı şemasını verileri SİLMEDEN günceller.
-    Eksik sütunları ekler.
-    """
-    from sqlalchemy import text
-    try:
-        # 1. Users tablosuna 'role' ekle
-        try:
-            db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR DEFAULT 'customer'"))
-        except Exception as e:
-            print(f"Role column error (might exist): {e}")
-
-        # 2. Reviews tablosuna 'image_url' ekle
-        try:
-            db.execute(text("ALTER TABLE reviews ADD COLUMN IF NOT EXISTS image_url VARCHAR"))
-        except Exception as e:
-            print(f"Review image_url error: {e}")
-
-        # 3. Businesses tablosuna 'image_url', 'owner_id', 'is_approved' ekle
-        cols = [
-            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS image_url VARCHAR",
-            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS owner_id INTEGER",
-            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE",
-            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS has_wifi BOOLEAN DEFAULT FALSE",
-            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS has_socket BOOLEAN DEFAULT FALSE",
-            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_pet_friendly BOOLEAN DEFAULT FALSE",
-            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_quiet BOOLEAN DEFAULT FALSE",
-            "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS serves_food BOOLEAN DEFAULT FALSE"
-        ]
-        for col_sql in cols:
-            try:
-                db.execute(text(col_sql))
-            except Exception as e:
-                print(f"Business col error: {e}")
-
-        # 4. Eksik tabloları oluştur (Campaigns, MenuItems vb.)
-        models.Base.metadata.create_all(bind=engine)
-        
-        db.commit()
-        return {"message": "Şema güncellemesi başarıyla tamamlandı. Eksik sütunlar eklendi."}
-        
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

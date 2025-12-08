@@ -16,18 +16,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.kahvezeka.mobile",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Kahve Zeka yakınındaki kahve mekanlarını göstermek için konumunuza erişmek istiyor.",
-        "NSPhotoLibraryUsageDescription": "Yorumlarınıza fotoğraf eklemek için galeri erişimi gerekiyor."
+        "NSLocationWhenInUseUsageDescription": "Kahve Zeka yakınındaki kahve mekanlarını göstermek için konumunuza erişmek istiyor."
       }
     },
-    "plugins": [
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Yorumlarınıza fotoğraf eklemek için galeri erişimine izin verin."
-        }
-      ]
-    ],
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
