@@ -106,7 +106,7 @@ function BusinessDetailPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const favorites = response.data;
-      const isFav = favorites.some(fav => fav.id === businessId);
+      const isFav = favorites.some(fav => fav.id === Number(businessId));
       setIsFavorite(isFav);
     } catch (error) {
       console.error('Favori kontrolü hatası:', error);

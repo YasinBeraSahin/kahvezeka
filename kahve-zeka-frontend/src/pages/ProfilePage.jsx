@@ -261,7 +261,7 @@ function ProfilePage() {
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                               <Rating value={business.average_rating || 0} readOnly size="small" precision={0.1} />
                               <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                                ({business.total_reviews || 0})
+                                ({business.review_count || 0})
                               </Typography>
                             </Box>
                             <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
