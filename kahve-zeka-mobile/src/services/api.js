@@ -2,8 +2,8 @@ import axios from 'axios';
 import { getToken } from '../utils/storage';
 
 // Backend API URL - geliştirme için local, production için gerçek URL
-const API_URL = __DEV__
-    ? 'https://kahve-zeka-api.onrender.com' // Reverted to Production due to local connection failure
+export const API_URL = __DEV__
+    ? 'http://10.71.61.71:8000' // Local IP for development
     : 'https://kahve-zeka-api.onrender.com';
 
 export const api = axios.create({

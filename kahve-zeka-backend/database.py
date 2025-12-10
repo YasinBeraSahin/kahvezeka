@@ -3,6 +3,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os # Ortam değişkenlerini okumak için 'os' import edildi
+from dotenv import load_dotenv
+
+load_dotenv() # .env dosyasını yükle
+
 
 # --- GÜNCELLENEN BÖLÜM ---
 

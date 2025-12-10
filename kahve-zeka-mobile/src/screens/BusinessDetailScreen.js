@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { getBusinessDetail, addFavorite, removeFavorite, getFavorites } from '../services/api';
 import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 import StarRating from '../components/StarRating';
+import { getImageUrl } from '../utils/image';
+
 
 // Tabs
 import MenuTab from '../components/MenuTab';
@@ -95,7 +97,7 @@ const BusinessDetailScreen = ({ navigation, route }) => {
                 {/* Header Image & Info */}
                 <View style={styles.headerContainer}>
                     <Image
-                        source={{ uri: business.image_url || 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80' }}
+                        source={{ uri: getImageUrl(business.image_url) || 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80' }}
                         style={styles.coverImage}
                     />
                     <View style={styles.overlay} />

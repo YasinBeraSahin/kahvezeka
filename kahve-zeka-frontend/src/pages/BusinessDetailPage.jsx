@@ -40,17 +40,7 @@ import FastfoodIcon from '@mui/icons-material/Fastfood'; // Yemek için
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { toast } from 'react-toastify';
-import IconButton from '@mui/material/IconButton';
-import PhotoCamera from '@mui/icons-material/PhotoCamera';
 
-const getImageUrl = (path) => {
-  if (!path) return null;
-  if (path.startsWith('http')) return path;
-  // API_URL sonunda slash varsa ve path başında slash varsa birini temizle
-  const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${baseUrl}${cleanPath}`;
-};
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -149,6 +139,20 @@ function BusinessDetailPage() {
     } finally {
       setFavLoading(false);
     }
+  };
+
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    // Remove leading slash if exists to avoid double slashes if API_URL ends with slash
+    const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+    // Ensure API_URL doesn't end with slash if we are appending
+    const cleanApiUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+
+    // Simple check: if path already has /uploads part and API_URL also points to same host, 
+    // we simply join them. 
+    // But safely:
+    return `${cleanApiUrl}/${cleanUrl}`;
   };
 
   const handleTabChange = (event, newValue) => {
@@ -478,7 +482,6 @@ function BusinessDetailPage() {
                             <img
                               src={getImageUrl(review.image_url)}
                               alt="Review attachment"
-                              onError={(e) => { e.target.src = 'https://via.placeholder.com/300x200?text=Resim+Silinmis'; }} // Placeholder göster
                               style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px' }}
                             />
                           </Box>

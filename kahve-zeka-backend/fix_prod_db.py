@@ -7,8 +7,12 @@ def fix_production_database():
     print("="*50)
     print("\nBu script Render veritabanına bağlanıp eksik sütunları ekleyecektir.")
     
-    # 1. URL İste
-    db_url = input("\nLütfen Render'daki 'External Database URL'i yapıştırın:\n(postgres://... ile başlar)\n> ").strip()
+    # 1. URL İste veya .env'den al
+    db_url = os.environ.get('DATABASE_URL')
+    if not db_url:
+        db_url = input("\nLütfen Render'daki 'External Database URL'i yapıştırın:\n(postgres://... ile başlar)\n> ").strip()
+    else:
+        print(f"DATABASE_URL bulundu: {db_url[:20]}...")
     
     if not db_url:
         print("URL boş olamaz!")

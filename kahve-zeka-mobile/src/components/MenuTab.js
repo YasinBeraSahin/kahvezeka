@@ -2,6 +2,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, FlatList } from 'react-native';
 import { COLORS, SIZES, SHADOWS } from '../constants/theme';
+import { getImageUrl } from '../utils/image';
+
 
 const MenuTab = ({ business }) => {
     const menuItems = business?.menu_items || [];
@@ -25,7 +27,7 @@ const MenuTab = ({ business }) => {
             </View>
             {item.image_url ? (
                 <Image
-                    source={{ uri: item.image_url }}
+                    source={{ uri: getImageUrl(item.image_url) }}
                     style={styles.itemImage}
                 />
             ) : (
