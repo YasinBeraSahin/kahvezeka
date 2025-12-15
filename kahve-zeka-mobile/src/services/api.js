@@ -1,9 +1,10 @@
 import axios from 'axios';
+import axiosRetry from 'axios-retry';
 import { getToken } from '../utils/storage';
 
 // Backend API URL - geliştirme için local, production için gerçek URL
 export const API_URL = __DEV__
-    ? 'http://10.71.61.71:8000' // Local IP for development
+    ? 'https://kahve-zeka-api.onrender.com' // Using Production API because local network is blocked
     : 'https://kahve-zeka-api.onrender.com';
 
 export const api = axios.create({
@@ -12,6 +13,15 @@ export const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+});
+
+// Configure retry strategy
+axiosRetry(api, {
+    retries: 3,
+    retryDelay: axiosRetry.exponentialDelay,
+    retryCondition: (error) => {
+        return axiosRetry.isNetworkOrIdempotentRequestError(error) || error.code === 'ECONNABORTED';
+    }
 });
 
 // Request interceptor - Her isteğe token ekle

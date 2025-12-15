@@ -401,7 +401,11 @@ function BusinessPanelPage() {
                     {item.image_url && (
                       <Box
                         component="img"
-                        src={item.image_url.startsWith('http') ? item.image_url : `${API_URL}${item.image_url}`}
+                        src={item.image_url.startsWith('http') ? item.image_url : `${API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL}/${item.image_url.startsWith('/') ? item.image_url.slice(1) : item.image_url}`}
+                        onError={(e) => {
+                          console.log('Image load error:', item.image_url);
+                          e.target.style.display = 'none';
+                        }}
                         sx={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 1, mr: 2 }}
                       />
                     )}

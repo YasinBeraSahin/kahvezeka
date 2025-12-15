@@ -24,8 +24,10 @@ import {
   CircularProgress,
   Alert,
   Card,
-  CardContent
+  CardContent,
+  IconButton
 } from '@mui/material';
+import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import RateReviewIcon from '@mui/icons-material/RateReview';
