@@ -14,40 +14,92 @@ else:
 
 model = genai.GenerativeModel('gemini-pro')
 
+COFFEE_MATRIX = {
+    "Enerjik & Neşeli": [
+        {"title": "🎉 Coşkuyu Katla!", "coffee": "Cold Brew (Nitro Dahil)", "description": "Enerjiniz tavan yapmış! Cold Brew'un pürüzsüz ama güçlü kafein vuruşuyla bu güzel modu tüm güne yayın."},
+        {"title": "✨ Tatlı Bir Kutlama", "coffee": "Iced Caramel Macchiato", "description": "Neşenize yakışır, katmanlı ve keyifli bir seçenek. Tatlı ve soğuk yapısıyla anı daha da özel kılın."},
+        {"title": "🍦 Sıradışı Keyif", "coffee": "Affogato", "description": "Güneşli ruh halinizi yansıtan, hem kahve hem tatlı. Hızlı ve eğlenceli bir mola ile modunuzu pekiştirin."}
+    ],
+    "Hüzünlü & Teselli Arayan": [
+        {"title": "💖 Sıcak Bir Sarılma", "coffee": "Mocha (Yoğun Çikolatalı)", "description": "Bazen tek ihtiyacımız olan yoğun bir tesellidir. Çikolatanın mutluluk hormonuyla ruhunuzu ısıtın."},
+        {"title": "☁️ Yumuşak Bir Sığınak", "coffee": "Vanilla Latte (Büyük Boy)", "description": "Büyük ve kremsi bir kucaklama. Vanilya Latte'nin tanıdık, rahatlatıcı tadıyla biraz yavaşlayın."},
+        {"title": "🌿 İç Huzuru Bul", "coffee": "Baharatlı Chai Latte", "description": "Eğer kafeine ara vermek isterseniz: Chai'nin sıcak baharatları iç gerginliği hafifletir ve huzur verir."}
+    ],
+    "Yoğun & Stresli": [
+        {"title": "🎯 Odaklanma Alanı", "coffee": "Sade Americano", "description": "Dağınıklıktan uzak durun. Americano'nun keskin ve saf gücüyle zihninizi toparlayın ve görevlere odaklanın."},
+        {"title": "🕰️ Yavaşlama Ritüeli", "coffee": "Sade Filtre Kahve", "description": "Bu karmaşık günde sade ve güvenilir bir seçim. Demliğinizi yavaşça yudumlayarak stresi uzaklaştırın."},
+        {"title": "⚖️ Mükemmel Denge", "coffee": "Cortado / Piccolo Latte", "description": "Çok fazla süt istemeyenler için. Espresso'nun gücü, küçük bir süt dokunuşuyla yumuşatılır; tam kararında."}
+    ],
+    "Yorgun & Düşük Enerjili": [
+        {"title": "⚡ Anında Şarj!", "coffee": "Ristretto / Double Espresso", "description": "Vücudunuz 'acil durum' sinyali veriyor. Hızlı bir Ristretto ile en yoğun kafeini en kısa sürede alın!"},
+        {"title": "🔥 Geleneksel Güç", "coffee": "Türk Kahvesi", "description": "Yoğun ve telveli yapısıyla zihni açar. Güçlü bir canlanma ve kalıcı enerji için ideal."},
+        {"title": "💣 Enerji Bombası", "coffee": "Red Eye / Black Eye", "description": "Maksimum güç isteyenler için. Filtre kahvenizin içine ekstra bir shot espresso: İki katı enerji!"}
+    ],
+    "Sakin & Huzurlu": [
+        {"title": "🧘 Ritüel ve Haz", "coffee": "Pour-Over (V60/Chemex)", "description": "Huzur anınızı demleme sanatıyla taçlandırın. Aromaların nüanslarına odaklanarak anın keyfini çıkarın."},
+        {"title": "🤏 Öz ve Nüans", "coffee": "Macchiato (Geleneksel)", "description": "Sakinliğinizin tadını çıkarın. Sadece bir kaşık köpükle örtülmüş saf espresso ile sade bir keyif."},
+        {"title": "😌 Dinlenme Modu", "coffee": "Kremalı Bitkisel Çay", "description": "Bugün kafeine ihtiyacınız yok. Yumuşak, bitkisel bir çay ile huzurunuzu koruyun ve rahatlayın."}
+    ],
+    "Kararsız & Karmaşık": [
+        {"title": "🔄 Dengeleyici Güç", "coffee": "Flat White", "description": "Hissiniz karmaşık ama kahveniz net olabilir. Süt ve espresso'nun mükemmel dengesini tadın."},
+        {"title": "🖼️ Görsel Terapi", "coffee": "Latte (Sanatlı Köpük)", "description": "Ne istediğinize karar veremiyorsanız, en azından güzel görünen bir şey için. Görsel çekicilik ve tanıdık tat."},
+        {"title": "🤯 Şaşırtıcı Kontrast", "coffee": "Espresso Tonic", "description": "Kararsız ruh halinize ayak uydurun. Acı, tatlı ve ekşi kontrastıyla zihninizi şaşırtın."}
+    ],
+    "Öfkeli & Gergin": [
+        {"title": "🌬️ Serinletici Nefes", "coffee": "Iced Matcha Latte", "description": "Kafein hassasiyetini düşürün. Matcha'nın sakinleştirici bileşenleri ve buzun serinliği gerginliği azaltır."},
+        {"title": "🧊 Soğuk Fikirler", "coffee": "Buzlu Americano", "description": "Öfke yüksek ısıda oluşur. Bol buzlu Americano ile hızlıca serinleyin ve durumu sadeleştirin."},
+        {"title": "🍭 Şekerli Kaçış", "coffee": "Soğuk Sütlü Kahve (Dalgona Tarzı)", "description": "Yoğun tatlılık ile odağınızı öfkenizden uzaklaştırın. Biraz eğlenceli ve farklı bir mola verin."}
+    ]
+}
+
 async def recommend_coffee_from_mood(user_message):
     if not API_KEY:
+        # Fallback (API anahtarı yoksa random veya default bir kategori)
+        category = "Kararsız & Karmaşık"
         return {
-            "recommendation": "Filtre Kahve",
-            "reason": "API anahtarı eksik olduğu için varsayılan öneri sunuyorum. Çoğu duruma uyar!",
-            "mood_detected": "Bilinmiyor"
+            "emotion_category": category,
+            "recommendations": COFFEE_MATRIX[category],
+            "note": "API anahtarı bulunamadı, varsayılan öneriler gösteriliyor."
         }
 
     try:
+        categories = list(COFFEE_MATRIX.keys())
         prompt = f"""
-        Sen "Kahve Zeka" uygulamasının uzman baristasısın. 
-        Kullanıcının gönderdiği mesaja göre ruh halini analiz et ve ona en uygun kahve çeşidini öner.
+        Görev: Aşağıdaki kullanıcı mesajını analiz et ve verilen 7 duygu kategorisinden en uygun olanına sınıflandır.
         
-        Kullanıcı mesajı: "{user_message}"
+        Kategoriler: {json.dumps(categories, ensure_ascii=False)}
         
-        Lütfen SADECE aşağıdaki JSON formatında yanıt ver, başka hiçbir metin ekleme:
-        {{
-            "mood_detected": "Kullanıcının ruh hali (örn: Yorgun, Mutlu, Stresli)",
-            "recommendation": "Önerilen kahve adı (örn: Double Espresso, Latte, Papatya Çayı)",
-            "reason": "Neden bu kahveyi önerdiğine dair samimi, kısa ve Türkçe bir açıklama."
-        }}
+        Kullanıcı Mesajı: "{user_message}"
+        
+        Sadece kategori ismini döndür. Başka hiçbir şey yazma. Eğer emin olamazsan "Kararsız & Karmaşık" döndür.
         """
 
         response = model.generate_content(prompt)
+        predicted_category = response.text.strip().replace('"', '').replace("'", "")
         
-        # Temizlik: Markdown json varsa temizle
-        text_response = response.text.replace('```json', '').replace('```', '').strip()
+        # Basit bir eşleştirme kontrolü (Tam eşleşmezse fuzzy logic veya default)
+        # Gemini bazen nokta veya boşluk ekleyebilir, temizleyelim.
+        matched_category = "Kararsız & Karmaşık"
+        for cat in categories:
+            if cat.lower() in predicted_category.lower():
+                matched_category = cat
+                break
         
-        return json.loads(text_response)
+        # Eğer hiçbiriyle eşleşmezse dönen cevabı logla ve default kullan
+        if matched_category not in COFFEE_MATRIX:
+             matched_category = "Kararsız & Karmaşık"
+
+        return {
+            "emotion_category": matched_category,
+            "recommendations": COFFEE_MATRIX[matched_category]
+        }
 
     except Exception as e:
         print(f"Gemini API Error: {e}")
+        # Hata durumunda fallback
+        category = "Kararsız & Karmaşık"
         return {
-            "recommendation": "Türk Kahvesi",
-            "reason": "Şu an zihnimi toplayamıyorum ama bir Türk Kahvesi her derde devadır.",
-            "mood_detected": "Karışık"
+            "emotion_category": category,
+            "recommendations": COFFEE_MATRIX[category],
+            "error": str(e)
         }

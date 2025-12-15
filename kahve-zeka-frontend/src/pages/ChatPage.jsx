@@ -50,13 +50,36 @@ function ChatPage() {
             });
 
             const data = response.data;
-            const botResponseText = `${data.recommendation} öneriyorum!\n\n${data.reason}`;
-            const botMessage = { id: Date.now() + 1, text: botResponseText, sender: 'bot' };
-            setMessages(prev => [...prev, botMessage]);
+            const emotion = data.emotion_category;
+            const recs = data.recommendations;
+
+            // Bot'un giriş mesajı (Duygu tespiti)
+            const botIntroMessage = {
+                id: Date.now() + 1,
+                text: `Seni "${emotion}" hissettim. İşte sana özel önerilerim:`,
+                sender: 'bot'
+            };
+            setMessages(prev => [...prev, botIntroMessage]);
+
+            // Önerileri kart olarak göstermek için özel mesaj tipi kullanabiliriz veya metin olarak formatlayabiliriz.
+            // Şimdilik metin olarak güzelce formatlayalım, ileride komponent eklenebilir.
+            let recsText = "";
+            recs.forEach((rec, index) => {
+                recsText += `${index + 1}. **${rec.title}** (${rec.coffee})\n${rec.description}\n\n`;
+            });
+
+            const botRecsMessage = {
+                id: Date.now() + 2,
+                text: recsText.trim(),
+                sender: 'bot',
+                isRecommendation: true,
+                recommendations: recs
+            };
+            setMessages(prev => [...prev, botRecsMessage]);
 
         } catch (error) {
             console.error("Chat Error:", error);
-            const errorMessage = { id: Date.now() + 1, text: "Üzgünüm, şu an bir hata oluştu.", sender: 'bot' };
+            const errorMessage = { id: Date.now() + 1, text: "Üzgünüm, şu an bağlantı kuramıyorum. Biraz sonra tekrar dener misin?", sender: 'bot' };
             setMessages(prev => [...prev, errorMessage]);
         } finally {
             setLoading(false);
