@@ -12,7 +12,7 @@ if not API_KEY:
 else:
     genai.configure(api_key=API_KEY)
 
-model = genai.GenerativeModel('gemini-pro')
+model = genai.GenerativeModel('gemini-pro-latest')
 
 COFFEE_MATRIX = {
     "Enerjik & Neşeli": [
