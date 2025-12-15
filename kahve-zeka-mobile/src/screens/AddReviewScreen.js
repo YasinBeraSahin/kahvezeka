@@ -1,12 +1,8 @@
-// src/screens/AddReviewScreen.js
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-// TEMPORARILY DISABLED - Native module issue
-// import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 import { addReview } from '../services/api';
-// import { uploadImage } from '../utils/uploadUtils';
 import Toast from 'react-native-toast-message';
 
 const AddReviewScreen = ({ navigation, route }) => {
@@ -14,51 +10,6 @@ const AddReviewScreen = ({ navigation, route }) => {
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
     const [loading, setLoading] = useState(false);
-    // PHOTO UPLOAD TEMPORARILY DISABLED
-    // const [imageUri, setImageUri] = useState(null);
-    // const [uploading, setUploading] = useState(false);
-
-    // PHOTO UPLOAD TEMPORARILY DISABLED
-    /*
-    const pickImage = async () => {
-        try {
-            // Request permission
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-            if (status !== 'granted') {
-                Toast.show({
-                    type: 'error',
-                    text1: 'İzin Gerekli',
-                    text2: 'Galeri erişimi için izin vermeniz gerekiyor.'
-                });
-                return;
-            }
-
-            // Launch image picker
-            const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [4, 3],
-                quality: 0.8,
-            });
-
-            if (!result.canceled && result.assets && result.assets.length > 0) {
-                setImageUri(result.assets[0].uri);
-            }
-        } catch (error) {
-            console.error('Image picker error:', error);
-            Toast.show({
-                type: 'error',
-                text1: 'Hata',
-                text2: 'Fotoğraf seçilirken bir hata oluştu.'
-            });
-        }
-    };
-
-    const removeImage = () => {
-        setImageUri(null);
-    };
-    */
 
     const handleSubmit = async () => {
         if (rating === 0) {
@@ -73,11 +24,9 @@ const AddReviewScreen = ({ navigation, route }) => {
         setLoading(true);
 
         try {
-            // Submit review without photo for now
             await addReview(businessId, {
                 rating,
                 comment
-                // image_url: null // Photo upload disabled
             });
 
             Toast.show({
@@ -135,8 +84,6 @@ const AddReviewScreen = ({ navigation, route }) => {
                     value={comment}
                     onChangeText={setComment}
                 />
-
-                {/* PHOTO UPLOAD TEMPORARILY DISABLED */}
 
                 <TouchableOpacity
                     style={styles.submitButton}
@@ -203,62 +150,18 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
     },
-    addPhotoButton: {
-        backgroundColor: COLORS.surface,
-        borderWidth: 2,
-        borderColor: COLORS.primary,
-        borderStyle: 'dashed',
-        borderRadius: SIZES.radius,
-        padding: SIZES.extraLarge,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: SIZES.medium,
-    },
-    addPhotoText: {
-        color: COLORS.primary,
-        fontSize: SIZES.font,
-        fontWeight: '600',
-        marginTop: SIZES.small,
-    },
-    imagePreviewContainer: {
-        position: 'relative',
-        marginBottom: SIZES.medium,
-        alignItems: 'center',
-    },
-    imagePreview: {
-        width: '100%',
-        height: 200,
-        borderRadius: SIZES.radius,
-        resizeMode: 'cover',
-    },
-    removeImageButton: {
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        backgroundColor: COLORS.surface,
-        borderRadius: 15,
-    },
     submitButton: {
         backgroundColor: COLORS.primary,
         paddingVertical: SIZES.medium,
         borderRadius: SIZES.radius,
         alignItems: 'center',
-        marginTop: SIZES.extraLarge,
+        marginTop: SIZES.extraLarge, // Increased margin since photo button is gone
         ...SHADOWS.medium,
     },
     submitButtonText: {
         color: COLORS.surface,
         fontSize: SIZES.medium,
         fontWeight: 'bold',
-    },
-    loadingContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: SIZES.small,
-    },
-    uploadingText: {
-        color: COLORS.surface,
-        fontSize: SIZES.font,
     },
 });
 

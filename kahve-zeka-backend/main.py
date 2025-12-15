@@ -607,6 +607,23 @@ async def upload_file(file: UploadFile = File(...)):
     return {"url": f"/uploads/{filename}"}
 
 
+# --- CHAT / AI ENDPOINT ---
+from services import chat_service
+
+class ChatRequest(schemas.BaseModel):
+    message: str
+
+@app.post("/api/chat/recommend")
+async def recommend_coffee(request: ChatRequest, db: Session = Depends(get_db)):
+    """
+    Kullanıcının ruh haline göre kahve önerisi yapar (Google Gemini AI).
+    """
+    # İsterseniz burada kullanıcı oturumunu kontrol edebilirsiniz (current_user = Depends...)
+    # Şimdilik herkese açık olsun veya token isteyebiliriz.
+    
+    result = await chat_service.recommend_coffee_from_mood(request.message)
+    return result
+
 # --- DEBUG / SYSTEM ENDPOINTS ---
 @app.post("/debug/reset-db")
 def reset_database(db: Session = Depends(get_db)):

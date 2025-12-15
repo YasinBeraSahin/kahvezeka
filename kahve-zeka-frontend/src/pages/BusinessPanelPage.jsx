@@ -6,7 +6,7 @@ import {
   IconButton, Divider
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import PhotoCamera from '@mui/icons-material/PhotoCamera';
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -30,19 +30,7 @@ function BusinessPanelPage() {
     longitude: 0.0
   });
 
-  // Arkaplan fotoğrafı için state
-  const [selectedBgFile, setSelectedBgFile] = useState(null);
 
-  // Menü ve Kampanya listeleri için state'ler
-  const [menuItems, setMenuItems] = useState([]);
-  const [campaigns, setCampaigns] = useState([]);
-
-  // Yeni öğe ekleme formları için state'ler
-  const [newMenuItem, setNewMenuItem] = useState({ name: '', description: '', price: '' });
-  const [newCampaign, setNewCampaign] = useState({ title: '', description: '' });
-
-  // Menü fotoğrafı için state
-  const [selectedMenuFile, setSelectedMenuFile] = useState(null);
 
   // Yükleme ve durum state'leri
   const [pageLoading, setPageLoading] = useState(true);
@@ -96,23 +84,7 @@ function BusinessPanelPage() {
     }));
   };
 
-  // --- FOTOĞRAF YÜKLEME YARDIMCI FONKSİYONU ---
-  const handleUploadFile = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const response = await axios.post(`${API_URL}/upload`, formData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data.url;
-    } catch (err) {
-      console.error("Yükleme hatası:", err);
-      throw new Error("Dosya yüklenemedi");
-    }
-  };
+
 
   // --- MEKAN YÖNETİMİ ---
 
@@ -148,17 +120,10 @@ function BusinessPanelPage() {
     e.preventDefault();
     setFormLoading(true); setError(null); setSuccess(null);
 
-    let chartUrl = businessData.image_url; // Mevcut URL
-
     try {
-      // Eğer yeni bir arkaplan seçildiyse önce onu yükle
-      if (selectedBgFile) {
-        chartUrl = await handleUploadFile(selectedBgFile);
-      }
-
       const response = await axios.put(
         `${API_URL}/businesses/me`,
-        { ...formData, image_url: chartUrl },
+        formData, // Sadece form datasını gönder, image_url yok
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       const data = response.data;
@@ -168,7 +133,6 @@ function BusinessPanelPage() {
       });
       // 'businessData'yı da güncelle
       setBusinessData(prev => ({ ...prev, ...data }));
-      setSelectedBgFile(null); // Dosya seçimini sıfırla
       setSuccess('Mekan bilgileri başarıyla güncellendi!');
       setFormLoading(false);
     } catch (err) {
@@ -188,21 +152,14 @@ function BusinessPanelPage() {
     e.preventDefault();
     setError(null); setSuccess(null);
 
-    let menuImageUrl = null;
-
     try {
-      if (selectedMenuFile) {
-        menuImageUrl = await handleUploadFile(selectedMenuFile);
-      }
-
       const response = await axios.post(
         `${API_URL}/businesses/me/menu-items/`,
-        { ...newMenuItem, price: parseFloat(newMenuItem.price), image_url: menuImageUrl },
+        { ...newMenuItem, price: parseFloat(newMenuItem.price) }, // image_url yok
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       setMenuItems([...menuItems, response.data]);
       setNewMenuItem({ name: '', description: '', price: '' });
-      setSelectedMenuFile(null);
       setSuccess('Menü öğesi eklendi!');
     } catch (err) {
       console.error("Menü ekleme hatası:", err.response);
@@ -341,27 +298,7 @@ function BusinessPanelPage() {
               <TextField fullWidth label="Adres" name="address" value={formData.address} onChange={handleFormChange} margin="normal" required />
               <TextField fullWidth label="Telefon" name="phone" value={formData.phone || ''} onChange={handleFormChange} margin="normal" />
 
-              {/* YENİ: Arkaplan Fotoğrafı Yükleme */}
-              <Box sx={{ mt: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  startIcon={<PhotoCamera />}
-                >
-                  Arkaplan Fotoğrafı Seç
-                  <input
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={(e) => setSelectedBgFile(e.target.files[0])}
-                  />
-                </Button>
-                {selectedBgFile ? (
-                  <Typography variant="body2">{selectedBgFile.name}</Typography>
-                ) : (
-                  businessData.image_url && <Typography variant="caption" color="text.secondary">Mevcut fotoğraf var</Typography>
-                )}
-              </Box>
+
 
               <Button type="submit" variant="contained" color="primary" size="large" sx={{ mt: 2 }} disabled={formLoading}>
                 {formLoading ? <CircularProgress size={24} color="inherit" /> : 'Bilgileri ve Fotoğrafı Güncelle'}
@@ -376,14 +313,7 @@ function BusinessPanelPage() {
               <TextField label="Açıklama" name="description" value={newMenuItem.description} onChange={handleMenuFormChange} sx={{ flexBasis: '250px', flexGrow: 2 }} />
               <TextField label="Fiyat (TL)" name="price" type="number" value={newMenuItem.price} onChange={handleMenuFormChange} required sx={{ flexBasis: '100px', flexGrow: 1 }} />
 
-              {/* YENİ: Menü Fotoğrafı Yükleme */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <IconButton color="primary" aria-label="upload picture" component="label">
-                  <input hidden accept="image/*" type="file" onChange={(e) => setSelectedMenuFile(e.target.files[0])} />
-                  <PhotoCamera />
-                </IconButton>
-                {selectedMenuFile && <Typography variant="caption">{selectedMenuFile.name.substring(0, 10)}...</Typography>}
-              </Box>
+
 
               <Button type="submit" variant="contained" color="secondary" sx={{ height: '56px' }}>Ekle</Button>
             </Box>

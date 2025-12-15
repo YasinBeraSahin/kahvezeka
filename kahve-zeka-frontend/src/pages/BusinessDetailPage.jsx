@@ -27,7 +27,7 @@ import {
   CardContent,
   IconButton
 } from '@mui/material';
-import PhotoCamera from '@mui/icons-material/PhotoCamera';
+
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import RateReviewIcon from '@mui/icons-material/RateReview';
@@ -78,9 +78,6 @@ function BusinessDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     axios.get(`${API_URL}/businesses/${businessId}`)
@@ -161,13 +158,7 @@ function BusinessDetailPage() {
     setTabValue(newValue);
   };
 
-  const handleImageSelect = (event) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-      setSelectedImage(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
+
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -180,38 +171,13 @@ function BusinessDetailPage() {
       return;
     }
 
-    let imageUrl = null;
-
-    // Fotoğraf varsa önce yükle
-    if (selectedImage) {
-      setUploading(true);
-      const formData = new FormData();
-      formData.append('file', selectedImage);
-
-      try {
-        const uploadResponse = await axios.post(`${API_URL}/upload`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        imageUrl = uploadResponse.data.url;
-      } catch (uploadErr) {
-        console.error('Fotoğraf yükleme hatası:', uploadErr);
-        toast.error('Fotoğraf yüklenirken bir hata oluştu.');
-        setUploading(false);
-        setSubmitting(false);
-        return;
-      }
-      setUploading(false);
-    }
-
     try {
       const response = await axios.post(
         `${API_URL}/businesses/${businessId}/reviews/`,
         {
           rating: newRating,
-          comment: newComment,
-          image_url: imageUrl
+          comment: newComment
+          // image_url yok
         },
         {
           headers: {
@@ -227,8 +193,6 @@ function BusinessDetailPage() {
 
       setNewRating(5);
       setNewComment('');
-      setSelectedImage(null);
-      setImagePreview(null);
       setSubmitting(false);
       toast.success('Yorumunuz başarıyla eklendi!');
 
@@ -400,47 +364,7 @@ function BusinessDetailPage() {
                         sx={{ mb: 2, bgcolor: 'white' }}
                       />
 
-                      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Button
-                          variant="outlined"
-                          component="label"
-                          startIcon={<PhotoCamera />}
-                        >
-                          Fotoğraf Ekle
-                          <input
-                            hidden
-                            accept="image/*"
-                            type="file"
-                            onChange={handleImageSelect}
-                          />
-                        </Button>
-                        {imagePreview && (
-                          <Box sx={{ position: 'relative' }}>
-                            <Avatar
-                              src={imagePreview}
-                              variant="rounded"
-                              sx={{ width: 56, height: 56 }}
-                            />
-                            <IconButton
-                              size="small"
-                              onClick={() => {
-                                setSelectedImage(null);
-                                setImagePreview(null);
-                              }}
-                              sx={{
-                                position: 'absolute',
-                                top: -10,
-                                right: -10,
-                                bgcolor: 'background.paper',
-                                boxShadow: 1,
-                                '&:hover': { bgcolor: 'grey.100' }
-                              }}
-                            >
-                              x
-                            </IconButton>
-                          </Box>
-                        )}
-                      </Box>
+
 
                       <Button
                         type="submit"
