@@ -64,30 +64,41 @@ async def recommend_coffee_from_mood(user_message):
 
     try:
         categories = list(COFFEE_MATRIX.keys())
-        prompt = f"""
-        Görev: Aşağıdaki kullanıcı mesajını analiz et ve verilen 7 duygu kategorisinden en uygun olanına sınıflandır.
         
-        Kategoriler: {json.dumps(categories, ensure_ascii=False)}
+        # Kategorileri numaralandırarak prompt'a ekle
+        category_list_str = "\n".join([f"{i+1}. {cat}" for i, cat in enumerate(categories)])
+        
+        prompt = f"""
+        Görev: Aşağıdaki kullanıcı mesajını analiz et ve verilen 7 duygu kategorisinden en uygun olanının NUMARASINI döndür.
+        
+        Kategoriler:
+        {category_list_str}
         
         Kullanıcı Mesajı: "{user_message}"
         
-        Sadece kategori ismini döndür. Başka hiçbir şey yazma. Eğer emin olamazsan "Kararsız & Karmaşık" döndür.
+        YANIT FORMATI: Sadece tek bir rakam (1-7 arası). Başka hiçbir kelime veya noktalama işareti kullanma.
+        Örnek Yanıt: 3
         """
 
         response = model.generate_content(prompt)
-        predicted_category = response.text.strip().replace('"', '').replace("'", "")
+        response_text = response.text.strip()
         
-        # Basit bir eşleştirme kontrolü (Tam eşleşmezse fuzzy logic veya default)
-        # Gemini bazen nokta veya boşluk ekleyebilir, temizleyelim.
-        matched_category = "Kararsız & Karmaşık"
-        for cat in categories:
-            if cat.lower() in predicted_category.lower():
-                matched_category = cat
-                break
+        # Yanıttan sayıyı ayıkla (Gemini bazen '1.' veya 'Cevap: 1' diyebilir)
+        import re
+        match = re.search(r'\d+', response_text)
         
-        # Eğer hiçbiriyle eşleşmezse dönen cevabı logla ve default kullan
-        if matched_category not in COFFEE_MATRIX:
-             matched_category = "Kararsız & Karmaşık"
+        if match:
+            category_index = int(match.group()) - 1 # 1-based to 0-based
+            
+            # Index geçerli mi kontrol et
+            if 0 <= category_index < len(categories):
+                matched_category = categories[category_index]
+            else:
+                print(f"Gemini returned invalid index: {category_index}")
+                matched_category = "Kararsız & Karmaşık"
+        else:
+            print(f"Gemini returned non-digit response: {response_text}")
+            matched_category = "Kararsız & Karmaşık"
 
         return {
             "emotion_category": matched_category,
