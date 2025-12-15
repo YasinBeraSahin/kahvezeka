@@ -70,7 +70,7 @@ COFFEE_MATRIX = {
 async def recommend_coffee_from_mood(user_message):
     if not API_KEY:
         # Fallback (API anahtarı yoksa random veya default bir kategori)
-        category = "Kararsız & Karmaşık"
+        category = "Kararsız"
         return {
             "emotion_category": category,
             "recommendations": COFFEE_MATRIX[category],
@@ -84,14 +84,14 @@ async def recommend_coffee_from_mood(user_message):
         category_list_str = "\n".join([f"{i+1}. {cat}" for i, cat in enumerate(categories)])
         
         prompt = f"""
-        Görev: Aşağıdaki kullanıcı mesajını analiz et ve verilen 7 duygu kategorisinden en uygun olanının NUMARASINI döndür.
+        Görev: Aşağıdaki kullanıcı mesajını analiz et ve verilen {len(categories)} duygu kategorisinden en uygun olanının NUMARASINI döndür.
         
         Kategoriler:
         {category_list_str}
         
         Kullanıcı Mesajı: "{user_message}"
         
-        YANIT FORMATI: Sadece tek bir rakam (1-7 arası). Başka hiçbir kelime veya noktalama işareti kullanma.
+        YANIT FORMATI: Sadece tek bir rakam (1-{len(categories)} arası). Başka hiçbir kelime veya noktalama işareti kullanma.
         Örnek Yanıt: 3
         """
 
@@ -110,10 +110,10 @@ async def recommend_coffee_from_mood(user_message):
                 matched_category = categories[category_index]
             else:
                 print(f"Gemini returned invalid index: {category_index}")
-                matched_category = "Kararsız & Karmaşık"
+                matched_category = "Kararsız"
         else:
             print(f"Gemini returned non-digit response: {response_text}")
-            matched_category = "Kararsız & Karmaşık"
+            matched_category = "Kararsız"
 
         return {
             "emotion_category": matched_category,
@@ -123,7 +123,7 @@ async def recommend_coffee_from_mood(user_message):
     except Exception as e:
         print(f"Gemini API Error: {e}")
         # Hata durumunda fallback
-        category = "Kararsız & Karmaşık"
+        category = "Kararsız"
         return {
             "emotion_category": category,
             "recommendations": COFFEE_MATRIX[category],
