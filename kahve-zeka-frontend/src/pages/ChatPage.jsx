@@ -9,15 +9,19 @@ import {
     Typography,
     List,
     ListItem,
-    ListItemText,
     Avatar,
     Container,
     CircularProgress,
-    IconButton
+    IconButton,
+    Card,
+    CardContent,
+    Grid,
+    Chip
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import PersonIcon from '@mui/icons-material/Person';
+import LocalCafeIcon from '@mui/icons-material/LocalCafe';
 
 function ChatPage() {
     const [messages, setMessages] = useState([
@@ -61,16 +65,9 @@ function ChatPage() {
             };
             setMessages(prev => [...prev, botIntroMessage]);
 
-            // Önerileri kart olarak göstermek için özel mesaj tipi kullanabiliriz veya metin olarak formatlayabiliriz.
-            // Şimdilik metin olarak güzelce formatlayalım, ileride komponent eklenebilir.
-            let recsText = "";
-            recs.forEach((rec, index) => {
-                recsText += `${index + 1}. **${rec.title}** (${rec.coffee})\n${rec.description}\n\n`;
-            });
-
+            // Önerileri kart olarak göstermek için özel mesaj tipi
             const botRecsMessage = {
                 id: Date.now() + 2,
-                text: recsText.trim(),
                 sender: 'bot',
                 isRecommendation: true,
                 recommendations: recs
@@ -113,43 +110,84 @@ function ChatPage() {
                             key={msg.id}
                             sx={{
                                 display: 'flex',
-                                justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                                p: 0
+                                flexDirection: 'column',
+                                alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                                p: 0,
+                                width: '100%'
                             }}
                         >
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    gap: 1,
-                                    flexDirection: msg.sender === 'user' ? 'row-reverse' : 'row',
-                                    maxWidth: '80%'
-                                }}
-                            >
-                                <Avatar
+                            {/* Standart Mesaj Balonu */}
+                            {(!msg.isRecommendation) && (
+                                <Box
                                     sx={{
-                                        width: 32,
-                                        height: 32,
-                                        bgcolor: msg.sender === 'user' ? 'primary.main' : 'white',
-                                        color: msg.sender === 'user' ? 'white' : 'secondary.main',
-                                        boxShadow: 1
+                                        display: 'flex',
+                                        gap: 1,
+                                        flexDirection: msg.sender === 'user' ? 'row-reverse' : 'row',
+                                        maxWidth: '80%'
                                     }}
                                 >
-                                    {msg.sender === 'user' ? <PersonIcon fontSize="small" /> : <SmartToyIcon fontSize="small" />}
-                                </Avatar>
-                                <Paper
-                                    elevation={1}
-                                    sx={{
-                                        p: 2,
-                                        borderRadius: 3,
-                                        bgcolor: msg.sender === 'user' ? 'primary.main' : 'white',
-                                        color: msg.sender === 'user' ? 'white' : 'text.primary',
-                                        borderTopLeftRadius: msg.sender === 'bot' ? 0 : 3,
-                                        borderTopRightRadius: msg.sender === 'user' ? 0 : 3
-                                    }}
-                                >
-                                    <Typography variant="body1" style={{ whiteSpace: 'pre-line' }}>{msg.text}</Typography>
-                                </Paper>
-                            </Box>
+                                    <Avatar
+                                        sx={{
+                                            width: 32,
+                                            height: 32,
+                                            bgcolor: msg.sender === 'user' ? 'primary.main' : 'white',
+                                            color: msg.sender === 'user' ? 'white' : 'secondary.main',
+                                            boxShadow: 1
+                                        }}
+                                    >
+                                        {msg.sender === 'user' ? <PersonIcon fontSize="small" /> : <SmartToyIcon fontSize="small" />}
+                                    </Avatar>
+                                    <Paper
+                                        elevation={1}
+                                        sx={{
+                                            p: 2,
+                                            borderRadius: 3,
+                                            bgcolor: msg.sender === 'user' ? 'primary.main' : 'white',
+                                            color: msg.sender === 'user' ? 'white' : 'text.primary',
+                                            borderTopLeftRadius: msg.sender === 'bot' ? 0 : 3,
+                                            borderTopRightRadius: msg.sender === 'user' ? 0 : 3
+                                        }}
+                                    >
+                                        <Typography variant="body1" style={{ whiteSpace: 'pre-line' }}>{msg.text}</Typography>
+                                    </Paper>
+                                </Box>
+                            )}
+
+                            {/* Öneri Kartları (Sadece Bot için) */}
+                            {msg.isRecommendation && (
+                                <Box sx={{ width: '100%', pl: 6, mt: 1 }}>
+                                    <Grid container spacing={2}>
+                                        {msg.recommendations.map((rec, index) => (
+                                            <Grid item xs={12} sm={6} md={4} key={index}>
+                                                <Card sx={{
+                                                    height: '100%',
+                                                    borderRadius: 3,
+                                                    transition: '0.3s',
+                                                    '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 },
+                                                    borderLeft: '5px solid #ff7043' // Secondary Color accent
+                                                }}>
+                                                    <CardContent>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5, gap: 1 }}>
+                                                            <LocalCafeIcon color="primary" />
+                                                            <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
+                                                                {rec.title}
+                                                            </Typography>
+                                                        </Box>
+
+                                                        <Typography variant="h6" component="div" sx={{ mb: 1, fontWeight: 'bold', color: 'primary.main' }}>
+                                                            {rec.coffee}
+                                                        </Typography>
+
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            {rec.description}
+                                                        </Typography>
+                                                    </CardContent>
+                                                </Card>
+                                            </Grid>
+                                        ))}
+                                    </Grid>
+                                </Box>
+                            )}
                         </ListItem>
                     ))}
                     {loading && (
