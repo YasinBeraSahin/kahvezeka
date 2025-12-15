@@ -13,6 +13,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import BusinessManagementScreen from './src/screens/BusinessManagementScreen';
 import AdminScreen from './src/screens/AdminScreen';
+import ChatScreen from './src/screens/ChatScreen';
 
 // Components
 import BottomNavigation from './src/components/BottomNavigation';
@@ -94,6 +95,8 @@ function AppContent() {
         return <BusinessManagementScreen {...navigationProps} />;
       case 'admin':
         return <AdminScreen {...navigationProps} />;
+      case 'chat':
+        return <ChatScreen {...navigationProps} />;
       default:
         return <HomeScreen {...navigationProps} />;
     }

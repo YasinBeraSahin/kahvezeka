@@ -21,6 +21,8 @@ import LoginPage from './pages/LoginPage.jsx'; // Yeni Login sayfasını import 
 import RegisterPage from './pages/RegisterPage.jsx';
 import BusinessPanelPage from './pages/BusinessPanelPage.jsx'; // İleride ekleyeceği
 import BusinessLandingPage from './pages/BusinessLandingPage.jsx';
+import ChatPage from './pages/ChatPage.jsx';
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -54,6 +56,10 @@ const router = createBrowserRouter([
       {
         path: '/isletme', // YENİ İŞLETME BAŞVURU YOLU
         element: <BusinessLandingPage />,
+      },
+      {
+        path: '/chat',
+        element: <ChatPage />,
       },
     ],
   },
