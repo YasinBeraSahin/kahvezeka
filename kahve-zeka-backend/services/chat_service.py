@@ -15,40 +15,55 @@ else:
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 COFFEE_MATRIX = {
-    "Enerjik & Neşeli": [
-        {"title": "🎉 Coşkuyu Katla!", "coffee": "Cold Brew (Nitro Dahil)", "description": "Enerjiniz tavan yapmış! Cold Brew'un pürüzsüz ama güçlü kafein vuruşuyla bu güzel modu tüm güne yayın."},
-        {"title": "✨ Tatlı Bir Kutlama", "coffee": "Iced Caramel Macchiato", "description": "Neşenize yakışır, katmanlı ve keyifli bir seçenek. Tatlı ve soğuk yapısıyla anı daha da özel kılın."},
-        {"title": "🍦 Sıradışı Keyif", "coffee": "Affogato", "description": "Güneşli ruh halinizi yansıtan, hem kahve hem tatlı. Hızlı ve eğlenceli bir mola ile modunuzu pekiştirin."}
+    "Mutlu": [
+        {"title": "🎉 Kutlama Modu", "coffee": "Iced Caramel Macchiato", "description": "Mutluluğunu tatlı bir soğuk kahveyle taçlandır. Karamel ve vanilya notaları neşene neşe katsın."},
+        {"title": "✨ Enerjik Seçim", "coffee": "Cold Brew", "description": "Enerjin zaten yüksek, Cold Brew ile bu enerjiyi tüm güne yay ve ferahla."},
+        {"title": "🍦 Keyif Anı", "coffee": "Affogato", "description": "Dondurma ve espresso... Mutlu anların vazgeçilmez ikilisi."}
     ],
-    "Hüzünlü & Teselli Arayan": [
-        {"title": "💖 Sıcak Bir Sarılma", "coffee": "Mocha (Yoğun Çikolatalı)", "description": "Bazen tek ihtiyacımız olan yoğun bir tesellidir. Çikolatanın mutluluk hormonuyla ruhunuzu ısıtın."},
-        {"title": "☁️ Yumuşak Bir Sığınak", "coffee": "Vanilla Latte (Büyük Boy)", "description": "Büyük ve kremsi bir kucaklama. Vanilya Latte'nin tanıdık, rahatlatıcı tadıyla biraz yavaşlayın."},
-        {"title": "🌿 İç Huzuru Bul", "coffee": "Baharatlı Chai Latte", "description": "Eğer kafeine ara vermek isterseniz: Chai'nin sıcak baharatları iç gerginliği hafifletir ve huzur verir."}
+    "Üzgün": [
+        {"title": "🍫 Çikolata Terapisi", "coffee": "Sıcak Çikolata veya Mocha", "description": "Çikolatanın mutluluk hormonu salgılatması bilimsel bir gerçek. Ruhuna iyi gelecek."},
+        {"title": "☁️ Yumuşak İçim", "coffee": "Vanilla Latte", "description": "Sıcak, yumuşak ve tatlı bir kucaklama gibi. Seni yormayacak, sakinleştirecek."},
+        {"title": "� Ev Sıcaklığı", "coffee": "Salep veya Sahlep Latte", "description": "İçini ısıtacak, tarçın kokulu geleneksel bir teselli."}
     ],
-    "Yoğun & Stresli": [
-        {"title": "🎯 Odaklanma Alanı", "coffee": "Sade Americano", "description": "Dağınıklıktan uzak durun. Americano'nun keskin ve saf gücüyle zihninizi toparlayın ve görevlere odaklanın."},
-        {"title": "🕰️ Yavaşlama Ritüeli", "coffee": "Sade Filtre Kahve", "description": "Bu karmaşık günde sade ve güvenilir bir seçim. Demliğinizi yavaşça yudumlayarak stresi uzaklaştırın."},
-        {"title": "⚖️ Mükemmel Denge", "coffee": "Cortado / Piccolo Latte", "description": "Çok fazla süt istemeyenler için. Espresso'nun gücü, küçük bir süt dokunuşuyla yumuşatılır; tam kararında."}
+    "Stresli": [
+        {"title": "� Sakinleştirici Güç", "coffee": "Papatya Çayı veya Melisa", "description": "Kafein bazen stresi artırabilir. Bitki çayı ile sinirlerini yatıştır ve derin bir nefes al."},
+        {"title": "🕰️ Mola Zamanı", "coffee": "Sade Türk Kahvesi", "description": "40 yıllık hatırı vardır. Yavaş yavaş iç, fincanı kapat ve sadece ana odaklan."},
+        {"title": "🥛 Dengeli Seçim", "coffee": "Cortado", "description": "Az süt, öz kahve. Ne çok sert ne çok yumuşak, tam dengede kalman için."}
     ],
-    "Yorgun & Düşük Enerjili": [
-        {"title": "⚡ Anında Şarj!", "coffee": "Ristretto / Double Espresso", "description": "Vücudunuz 'acil durum' sinyali veriyor. Hızlı bir Ristretto ile en yoğun kafeini en kısa sürede alın!"},
-        {"title": "🔥 Geleneksel Güç", "coffee": "Türk Kahvesi", "description": "Yoğun ve telveli yapısıyla zihni açar. Güçlü bir canlanma ve kalıcı enerji için ideal."},
-        {"title": "💣 Enerji Bombası", "coffee": "Red Eye / Black Eye", "description": "Maksimum güç isteyenler için. Filtre kahvenizin içine ekstra bir shot espresso: İki katı enerji!"}
+    "Yorgun": [
+        {"title": "⚡ Hızlı Etki", "coffee": "Double Espresso", "description": "Vakit kaybetmeden uyanman lazım. İtalyan usübü hızlı ve etkili çözüm."},
+        {"title": "� Atom Etkisi", "coffee": "Red Eye", "description": "Filtre kahveye bir shot espresso... Gözlerini faltaşı gibi açacak en güçlü silahımız."},
+        {"title": "� Güçlü Destek", "coffee": "Americano", "description": "Uzun süre içebileceğin, seni yavaş yavaş kendine getirecek güvenilir bir dost."}
     ],
-    "Sakin & Huzurlu": [
-        {"title": "🧘 Ritüel ve Haz", "coffee": "Pour-Over (V60/Chemex)", "description": "Huzur anınızı demleme sanatıyla taçlandırın. Aromaların nüanslarına odaklanarak anın keyfini çıkarın."},
-        {"title": "🤏 Öz ve Nüans", "coffee": "Macchiato (Geleneksel)", "description": "Sakinliğinizin tadını çıkarın. Sadece bir kaşık köpükle örtülmüş saf espresso ile sade bir keyif."},
-        {"title": "😌 Dinlenme Modu", "coffee": "Kremalı Bitkisel Çay", "description": "Bugün kafeine ihtiyacınız yok. Yumuşak, bitkisel bir çay ile huzurunuzu koruyun ve rahatlayın."}
+    "Sakin": [
+        {"title": "🧘 Meditatif Demleme", "coffee": "V60 veya Chemex", "description": "Acelen yok. Kahvenin demlenmesini izle, aromaların tadını çıkar. Huzur ritüeli."},
+        {"title": "📖 Kitap Dostu", "coffee": "Filtre Kahve", "description": "Yanına bir kitap veya sevdiğin bir müzik al. Sade ve akıcı bir keyif."},
+        {"title": "🥛 Sütlü Rüya", "coffee": "Flat White", "description": "İpeksi süt köpüğü ve kaliteli espresso. Huzurlu anların sofistike tadı."}
     ],
-    "Kararsız & Karmaşık": [
-        {"title": "🔄 Dengeleyici Güç", "coffee": "Flat White", "description": "Hissiniz karmaşık ama kahveniz net olabilir. Süt ve espresso'nun mükemmel dengesini tadın."},
-        {"title": "🖼️ Görsel Terapi", "coffee": "Latte (Sanatlı Köpük)", "description": "Ne istediğinize karar veremiyorsanız, en azından güzel görünen bir şey için. Görsel çekicilik ve tanıdık tat."},
-        {"title": "🤯 Şaşırtıcı Kontrast", "coffee": "Espresso Tonic", "description": "Kararsız ruh halinize ayak uydurun. Acı, tatlı ve ekşi kontrastıyla zihninizi şaşırtın."}
+    "Öfkeli": [
+        {"title": "🧊 Buz Gibi Serinle", "coffee": "Iced Americano", "description": "Başına vuran ateşi söndürmek için buz gibi, şekersiz ve net bir tat."},
+        {"title": "🍋 Ekşi Ferahlık", "coffee": "Espresso Romano", "description": "Limonlu espresso. Keskin tadı odağını değiştirecek ve seni şaşırtarak sakinleştirecek."},
+        {"title": "🧉 Soğuk Mat", "coffee": "Cold Brew Latte", "description": "Sistemini yavaşlatacak, tansiyonunu düşürecek soğuk ve sütlü bir mola."}
     ],
-    "Öfkeli & Gergin": [
-        {"title": "🌬️ Serinletici Nefes", "coffee": "Iced Matcha Latte", "description": "Kafein hassasiyetini düşürün. Matcha'nın sakinleştirici bileşenleri ve buzun serinliği gerginliği azaltır."},
-        {"title": "🧊 Soğuk Fikirler", "coffee": "Buzlu Americano", "description": "Öfke yüksek ısıda oluşur. Bol buzlu Americano ile hızlıca serinleyin ve durumu sadeleştirin."},
-        {"title": "🍭 Şekerli Kaçış", "coffee": "Soğuk Sütlü Kahve (Dalgona Tarzı)", "description": "Yoğun tatlılık ile odağınızı öfkenizden uzaklaştırın. Biraz eğlenceli ve farklı bir mola verin."}
+    "Heyecanlı": [
+        {"title": "🎯 Odaklan", "coffee": "Macchiato", "description": "Heyecanını doğru yönlendirmek için küçük ama etkili bir dokunuş."},
+        {"title": "🕺 Ritim Tut", "coffee": "White Chocolate Mocha", "description": "Kalbin pır pır ederken tatlı bir eşlikçi. Heyecanını keyfe dönüştür."},
+        {"title": "🚀 Uçuş Modu", "coffee": "Nitro Cold Brew", "description": "Köpüklü ve pürüzsüz. Heyecanlı ruh haline yakışan havalı bir seçim."}
+    ],
+    "Dalgın": [
+        {"title": "💡 Zihin Açıcı", "coffee": "Bulletproof Coffee (Yağlı Kahve)", "description": "Beyin fonksiyonlarını hızlandıran, dikkati toplayan özel bir karışım."},
+        {"title": "🎯 Keskin Odak", "coffee": "Ristretto", "description": "Kısa ve öz. Dağınık zihnini tek bir noktada toplamak için."},
+        {"title": "� Yeşil Güç", "coffee": "Matcha Latte", "description": "L-Theanine sayesinde sakin bir odaklanma sağlar. Dağınıklığı nazikçe toparlar."}
+    ],
+    "Uykulu": [
+        {"title": "🚨 Acil Durum", "coffee": "Dead Eye", "description": "Üç shot espresso içeren filtre kahve. Uykuyu kesinlikle kaçırır (Dikkatli iç!)."},
+        {"title": "☕ Klasik Uyandırıcı", "coffee": "Robusta Blend Filtre", "description": "Kafein oranı yüksek çekirdeklerden, sert bir filtre kahve."},
+        {"title": "🍫 Enerji Barı", "coffee": "Mocha Frappuccino", "description": "Soğuk şok ve şeker enerjisiyle gözlerini aç."}
+    ],
+    "Kararsız": [
+        {"title": "� Şefin Tavsiyesi", "coffee": "Günün Kahvesi", "description": "Karar verme yükünü bize bırak. Bugün senin için seçtiğimiz sürpriz kahveyi dene."},
+        {"title": "⚖️ Orta Yol", "coffee": "Latte", "description": "Risk alma. Herkesin sevdiği, her duruma uyan garanti seçim."},
+        {"title": "🎨 Sanatsal", "coffee": "Cortado", "description": "Ne çok büyük ne çok küçük. Tam kararında bir lezzet."}
     ]
 }
 
