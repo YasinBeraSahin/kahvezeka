@@ -29,10 +29,12 @@ function ChatPage() {
     ]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
-    const messagesEndRef = useRef(null);
+    const listRef = useRef(null);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (listRef.current) {
+            listRef.current.scrollTop = listRef.current.scrollHeight;
+        }
     };
 
     useEffect(() => {
@@ -104,7 +106,10 @@ function ChatPage() {
                     <Typography variant="h6" color="primary">Kahve Zeka Asistanı</Typography>
                 </Box>
 
-                <List sx={{ flexGrow: 1, overflow: 'auto', p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <List
+                    ref={listRef}
+                    sx={{ flexGrow: 1, overflow: 'auto', p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}
+                >
                     {messages.map((msg) => (
                         <ListItem
                             key={msg.id}
@@ -198,7 +203,6 @@ function ChatPage() {
                             </Box>
                         </ListItem>
                     )}
-                    <div ref={messagesEndRef} />
                 </List>
 
                 <Box
