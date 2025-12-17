@@ -7,7 +7,7 @@ import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 const BottomNavigation = ({ activeTab = 'home', onTabPress, isAdmin, isOwner }) => {
     const tabs = [
         { id: 'home', icon: 'home', iconOutline: 'home-outline', label: 'Ana Sayfa' },
-        { id: 'chat', icon: 'chatbubbles', iconOutline: 'chatbubbles-outline', label: 'Asistan' },
+        { id: 'chat', icon: 'cafe', iconOutline: 'cafe-outline', label: 'Kahvelog' },
         { id: 'profile', icon: 'person', iconOutline: 'person-outline', label: 'Profil' },
     ];
 

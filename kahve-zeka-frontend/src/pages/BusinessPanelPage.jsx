@@ -3,7 +3,8 @@ import { API_URL } from '../apiConfig.js';
 import {
   Container, Typography, Button, TextField, Box, Paper,
   CircularProgress, Alert, List, ListItem, ListItemText,
-  IconButton, Divider
+  IconButton, Divider, Checkbox, FormControlLabel, FormGroup,
+  FormControl, FormLabel
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
@@ -27,7 +28,13 @@ function BusinessPanelPage() {
     address: '',
     phone: '',
     latitude: 0.0,
-    longitude: 0.0
+    longitude: 0.0,
+    has_wifi: false,
+    has_socket: false,
+    is_pet_friendly: false,
+    is_quiet: false,
+    serves_food: false,
+    has_board_games: false
   });
 
   // Menü ve Kampanya state'leri
@@ -59,7 +66,13 @@ function BusinessPanelPage() {
             address: data.address,
             phone: data.phone,
             latitude: data.latitude,
-            longitude: data.longitude
+            longitude: data.longitude,
+            has_wifi: data.has_wifi,
+            has_socket: data.has_socket,
+            is_pet_friendly: data.is_pet_friendly,
+            is_quiet: data.is_quiet,
+            serves_food: data.serves_food,
+            has_board_games: data.has_board_games
           });
           setMenuItems(data.menu_items || []);
           setCampaigns(data.campaigns || []);
@@ -86,10 +99,10 @@ function BusinessPanelPage() {
 
   // Form alanı değiştiğinde çalışır (hem yeni hem güncelleme için ortak)
   const handleFormChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prevData => ({
       ...prevData,
-      [name]: (name === 'latitude' || name === 'longitude') ? parseFloat(value) : value
+      [name]: type === 'checkbox' ? checked : ((name === 'latitude' || name === 'longitude') ? parseFloat(value) : value)
     }));
   };
 
@@ -267,6 +280,19 @@ function BusinessPanelPage() {
             <TextField fullWidth label="Telefon" name="phone" value={formData.phone || ''} onChange={handleFormChange} margin="normal" />
             <TextField fullWidth label="Enlem" name="latitude" type="number" value={formData.latitude} onChange={handleFormChange} margin="normal" required />
             <TextField fullWidth label="Boylam" name="longitude" type="number" value={formData.longitude} onChange={handleFormChange} margin="normal" required />
+
+            <FormControl component="fieldset" sx={{ mt: 2, mb: 1, width: '100%', border: '1px solid #ddd', borderRadius: 1, p: 2 }}>
+              <FormLabel component="legend">Mekan Özellikleri</FormLabel>
+              <FormGroup row>
+                <FormControlLabel control={<Checkbox checked={formData.has_wifi} onChange={handleFormChange} name="has_wifi" />} label="Wifi Var" />
+                <FormControlLabel control={<Checkbox checked={formData.has_socket} onChange={handleFormChange} name="has_socket" />} label="Priz Var" />
+                <FormControlLabel control={<Checkbox checked={formData.is_quiet} onChange={handleFormChange} name="is_quiet" />} label="Sessiz Ortam" />
+                <FormControlLabel control={<Checkbox checked={formData.is_pet_friendly} onChange={handleFormChange} name="is_pet_friendly" />} label="Hayvan Dostu" />
+                <FormControlLabel control={<Checkbox checked={formData.serves_food} onChange={handleFormChange} name="serves_food" />} label="Yemek Servisi" />
+                <FormControlLabel control={<Checkbox checked={formData.has_board_games} onChange={handleFormChange} name="has_board_games" />} label="Masa Oyunları" />
+              </FormGroup>
+            </FormControl>
+
             <Button type="submit" variant="contained" color="primary" size="large" sx={{ mt: 2 }} disabled={formLoading}>
               {formLoading ? <CircularProgress size={24} color="inherit" /> : 'Mekanımı Oluştur'}
             </Button>
@@ -307,10 +333,20 @@ function BusinessPanelPage() {
               <TextField fullWidth label="Adres" name="address" value={formData.address} onChange={handleFormChange} margin="normal" required />
               <TextField fullWidth label="Telefon" name="phone" value={formData.phone || ''} onChange={handleFormChange} margin="normal" />
 
-
+              <FormControl component="fieldset" sx={{ mt: 2, mb: 1, width: '100%', border: '1px solid #ddd', borderRadius: 1, p: 2 }}>
+                <FormLabel component="legend">Mekan Özellikleri</FormLabel>
+                <FormGroup row>
+                  <FormControlLabel control={<Checkbox checked={formData.has_wifi} onChange={handleFormChange} name="has_wifi" />} label="Wifi Var" />
+                  <FormControlLabel control={<Checkbox checked={formData.has_socket} onChange={handleFormChange} name="has_socket" />} label="Priz Var" />
+                  <FormControlLabel control={<Checkbox checked={formData.is_quiet} onChange={handleFormChange} name="is_quiet" />} label="Sessiz Ortam" />
+                  <FormControlLabel control={<Checkbox checked={formData.is_pet_friendly} onChange={handleFormChange} name="is_pet_friendly" />} label="Hayvan Dostu" />
+                  <FormControlLabel control={<Checkbox checked={formData.serves_food} onChange={handleFormChange} name="serves_food" />} label="Yemek Servisi" />
+                  <FormControlLabel control={<Checkbox checked={formData.has_board_games} onChange={handleFormChange} name="has_board_games" />} label="Masa Oyunları" />
+                </FormGroup>
+              </FormControl>
 
               <Button type="submit" variant="contained" color="primary" size="large" sx={{ mt: 2 }} disabled={formLoading}>
-                {formLoading ? <CircularProgress size={24} color="inherit" /> : 'Bilgileri ve Fotoğrafı Güncelle'}
+                {formLoading ? <CircularProgress size={24} color="inherit" /> : 'Bilgilerini Güncelle'}
               </Button>
             </Box>
           </Paper>

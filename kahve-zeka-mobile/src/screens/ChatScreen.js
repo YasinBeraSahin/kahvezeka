@@ -113,7 +113,7 @@ const ChatScreen = ({ navigation }) => {
             keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
         >
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Kahve Zeka Asistanı</Text>
+                <Text style={styles.headerTitle}>Kahvelog</Text>
             </View>
 
             <FlatList

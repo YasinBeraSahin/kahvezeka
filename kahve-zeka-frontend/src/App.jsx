@@ -5,7 +5,7 @@ import { useAuth } from './context/AuthContext';
 import { Box, Button, Typography, Container, CircularProgress, Link as MuiLink } from '@mui/material';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
+import LocalCafeIcon from '@mui/icons-material/LocalCafe';
 
 function App() {
   const { token, user, loading, logout } = useAuth();
@@ -44,8 +44,8 @@ function App() {
 
           {/* Navigation */}
           <Box component="nav" sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <Button component={RouterLink} to="/chat" color="inherit" sx={{ fontWeight: 600, color: 'secondary.main' }} startIcon={<SmartToyIcon />}>
-              Asistan
+            <Button component={RouterLink} to="/chat" color="inherit" sx={{ fontWeight: 600, color: 'secondary.main' }} startIcon={<LocalCafeIcon />}>
+              Kahvelog
             </Button>
             {(!user || user.role === 'customer') && (
               <Button component={RouterLink} to="/isletme" color="inherit" sx={{ fontWeight: 500 }}>

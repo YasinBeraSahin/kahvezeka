@@ -50,6 +50,13 @@ function MapComponent({ businesses, center, radius }) {
         <Marker
           key={b.business.id}
           position={[b.business.latitude, b.business.longitude]}
+          icon={new L.DivIcon({
+            className: 'coffee-marker',
+            html: '<div style="background-color: #4E342E; width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; display: flex; justify-content: center; align-items: center; color: white; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">☕</div>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+          })}
         >
           <Popup>
             <strong>{b.business.name}</strong><br />

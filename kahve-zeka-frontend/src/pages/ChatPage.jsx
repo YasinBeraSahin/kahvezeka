@@ -19,7 +19,7 @@ import {
     Chip
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
+
 import PersonIcon from '@mui/icons-material/Person';
 import LocalCafeIcon from '@mui/icons-material/LocalCafe';
 
@@ -101,9 +101,9 @@ function ChatPage() {
             >
                 <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', bgcolor: 'white', display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Avatar sx={{ bgcolor: 'secondary.main' }}>
-                        <SmartToyIcon />
+                        <LocalCafeIcon />
                     </Avatar>
-                    <Typography variant="h6" color="primary">Kahve Zeka Asistanı</Typography>
+                    <Typography variant="h6" color="primary">Kahvelog</Typography>
                 </Box>
 
                 <List
@@ -140,7 +140,7 @@ function ChatPage() {
                                             boxShadow: 1
                                         }}
                                     >
-                                        {msg.sender === 'user' ? <PersonIcon fontSize="small" /> : <SmartToyIcon fontSize="small" />}
+                                        {msg.sender === 'user' ? <PersonIcon fontSize="small" /> : <LocalCafeIcon fontSize="small" />}
                                     </Avatar>
                                     <Paper
                                         elevation={1}

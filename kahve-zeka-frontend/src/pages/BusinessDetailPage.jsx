@@ -500,23 +500,7 @@ function BusinessDetailPage() {
                 )}
               </Box>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Çalışma Saatleri
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Hergün: 08:00 - 23:00
-                </Typography>
-              </Box>
 
-              <Button
-                variant="outlined"
-                fullWidth
-                sx={{ mt: 3 }}
-                startIcon={<LocationOnIcon />}
-              >
-                Yol Tarifi Al
-              </Button>
             </Paper>
           </Grid>
         </Grid>
