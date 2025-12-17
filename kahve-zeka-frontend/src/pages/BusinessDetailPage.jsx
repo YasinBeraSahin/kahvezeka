@@ -369,9 +369,9 @@ function BusinessDetailPage() {
                       <Button
                         type="submit"
                         variant="contained"
-                        disabled={submitting || uploading}
+                        disabled={submitting}
                       >
-                        {submitting || uploading ? 'Gönderiliyor...' : 'Yorum Yap'}
+                        {submitting ? 'Gönderiliyor...' : 'Yorum Yap'}
                       </Button>
                       {formError && <Typography color="error" sx={{ mt: 1 }}>{formError}</Typography>}
                     </Box>
