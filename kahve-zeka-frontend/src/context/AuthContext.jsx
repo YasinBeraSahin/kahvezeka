@@ -70,11 +70,11 @@ export function AuthProvider({ children }) {
 
   // register fonksiyonu (Bu aynı kalabilir, çünkü 'register' zaten 'login'i çağırıyor)
   const register = async (email, username, password, role) => { // 'role' parametresini geri ekle
-  try {
-    setLoading(true);
-    await axios.post(`${API_URL}/users/`, {
-      email: email, username: username, password: password, role: role // 'role'ü değişkenden al
-    });
+    try {
+      setLoading(true);
+      await axios.post(`${API_URL}/users/`, {
+        email: email, username: username, password: password, role: role // 'role'ü değişkenden al
+      });
       // Not: İşletme sahibi kaydını da buraya ekleyebiliriz ama şimdilik kalsın.
 
       const loginSuccess = await login(username, password);
@@ -83,7 +83,11 @@ export function AuthProvider({ children }) {
     } catch (err) {
       console.error('Kayıt hatası:', err);
       //... (hata yönetimi aynı)
-      setError('Kayıt işlemi başarısız oldu.');
+      if (err.response && err.response.data && err.response.data.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError('Kayıt işlemi başarısız oldu.');
+      }
       setLoading(false);
       return false;
     }
