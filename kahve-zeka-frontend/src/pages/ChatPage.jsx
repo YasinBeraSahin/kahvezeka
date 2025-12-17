@@ -60,21 +60,29 @@ function ChatPage() {
             const recs = data.recommendations;
 
             // Bot'un giriş mesajı (Duygu tespiti)
+            let introText = `Seni "${emotion}" hissettim. İşte sana özel önerilerim:`;
+
+            if (emotion === "Belirsiz") {
+                introText = "Yazdıklarınızdan belirli bir duygu çıkaramadım. Alakasız veya nötr bir durum gibi görünüyor. Lütfen hislerinizi daha açık ifade eder misiniz?";
+            }
+
             const botIntroMessage = {
                 id: Date.now() + 1,
-                text: `Seni "${emotion}" hissettim. İşte sana özel önerilerim:`,
+                text: introText,
                 sender: 'bot'
             };
             setMessages(prev => [...prev, botIntroMessage]);
 
             // Önerileri kart olarak göstermek için özel mesaj tipi
-            const botRecsMessage = {
-                id: Date.now() + 2,
-                sender: 'bot',
-                isRecommendation: true,
-                recommendations: recs
-            };
-            setMessages(prev => [...prev, botRecsMessage]);
+            if (recs && recs.length > 0) {
+                const botRecsMessage = {
+                    id: Date.now() + 2,
+                    sender: 'bot',
+                    isRecommendation: true,
+                    recommendations: recs
+                };
+                setMessages(prev => [...prev, botRecsMessage]);
+            }
 
         } catch (error) {
             console.error("Chat Error:", error);
@@ -159,7 +167,7 @@ function ChatPage() {
                             )}
 
                             {/* Öneri Kartları (Sadece Bot için) */}
-                            {msg.isRecommendation && (
+                            {msg.isRecommendation && msg.recommendations && msg.recommendations.length > 0 && (
                                 <Box sx={{ width: '100%', pl: 6, mt: 1 }}>
                                     <Grid container spacing={2}>
                                         {msg.recommendations.map((rec, index) => (
