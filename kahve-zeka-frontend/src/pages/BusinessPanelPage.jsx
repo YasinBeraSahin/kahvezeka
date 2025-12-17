@@ -30,7 +30,12 @@ function BusinessPanelPage() {
     longitude: 0.0
   });
 
+  // Menü ve Kampanya state'leri
+  const [menuItems, setMenuItems] = useState([]);
+  const [newMenuItem, setNewMenuItem] = useState({ name: '', description: '', price: '' });
 
+  const [campaigns, setCampaigns] = useState([]);
+  const [newCampaign, setNewCampaign] = useState({ title: '', description: '' });
 
   // Yükleme ve durum state'leri
   const [pageLoading, setPageLoading] = useState(true);
