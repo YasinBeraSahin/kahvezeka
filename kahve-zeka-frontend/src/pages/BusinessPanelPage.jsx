@@ -62,13 +62,15 @@ function BusinessPanelPage() {
           setPageLoading(false);
         })
         .catch(err => {
+          console.error("Mekan detayı hatası:", err);
           // Hata 404 ise (Mekan bulunamadı), bu "yeni sahip" durumudur.
-          if (err.response && err.response.status === 404) {
+          // CORS veya tarayıcı kısıtlamaları bazen response objesini gizleyebilir, bu yüzden err.message'a da bakıyoruz.
+          if ((err.response && err.response.status === 404) || (err.message && err.message.includes('404'))) {
             setHasBusiness(false); // Mekanı yok, "Oluştur" formu gösterilecek
           } else {
             // Başka bir hata (örn: 500 veya 401)
             console.error("Mekan bilgileri yüklenemedi:", err.response);
-            setError("Mekan bilgileri yüklenemedi.");
+            setError("Mekan bilgileri yüklenemedi. (Sunucu bağlantısı veya yetki hatası)");
           }
           setPageLoading(false);
         });
