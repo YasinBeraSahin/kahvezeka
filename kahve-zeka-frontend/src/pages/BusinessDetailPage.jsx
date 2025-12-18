@@ -154,11 +154,13 @@ function BusinessDetailPage() {
       {/* HERO SECTION */}
       <Box
         sx={{
-          height: '300px',
-          background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
+          height: '350px', // Slightly taller for better visibility
+          backgroundImage: 'url(https://images.unsplash.com/photo-1453614512568-c4024d13c247?q=80&w=2066&auto=format&fit=crop)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           display: 'flex',
           alignItems: 'flex-end',
-          position: 'relative' // Fix: Ensure absolute child is contained
+          position: 'relative'
         }}
       >
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, mb: 4, color: 'white' }}>

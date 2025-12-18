@@ -93,7 +93,23 @@ COFFEE_MATRIX = {
     "Belirsiz": []
 }
 
-async def recommend_coffee_from_mood(user_message, db: Session = None):
+import math
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    if lat1 is None or lon1 is None or lat2 is None or lon2 is None:
+        return float('inf') # Uzaklık hesaplanamazsa en sona at
+    
+    R = 6371  # Dünya yarıçapı (km)
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2) * math.sin(dlat / 2) + \
+        math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * \
+        math.sin(dlon / 2) * math.sin(dlon / 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    distance = R * c
+    return distance
+
+async def recommend_coffee_from_mood(user_message, db: Session = None, user_lat: float = None, user_lon: float = None):
     if not API_KEY:
         # Fallback (API anahtarı yoksa random veya default bir kategori)
         category = "Belirsiz"
@@ -150,28 +166,61 @@ async def recommend_coffee_from_mood(user_message, db: Session = None):
             # Önerilen kahve isimlerini al (Matrix'ten)
             recommended_coffees = [rec["coffee"] for rec in COFFEE_MATRIX[matched_category]]
             
-            # Bu kahvelere benzeyen ürünleri veritabanında ara
-            # Basit bir "LIKE" sorgusu: Her bir öneri için db'de arama yap
-            # Örn: "Cold Brew" önerildiyse, isminde "Cold Brew" geçen MenuItem'ları bul
+            # Tüm potansiyel ürünleri topla
+            all_candidates = []
             
             for coffee_name in recommended_coffees:
-                # Arama terimini basitleştir (örn: "Iced Caramel Macchiato" -> "Macchiato")
-                # Daha geniş bir eşleşme için
                 search_term = coffee_name.split()[0] if " " in coffee_name else coffee_name
                 
                 products = db.query(MenuItem).join(Business).filter(
                     MenuItem.name.ilike(f"%{search_term}%"),
                     Business.is_approved == True
-                ).limit(3).all()
+                ).all() # Limit kaldırıldı, hepsini çekip mesafeye göre eleyeceğiz
                 
                 for p in products:
-                    matching_products.append({
+                    # Mesafe hesabı
+                    distance = calculate_distance(user_lat, user_lon, p.business.latitude, p.business.longitude)
+                    
+                    all_candidates.append({
                         "id": p.id,
                         "name": p.name,
                         "price": p.price,
                         "business_name": p.business.name,
-                        "business_id": p.business.id
+                        "business_id": p.business.id,
+                        "distance": distance
                     })
+
+            # Mesafeye göre sırala (En yakın en üstte)
+            # Eğer konum yoksa (inf döner) varsayılan sırayla gelir
+            all_candidates.sort(key=lambda x: x["distance"])
+            
+            # İlk 3 ürünü al
+            # Aynı ürünleri filtrelemek isteyebiliriz ama şimdilik basit tutalım
+            # Belki farklı işletmelerden çeşitlilik sağlamak iyi olabilir
+            
+            unique_businesses = set()
+            count = 0
+            for item in all_candidates:
+                if item["business_id"] not in unique_businesses:
+                    matching_products.append(item)
+                    unique_businesses.add(item["business_id"])
+                    count += 1
+                if count >= 3:
+                    break
+            
+            # Eğer 3 farklı mekan çıkmazsa, listeyi doldurmak için tekrar dönmek gerekebilir
+            # Ama şimdilik "En yakın 3 farklı mekan" mantığı daha güzel
+            
+            if count < 3 and len(all_candidates) > count:
+                 remaining = [item for item in all_candidates if item["business_id"] in unique_businesses] # Zaten ekli olanların diğer ürünleri
+                 # Basitçe kalan kontenjanı doldur
+                 for item in all_candidates:
+                     if len(matching_products) >= 3:
+                         break
+                     # Zaten eklenmiş mi diye id kontrolü (yukarıdaki business kontrolü yetmeyebilir raw obje için)
+                     if not any(mp["id"] == item["id"] for mp in matching_products):
+                         matching_products.append(item)
+
 
         return {
             "emotion_category": matched_category,

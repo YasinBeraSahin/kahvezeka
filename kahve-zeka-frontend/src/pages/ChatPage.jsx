@@ -53,8 +53,27 @@ function ChatPage() {
         setLoading(true);
 
         try {
+            // Get location if available
+            let location = { latitude: null, longitude: null };
+
+            if (navigator.geolocation) {
+                try {
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject);
+                    });
+                    location = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    };
+                } catch (geoError) {
+                    console.warn("Location access denied or error:", geoError);
+                }
+            }
+
             const response = await axios.post(`${API_URL}/api/chat/recommend`, {
-                message: userMessage.text
+                message: userMessage.text,
+                latitude: location.latitude,
+                longitude: location.longitude
             });
 
             const data = response.data;

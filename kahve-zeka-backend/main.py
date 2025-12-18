@@ -612,16 +612,20 @@ from services import chat_service
 
 class ChatRequest(schemas.BaseModel):
     message: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 @app.post("/api/chat/recommend")
 async def recommend_coffee(request: ChatRequest, db: Session = Depends(get_db)):
     """
     Kullanıcının ruh haline göre kahve önerisi yapar (Google Gemini AI).
     """
-    # İsterseniz burada kullanıcı oturumunu kontrol edebilirsiniz (current_user = Depends...)
-    # Şimdilik herkese açık olsun veya token isteyebiliriz.
-    
-    result = await chat_service.recommend_coffee_from_mood(request.message, db)
+    result = await chat_service.recommend_coffee_from_mood(
+        request.message, 
+        db,
+        user_lat=request.latitude,
+        user_lon=request.longitude
+    )
     return result
 
 # --- DEBUG / SYSTEM ENDPOINTS ---
