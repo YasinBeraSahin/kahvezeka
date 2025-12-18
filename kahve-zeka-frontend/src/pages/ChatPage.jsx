@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../apiConfig';
 import axios from 'axios';
 import {
@@ -30,6 +31,7 @@ function ChatPage() {
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const listRef = useRef(null);
+    const navigate = useNavigate();
 
     const scrollToBottom = () => {
         if (listRef.current) {
@@ -57,7 +59,10 @@ function ChatPage() {
 
             const data = response.data;
             const emotion = data.emotion_category;
+            const data = response.data;
+            const emotion = data.emotion_category;
             const recs = data.recommendations;
+            const matchingProducts = data.matching_products || [];
 
             // Bot'un giriş mesajı (Duygu tespiti)
             let introText = `Seni "${emotion}" hissettim. İşte sana özel önerilerim:`;
@@ -82,6 +87,17 @@ function ChatPage() {
                     recommendations: recs
                 };
                 setMessages(prev => [...prev, botRecsMessage]);
+            }
+
+            // Gerçek ürünleri göster
+            if (matchingProducts.length > 0) {
+                const botProductsMessage = {
+                    id: Date.now() + 3,
+                    sender: 'bot',
+                    isProductList: true,
+                    products: matchingProducts
+                };
+                setMessages(prev => [...prev, botProductsMessage]);
             }
 
         } catch (error) {
@@ -200,58 +216,98 @@ function ChatPage() {
                                         ))}
                                     </Grid>
                                 </Box>
-                            )}
-                        </ListItem>
-                    ))}
-                    {loading && (
-                        <ListItem sx={{ justifyContent: 'flex-start' }}>
-                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', ml: 5 }}>
-                                <CircularProgress size={16} />
-                                <Typography variant="caption" color="text.secondary">Yazıyor...</Typography>
-                            </Box>
-                        </ListItem>
+                                </Box>
                     )}
-                </List>
 
-                <Box
-                    component="form"
-                    onSubmit={handleSend}
+                    {/* Ürün Listesi (Sadece Bot için) */}
+                    {msg.isProductList && msg.products && msg.products.length > 0 && (
+                        <Box sx={{ width: '100%', pl: 6, mt: 1 }}>
+                            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: 'primary.main' }}>
+                                📍 Size En Yakın Lezzetler
+                            </Typography>
+                            <Grid container spacing={2}>
+                                {msg.products.map((prod, index) => (
+                                    <Grid item xs={12} sm={6} md={4} key={index}>
+                                        <Card sx={{
+                                            height: '100%',
+                                            borderRadius: 3,
+                                            cursor: 'pointer',
+                                            transition: '0.3s',
+                                            '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 },
+                                            border: '1px solid #e0e0e0'
+                                        }}
+                                            onClick={() => navigate(`/business/${prod.business_id}`)}
+                                        >
+                                            <CardContent>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                                    <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>
+                                                        {prod.name}
+                                                    </Typography>
+                                                    <Chip label={`${prod.price} ₺`} color="primary" size="small" variant="outlined" />
+                                                </Box>
+
+                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                    <LocalCafeIcon fontSize="inherit" />
+                                                    {prod.business_name}
+                                                </Typography>
+                                            </CardContent>
+                                        </Card>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        </Box>
+                    )}
+                </ListItem>
+                    ))}
+                {loading && (
+                    <ListItem sx={{ justifyContent: 'flex-start' }}>
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', ml: 5 }}>
+                            <CircularProgress size={16} />
+                            <Typography variant="caption" color="text.secondary">Yazıyor...</Typography>
+                        </Box>
+                    </ListItem>
+                )}
+            </List>
+
+            <Box
+                component="form"
+                onSubmit={handleSend}
+                sx={{
+                    p: 2,
+                    borderTop: '1px solid #e0e0e0',
+                    bgcolor: 'white',
+                    display: 'flex',
+                    gap: 1
+                }}
+            >
+                <TextField
+                    fullWidth
+                    placeholder="Bugün nasıl hissediyorsun?"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    variant="outlined"
+                    size="medium"
+                    InputProps={{ sx: { borderRadius: 3 } }}
+                    disabled={loading}
+                />
+                <IconButton
+                    type="submit"
+                    color="primary"
+                    size="large"
+                    disabled={loading || !input.trim()}
                     sx={{
-                        p: 2,
-                        borderTop: '1px solid #e0e0e0',
-                        bgcolor: 'white',
-                        display: 'flex',
-                        gap: 1
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        '&:hover': { bgcolor: 'primary.dark' },
+                        width: 50,
+                        height: 50
                     }}
                 >
-                    <TextField
-                        fullWidth
-                        placeholder="Bugün nasıl hissediyorsun?"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        variant="outlined"
-                        size="medium"
-                        InputProps={{ sx: { borderRadius: 3 } }}
-                        disabled={loading}
-                    />
-                    <IconButton
-                        type="submit"
-                        color="primary"
-                        size="large"
-                        disabled={loading || !input.trim()}
-                        sx={{
-                            bgcolor: 'primary.main',
-                            color: 'white',
-                            '&:hover': { bgcolor: 'primary.dark' },
-                            width: 50,
-                            height: 50
-                        }}
-                    >
-                        <SendIcon />
-                    </IconButton>
-                </Box>
-            </Paper>
-        </Container>
+                    <SendIcon />
+                </IconButton>
+            </Box>
+        </Paper>
+        </Container >
     );
 }
 

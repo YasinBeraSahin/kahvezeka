@@ -96,10 +96,10 @@ const BusinessDetailScreen = ({ navigation, route }) => {
             <ScrollView stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}>
                 {/* Header Image & Info */}
                 <View style={styles.headerContainer}>
-                    <Image
-                        source={{ uri: getImageUrl(business.image_url) || 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80' }}
-                        style={styles.coverImage}
-                    />
+                    {/* <Image source={{ uri: `${API_URL}${business.image_url}` }} style={styles.image} /> */}
+                    <View style={styles.imagePlaceholder}>
+                        <Ionicons name="cafe" size={50} color={COLORS.primary} />
+                    </View>
                     <View style={styles.overlay} />
 
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>

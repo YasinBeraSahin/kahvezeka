@@ -18,7 +18,6 @@ class BusinessBase(BaseModel):
     is_pet_friendly: bool = False
     is_quiet: bool = False
     serves_food: bool = False
-    image_url: Optional[str] = None # <-- Yeni alan
     has_board_games: bool = False
 
 class BusinessSimple(BaseModel):
@@ -34,13 +33,12 @@ class UserBase(BaseModel):
 class ReviewBase(BaseModel):
     rating: int
     comment: Optional[str] = None
-    image_url: Optional[str] = None # <-- Yeni alan
 
 class MenuItemBase(BaseModel):
     name: str
     description: Optional[str] = None
     price: float
-    image_url: Optional[str] = None # <-- Yeni alan
+    category: Optional[str] = None # <-- Yeni alan: Kategori
 
 # --- KAMPANYA TEMEL ŞEMASI (BURAYA TAŞINDI) ---
 class CampaignBase(BaseModel):
@@ -74,7 +72,6 @@ class BusinessUpdate(BaseModel):
     is_pet_friendly: Optional[bool] = None
     is_quiet: Optional[bool] = None
     serves_food: Optional[bool] = None
-    image_url: Optional[str] = None # <-- Yeni alan
     has_board_games: Optional[bool] = None
 
 class UserCreate(UserBase):

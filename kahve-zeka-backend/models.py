@@ -15,7 +15,6 @@ class User(Base):
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
     
-    # --- YENİ SATIRLAR ---
     # Rol: 'customer' (normal kullanıcı) veya 'owner' (işletme sahibi)
     role = Column(String, default="customer") 
     
@@ -24,7 +23,6 @@ class User(Base):
     
     # Favori mekanlar (Many-to-Many)
     favorites = relationship("Business", secondary="favorites", back_populates="favorited_by")
-    # --- YENİ SATIRLAR SONU ---
 
     reviews = relationship("Review", back_populates="owner")
 
@@ -37,8 +35,6 @@ favorites = Table(
     Column("business_id", Integer, ForeignKey("businesses.id"), primary_key=True),
 )
 
-# ... (User sınıfının bittiği yer)
-
 # 'Review' (Yorum) modelini/tablosunu tanımlıyoruz.
 class Review(Base):
     __tablename__ = "reviews"
@@ -46,19 +42,11 @@ class Review(Base):
     id = Column(Integer, primary_key=True, index=True)
     rating = Column(Integer, index=True) # 1-5 arası puan
     comment = Column(Text, nullable=True) # Yorum metni (opsiyonel)
-    image_url = Column(String, nullable=True) # <-- Yeni alan
     
     # --- İlişkiler (Relationships) ---
-    # Bu, "reviews" tablosundaki "user_id" sütununun,
-    # "users" tablosundaki "id" sütununa bağlı olduğunu söyler.
     user_id = Column(Integer, ForeignKey("users.id"))
-    
-    # Bu, "reviews" tablosundaki "business_id" sütununun,
-    # "businesses" tablosundaki "id" sütununa bağlı olduğunu söyler.
     business_id = Column(Integer, ForeignKey("businesses.id"))
 
-    # Bu ilişkiler, Python kodunda review.owner veya review.business
-    # yazarak doğrudan User ve Business objelerine ulaşmamızı sağlar.
     owner = relationship("User", back_populates="reviews")
     business = relationship("Business", back_populates="reviews")
 
@@ -72,7 +60,6 @@ class Business(Base):
     phone = Column(String, nullable=True)
     latitude = Column(Float)
     longitude = Column(Float)
-    image_url = Column(String, nullable=True) # <-- Yeni alan
     
     # Filtreleme Özellikleri
     has_wifi = Column(Boolean, default=False)
@@ -82,9 +69,7 @@ class Business(Base):
     serves_food = Column(Boolean, default=False) # Yemek servisi var mı?
     has_board_games = Column(Boolean, default=False) # Masa/Kutu oyunları var mı?
     
-    # --- YENİ SATIRLAR ---
     # Bu mekanın sahibinin 'users' tablosundaki ID'si
-    # nullable=True, bir mekanın sahibi olmayabileceği anlamına gelir (Admin eklemişse)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     # Bu mekanın menü öğelerini listeler
     menu_items = relationship("MenuItem", back_populates="business", cascade="all, delete-orphan")
@@ -96,7 +81,6 @@ class Business(Base):
     
     # Bu mekanı favorileyen kullanıcılar
     favorited_by = relationship("User", secondary="favorites", back_populates="favorites")
-    # --- YENİ SATIRLAR SONU ---
 
     reviews = relationship("Review", back_populates="business")
 
@@ -119,7 +103,7 @@ class MenuItem(Base):
     name = Column(String, index=True, nullable=False) # örn: "Espresso"
     description = Column(String, nullable=True)     # örn: "İtalyan usulü"
     price = Column(Float, nullable=False)           # örn: 50.0
-    image_url = Column(String, nullable=True)       # <-- Yeni alan
+    category = Column(String, nullable=True, index=True) # <-- Yeni alan: Kategori (Sıcak, Soğuk, Tatlı vb.)
     
     # Bu öğenin hangi mekana ait olduğunu belirten ilişki
     business_id = Column(Integer, ForeignKey("businesses.id"))

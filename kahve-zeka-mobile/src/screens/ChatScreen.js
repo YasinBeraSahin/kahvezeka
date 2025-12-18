@@ -30,6 +30,7 @@ const ChatScreen = ({ navigation }) => {
             const data = response.data;
             const emotion = data.emotion_category;
             const recs = data.recommendations;
+            const matchingProducts = data.matching_products || [];
 
             // Bot'un giriş mesajı
             const botIntroMessage = {
@@ -47,6 +48,17 @@ const ChatScreen = ({ navigation }) => {
                 recommendations: recs
             };
             setMessages(prev => [...prev, botRecsMessage]);
+
+            // Eğer veritabanından eşleşen ürün bulunduysa onları da göster
+            if (matchingProducts.length > 0) {
+                const botProductsMessage = {
+                    id: (Date.now() + 3).toString(),
+                    sender: 'bot',
+                    type: 'product_list',
+                    products: matchingProducts
+                };
+                setMessages(prev => [...prev, botProductsMessage]);
+            }
 
         } catch (error) {
             console.error(error);
@@ -78,6 +90,28 @@ const ChatScreen = ({ navigation }) => {
                             <Text style={styles.recCoffeeName}>{rec.coffee}</Text>
                             <Text style={styles.recDesc}>{rec.description}</Text>
                         </View>
+                    ))}
+                </View>
+            );
+        }
+
+        if (item.type === 'product_list') {
+            return (
+                <View style={styles.recommendationContainer}>
+                    <Text style={styles.sectionTitle}>📍 Size En Yakın Lezzetler</Text>
+                    {item.products.map((prod, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            style={styles.productCard}
+                            onPress={() => navigation.navigate('businessDetail', { businessId: prod.business_id })}
+                        >
+                            <View style={styles.productInfo}>
+                                <Text style={styles.prodName}>{prod.name}</Text>
+                                <Text style={styles.prodBusiness}>{prod.business_name}</Text>
+                                <Text style={styles.prodPrice}>{prod.price} ₺</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={24} color={COLORS.primary} />
+                        </TouchableOpacity>
                     ))}
                 </View>
             );
@@ -246,48 +280,82 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         marginBottom: 4,
     },
-    recDesc: {
-        fontSize: 12,
-        color: COLORS.textSecondary,
-        lineHeight: 18,
-    },
+    lineHeight: 18,
+},
+    sectionTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 10,
+    marginTop: 5
+},
+    productCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    ...SHADOWS.medium,
+    borderWidth: 1,
+    borderColor: COLORS.secondary
+},
+    productInfo: {
+    flex: 1,
+},
+    prodName: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: COLORS.text,
+},
+    prodBusiness: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 2
+},
+    prodPrice: {
+    marginTop: 4,
+    fontWeight: 'bold',
+    color: COLORS.primary
+},
     inputContainer: {
-        flexDirection: 'row',
-        padding: SIZES.medium,
-        backgroundColor: COLORS.surface,
-        alignItems: 'center',
-        borderTopWidth: 1,
-        borderTopColor: COLORS.border,
-    },
+    flexDirection: 'row',
+    padding: SIZES.medium,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+},
     input: {
-        flex: 1,
-        backgroundColor: COLORS.background,
-        borderRadius: 25,
-        paddingHorizontal: 20,
-        height: 50,
-        marginRight: 10,
-        color: COLORS.text,
-    },
+    flex: 1,
+    backgroundColor: COLORS.background,
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    height: 50,
+    marginRight: 10,
+    color: COLORS.text,
+},
     sendButton: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: COLORS.secondary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...SHADOWS.medium,
-    },
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: COLORS.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...SHADOWS.medium,
+},
     loadingContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginLeft: 45,
-        marginBottom: 10,
-    },
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 45,
+    marginBottom: 10,
+},
     loadingText: {
-        marginLeft: 10,
-        color: COLORS.textSecondary,
-        fontSize: SIZES.small,
-    },
+    marginLeft: 10,
+    color: COLORS.textSecondary,
+    fontSize: SIZES.small,
+},
 });
 
 export default ChatScreen;

@@ -170,7 +170,7 @@ async def recommend_coffee_from_mood(user_message, db: Session = None):
                         "name": p.name,
                         "price": p.price,
                         "business_name": p.business.name,
-                        "image_url": p.image_url
+                        "business_id": p.business.id
                     })
 
         return {
