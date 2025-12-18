@@ -621,7 +621,7 @@ async def recommend_coffee(request: ChatRequest, db: Session = Depends(get_db)):
     # İsterseniz burada kullanıcı oturumunu kontrol edebilirsiniz (current_user = Depends...)
     # Şimdilik herkese açık olsun veya token isteyebiliriz.
     
-    result = await chat_service.recommend_coffee_from_mood(request.message)
+    result = await chat_service.recommend_coffee_from_mood(request.message, db)
     return result
 
 # --- DEBUG / SYSTEM ENDPOINTS ---

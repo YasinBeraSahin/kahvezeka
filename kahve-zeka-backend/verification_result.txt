@@ -1,0 +1,6 @@
+Seeding data...
+Testing AI 'Mutlu' mood...
+Result:
+Emotion: Mutlu
+Matching Products Found: 1
+- Found: Iced Caramel MacchiatoTest at AI Test Cafe

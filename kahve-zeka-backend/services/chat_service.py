@@ -1,6 +1,9 @@
 import os
 import json
 import google.generativeai as genai
+from sqlalchemy.orm import Session
+from sqlalchemy import or_
+from models import MenuItem, Business
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -90,7 +93,7 @@ COFFEE_MATRIX = {
     "Belirsiz": []
 }
 
-async def recommend_coffee_from_mood(user_message):
+async def recommend_coffee_from_mood(user_message, db: Session = None):
     if not API_KEY:
         # Fallback (API anahtarı yoksa random veya default bir kategori)
         category = "Belirsiz"
@@ -141,9 +144,39 @@ async def recommend_coffee_from_mood(user_message):
             print(f"Gemini returned non-digit response: {response_text}")
             matched_category = "Belirsiz"
 
+        # Veritabanında eşleşen ürünleri bul
+        matching_products = []
+        if db:
+            # Önerilen kahve isimlerini al (Matrix'ten)
+            recommended_coffees = [rec["coffee"] for rec in COFFEE_MATRIX[matched_category]]
+            
+            # Bu kahvelere benzeyen ürünleri veritabanında ara
+            # Basit bir "LIKE" sorgusu: Her bir öneri için db'de arama yap
+            # Örn: "Cold Brew" önerildiyse, isminde "Cold Brew" geçen MenuItem'ları bul
+            
+            for coffee_name in recommended_coffees:
+                # Arama terimini basitleştir (örn: "Iced Caramel Macchiato" -> "Macchiato")
+                # Daha geniş bir eşleşme için
+                search_term = coffee_name.split()[0] if " " in coffee_name else coffee_name
+                
+                products = db.query(MenuItem).join(Business).filter(
+                    MenuItem.name.ilike(f"%{search_term}%"),
+                    Business.is_approved == True
+                ).limit(3).all()
+                
+                for p in products:
+                    matching_products.append({
+                        "id": p.id,
+                        "name": p.name,
+                        "price": p.price,
+                        "business_name": p.business.name,
+                        "image_url": p.image_url
+                    })
+
         return {
             "emotion_category": matched_category,
-            "recommendations": COFFEE_MATRIX[matched_category]
+            "recommendations": COFFEE_MATRIX[matched_category],
+            "matching_products": matching_products
         }
 
     except Exception as e:
