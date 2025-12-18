@@ -250,6 +250,12 @@ function AdminPage() {
               <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Adres</Typography>
               <Typography paragraph>{detailsBusiness.address}</Typography>
 
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Konum Bilgisi</Typography>
+              <Typography paragraph variant="body2" sx={{ fontFamily: 'monospace' }}>
+                Enlem: {detailsBusiness.latitude}<br />
+                Boylam: {detailsBusiness.longitude}
+              </Typography>
+
               <Typography variant="subtitle1" fontWeight="bold" gutterBottom>İletişim</Typography>
               <Typography paragraph>{detailsBusiness.phone || 'Belirtilmemiş'}</Typography>
 

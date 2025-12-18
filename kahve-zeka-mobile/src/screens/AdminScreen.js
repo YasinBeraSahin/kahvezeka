@@ -232,6 +232,12 @@ const AdminScreen = ({ navigation }) => {
                                 <Text style={styles.detailText}>{selectedBusiness?.address}</Text>
                             </View>
                             <View style={styles.detailRow}>
+                                <Ionicons name="map" size={20} color={COLORS.secondary} />
+                                <Text style={styles.detailText}>
+                                    {selectedBusiness?.latitude}, {selectedBusiness?.longitude}
+                                </Text>
+                            </View>
+                            <View style={styles.detailRow}>
                                 <Ionicons name="call" size={20} color={COLORS.secondary} />
                                 <Text style={styles.detailText}>{selectedBusiness?.phone || 'Telefon belirtilmemiş'}</Text>
                             </View>
