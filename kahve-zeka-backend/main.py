@@ -618,9 +618,10 @@ class ChatRequest(schemas.BaseModel):
 @app.post("/api/chat/recommend")
 async def recommend_coffee(request: ChatRequest, db: Session = Depends(get_db)):
     """
-    Kullanıcının ruh haline göre kahve önerisi yapar (Google Gemini AI).
+    Kullanıcının ruh haline göre kahve önerisi yapar (Google Gemini AI + RAG).
+    Artık veritabanındaki gerçek ürünleri analiz eder.
     """
-    result = await chat_service.recommend_coffee_from_mood(
+    result = await chat_service.recommend_coffee_smart(
         request.message, 
         db,
         user_lat=request.latitude,

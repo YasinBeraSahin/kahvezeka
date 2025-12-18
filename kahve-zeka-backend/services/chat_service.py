@@ -237,3 +237,164 @@ async def recommend_coffee_from_mood(user_message, db: Session = None, user_lat:
             "recommendations": COFFEE_MATRIX[category],
             "error": str(e)
         }
+
+async def recommend_coffee_smart(user_message, db: Session, user_lat: float = None, user_lon: float = None):
+    """
+    RAG-Lite implementation:
+    1. Fetches nearby business menus.
+    2. Feeds them to Gemini.
+    3. Asks for specific product recommendations based on user mood/request.
+    """
+    if not API_KEY:
+        return {
+            "emotion_category": "Belirsiz",
+            "recommendations": [],
+            "matching_products": [],
+            "text_response": "API Anahtarı eksik."
+        }
+
+    # 1. Gather Context (Nearby Menu Items)
+    # ---------------------------------------------------------
+    # Get all approved businesses
+    businesses = db.query(Business).filter(Business.is_approved == True).all()
+    
+    # Filter by distance (if location provided) or take all (limit 10 closest)
+    nearby_data = []
+    
+    for b in businesses:
+        dist = calculate_distance(user_lat, user_lon, b.latitude, b.longitude)
+        nearby_data.append({
+            "business": b,
+            "distance": dist
+        })
+    
+    # Sort by distance (nearest first)
+    nearby_data.sort(key=lambda x: x["distance"])
+    
+    # Take top 5 nearest businesses to keep context window manageable
+    nearby_data = nearby_data[:5]
+    
+    if not nearby_data:
+        # Fallback if no businesses
+        return await recommend_coffee_from_mood(user_message, db, user_lat, user_lon)
+
+    # Format menu items for Prompt
+    menu_context_str = ""
+    valid_item_ids = []
+    
+    for entry in nearby_data:
+        b = entry["business"]
+        dist_str = f"{entry['distance']:.1f} km" if entry['distance'] != float('inf') else "? km"
+        
+        menu_context_str += f"\n--- MEKAN: {b.name} (Uzaklık: {dist_str}) ---\n"
+        
+        for item in b.menu_items:
+            # Item ID'yi takip etmek önemli
+            valid_item_ids.append(item.id)
+            desc = item.description if item.description else "Açıklama yok"
+            cat = item.category if item.category else "Genel"
+            menu_context_str += f"[ID: {item.id}] Ürün: {item.name} | Fiyat: {item.price} TL | Kategori: {cat} | İçerik: {desc}\n"
+
+    # 2. Build Prompt
+    # ---------------------------------------------------------
+    prompt = f"""
+    Sen uzman bir Barista ve Kahve Gurmesisin.
+    
+    GÖREVİN:
+    Aşağıdaki "MEKAN VE MENÜ LİSTESİ" içinden, kullanıcının ruh haline ve isteğine EN UYGUN 3 farklı ürünü seçmek.
+    
+    KURALLAR:
+    1. Öncelikle kullanıcının mesajından RUH HALİNİ (Mood) analiz et (Örn: Yorgun, Mutlu, Romantik...).
+    2. Sadece aşağıda listelenen ürünlerden seçim yapabilirsin. Uydurma ürün önerme.
+    3. Seçtiğin ürünlerin ID'lerini kesinlikle doğru kullan.
+    4. Yanıtın mutlaka geçerli bir JSON formatında olmalı.
+    
+    KULLANICI MESAJI: "{user_message}"
+    
+    MEKAN VE MENÜ LİSTESİ:
+    {menu_context_str}
+    
+    İSTENEN JSON FORMATI: (Lütfen tırnak işaretlerini "" kullanın)
+    {{
+      "emotion_category": "Tespit Edilen Ruh Hali (Örn: Yorgun, Keyifli)",
+      "thought_process": "Kısaca neden bu ürünleri seçtiğini açıkla (Barista yorumu)",
+      "recommendations": [
+        {{
+          "id": 123,  
+          "reason": "Bu ürünü neden seçtin?"
+        }}
+      ]
+    }}
+    """
+    
+    # 3. Call Gemini
+    # ---------------------------------------------------------
+    try:
+        response = model.generate_content(prompt)
+        response_text = response.text.strip()
+        
+        # Clean up JSON (remove markdown ticks if present)
+        if response_text.startswith("```json"):
+            response_text = response_text[7:]
+        elif response_text.startswith("```"):
+            response_text = response_text[3:]
+        if response_text.endswith("```"):
+            response_text = response_text[:-3]
+        response_text = response_text.strip()
+        
+        print(f"DEBUG: Gemini RAG Response: {response_text}")
+        
+        ai_data = json.loads(response_text)
+        
+        # 4. Process Response & Fetch Details
+        # ---------------------------------------------------------
+        emotion = ai_data.get("emotion_category", "Belirsiz")
+        ai_recs = ai_data.get("recommendations", [])
+        
+        matching_products = []
+        
+        # Seçilen ID'leri DB'den tam detaylarıyla çek
+        for rec in ai_recs:
+            item_id = rec.get("id")
+            reason = rec.get("reason", "")
+            
+            # DB'den bul
+            db_item = db.query(MenuItem).filter(MenuItem.id == item_id).first()
+            if db_item:
+                # Mesafe hesabı tekrar (Context'te vardı ama objeye ekleyelim)
+                dist = calculate_distance(user_lat, user_lon, db_item.business.latitude, db_item.business.longitude)
+                
+                matching_products.append({
+                    "id": db_item.id,
+                    "name": db_item.name,
+                    "price": db_item.price,
+                    "business_name": db_item.business.name,
+                    "business_id": db_item.business.id,
+                    "distance": dist,
+                    "ai_reason": reason, # Frontend'de gösterebiliriz
+                    "description": db_item.description # Orijinal açıklama
+                })
+
+        # Frontend formatına uyumlu dönüş
+        # 'recommendations' alanı eskiden genel önerilerdi (Matrix).
+        # Şimdi AI'nın seçtiği ürünlerin "Nedenini" buraya koyabiliriz.
+        
+        frontend_recs = []
+        for p in matching_products:
+            frontend_recs.append({
+                "title": f"Öneri: {p['name']}",
+                "coffee": p['business_name'], # Kartta büyük görünen yer
+                "description": p['ai_reason'] # AI'nın sebebi description olsun
+            })
+
+        return {
+            "emotion_category": emotion,
+            "recommendations": frontend_recs, # Kartlarda görünecek AI yorumları
+            "matching_products": matching_products, # Aşağıdaki ürün listesi
+            "is_smart_search": True
+        }
+
+    except Exception as e:
+        print(f"Smart Recommend Error: {e}")
+        # Hata olursa eski sistemi fallback olarak kullan
+        return await recommend_coffee_from_mood(user_message, db, user_lat, user_lon)
