@@ -398,9 +398,14 @@ async def recommend_coffee_smart(user_message, db: Session, user_lat: float = No
             })
 
         for p in matching_products:
+            # Mesafeyi formatla (örn: 0.5 km veya 1.2 km)
+            dist_display = f"{p['distance']:.1f} km"
+            if p['distance'] < 1.0:
+                 dist_display = f"{int(p['distance']*1000)}m"
+
             frontend_recs.append({
                 "title": f"Öneri: {p['name']}",
-                "coffee": p['business_name'], 
+                "coffee": f"{p['business_name']} ({dist_display})", # Mesafeyi buraya ekledik
                 "description": p['ai_reason'] 
             })
 
@@ -412,5 +417,16 @@ async def recommend_coffee_smart(user_message, db: Session, user_lat: float = No
         }
     except Exception as e:
         print(f"CRITICAL ERROR in Smart Recommend: {e}")
-        # Hata fall-through
-        pass
+        try:
+             # Ana AI başarısız olursa yedek (eski) sistemi devreye sok
+            return await recommend_coffee_from_mood(user_message, db, user_lat, user_lon)
+        except Exception as fallback_e:
+            print(f"Fallback Failed: {fallback_e}")
+            return {
+                "emotion_category": "Belirsiz",
+                "recommendations": [],
+                "matching_products": [],
+                "thought_process": "Sistem geçici olarak yanıt veremiyor, lütfen tekrar deneyin.",
+                "is_smart_search": False,
+                "error": str(e)
+            }
