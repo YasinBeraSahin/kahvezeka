@@ -18,8 +18,8 @@ function AdminPage() {
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsBusiness, setDetailsBusiness] = useState(null);
 
   const fetchBusinesses = async () => {
     try {
@@ -60,6 +60,11 @@ function AdminPage() {
   const handleRejectClick = (business) => {
     setSelectedBusiness(business);
     setOpenDialog(true);
+  };
+
+  const handleDetailsClick = (business) => {
+    setDetailsBusiness(business);
+    setDetailsOpen(true);
   };
 
   const handleConfirmReject = async () => {
@@ -126,6 +131,14 @@ function AdminPage() {
                 secondaryAction={
                   <Box>
                     <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => handleDetailsClick(business)}
+                      sx={{ mr: 1 }}
+                    >
+                      Detaylar
+                    </Button>
+                    <Button
                       variant="contained"
                       color="success"
                       size="small"
@@ -175,9 +188,19 @@ function AdminPage() {
               key={business.id}
               divider
               secondaryAction={
-                <IconButton edge="end" aria-label="delete" onClick={() => handleRejectClick(business)} color="error">
-                  <DeleteIcon />
-                </IconButton>
+                <Box>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handleDetailsClick(business)}
+                    sx={{ mr: 1 }}
+                  >
+                    Detaylar
+                  </Button>
+                  <IconButton edge="end" aria-label="delete" onClick={() => handleRejectClick(business)} color="error">
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
               }
             >
               <ListItemText
@@ -206,6 +229,54 @@ function AdminPage() {
           <Button onClick={handleConfirmReject} color="error" autoFocus>
             Sil
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* DETAILS DIALOG */}
+      <Dialog
+        open={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white' }}>
+          {detailsBusiness?.name}
+        </DialogTitle>
+        <DialogContent dividers>
+          {detailsBusiness && (
+            <Box>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Adres</Typography>
+              <Typography paragraph>{detailsBusiness.address}</Typography>
+
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>İletişim</Typography>
+              <Typography paragraph>{detailsBusiness.phone || 'Belirtilmemiş'}</Typography>
+
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Özellikler</Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {detailsBusiness.has_wifi && <Chip label="Wi-Fi" color="primary" variant="outlined" size="small" />}
+                {detailsBusiness.has_socket && <Chip label="Priz" color="primary" variant="outlined" size="small" />}
+                {detailsBusiness.is_pet_friendly && <Chip label="Hayvan Dostu" color="primary" variant="outlined" size="small" />}
+                {detailsBusiness.is_quiet && <Chip label="Sessiz" color="primary" variant="outlined" size="small" />}
+                {detailsBusiness.serves_food && <Chip label="Yemek" color="primary" variant="outlined" size="small" />}
+                {detailsBusiness.has_board_games && <Chip label="Oyun" color="primary" variant="outlined" size="small" />}
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDetailsOpen(false)}>Kapat</Button>
+          {!detailsBusiness?.is_approved && (
+            <Button
+              onClick={() => {
+                handleApprove(detailsBusiness.id);
+                setDetailsOpen(false);
+              }}
+              variant="contained"
+              color="success"
+            >
+              Onayla
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 

@@ -1,4 +1,3 @@
-// src/screens/AdminScreen.js
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -8,7 +7,9 @@ import {
     TouchableOpacity,
     Alert,
     ActivityIndicator,
-    RefreshControl
+    RefreshControl,
+    Modal,
+    ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES, SHADOWS } from '../constants/theme';
@@ -21,6 +22,10 @@ const AdminScreen = ({ navigation }) => {
     const [businesses, setBusinesses] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'approved'
+
+    // Details Modal State
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedBusiness, setSelectedBusiness] = useState(null);
 
     const fetchBusinesses = async () => {
         try {
@@ -49,6 +54,7 @@ const AdminScreen = ({ navigation }) => {
             Alert.alert('Başarılı', 'İşletme onaylandı.');
             // Listeyi güncelle
             setBusinesses(prev => prev.map(b => b.id === id ? { ...b, is_approved: true } : b));
+            if (modalVisible) setModalVisible(false);
         } catch (error) {
             Alert.alert('Hata', 'Onaylama işlemi başarısız.');
         }
@@ -68,6 +74,7 @@ const AdminScreen = ({ navigation }) => {
                             await rejectBusiness(id);
                             // Listeden çıkar
                             setBusinesses(prev => prev.filter(b => b.id !== id));
+                            if (modalVisible) setModalVisible(false);
                         } catch (error) {
                             Alert.alert('Hata', 'Silme işlemi başarısız.');
                         }
@@ -75,6 +82,11 @@ const AdminScreen = ({ navigation }) => {
                 }
             ]
         );
+    };
+
+    const openDetails = (business) => {
+        setSelectedBusiness(business);
+        setModalVisible(true);
     };
 
     const handleLogout = async () => {
@@ -100,35 +112,44 @@ const AdminScreen = ({ navigation }) => {
             <Text style={styles.address}>{item.address}</Text>
             <Text style={styles.phone}>{item.phone || 'Telefon yok'}</Text>
 
-            {!item.is_approved && (
-                <View style={styles.actionButtons}>
-                    <TouchableOpacity
-                        style={[styles.button, styles.approveButton]}
-                        onPress={() => handleApprove(item.id)}
-                    >
-                        <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                        <Text style={styles.buttonText}>Onayla</Text>
-                    </TouchableOpacity>
+            <View style={styles.actionButtons}>
+                <TouchableOpacity
+                    style={[styles.button, styles.detailsButton]}
+                    onPress={() => openDetails(item)}
+                >
+                    <Ionicons name="information-circle" size={20} color={COLORS.primary} />
+                    <Text style={[styles.buttonText, { color: COLORS.primary }]}>Detaylar</Text>
+                </TouchableOpacity>
 
+                {!item.is_approved && (
+                    <>
+                        <TouchableOpacity
+                            style={[styles.button, styles.approveButton]}
+                            onPress={() => handleApprove(item.id)}
+                        >
+                            <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                            <Text style={styles.buttonText}>Onayla</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.button, styles.rejectButton]}
+                            onPress={() => handleReject(item.id)}
+                        >
+                            <Ionicons name="close-circle" size={20} color="#fff" />
+                            <Text style={styles.buttonText}>Reddet</Text>
+                        </TouchableOpacity>
+                    </>
+                )}
+                {item.is_approved && (
                     <TouchableOpacity
                         style={[styles.button, styles.rejectButton]}
                         onPress={() => handleReject(item.id)}
                     >
-                        <Ionicons name="close-circle" size={20} color="#fff" />
-                        <Text style={styles.buttonText}>Reddet</Text>
+                        <Ionicons name="trash-outline" size={20} color="#fff" />
+                        <Text style={styles.buttonText}>Sil</Text>
                     </TouchableOpacity>
-                </View>
-            )}
-
-            {item.is_approved && (
-                <TouchableOpacity
-                    style={[styles.button, styles.rejectButton, { marginTop: 10 }]}
-                    onPress={() => handleReject(item.id)}
-                >
-                    <Ionicons name="trash-outline" size={20} color="#fff" />
-                    <Text style={styles.buttonText}>Sil</Text>
-                </TouchableOpacity>
-            )}
+                )}
+            </View>
         </View>
     );
 
@@ -188,6 +209,64 @@ const AdminScreen = ({ navigation }) => {
                     </Text>
                 }
             />
+
+            {/* DETAILS MODAL */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>{selectedBusiness?.name}</Text>
+                            <TouchableOpacity onPress={() => setModalVisible(false)}>
+                                <Ionicons name="close" size={24} color={COLORS.text} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={styles.modalBody}>
+                            <View style={styles.detailRow}>
+                                <Ionicons name="location" size={20} color={COLORS.secondary} />
+                                <Text style={styles.detailText}>{selectedBusiness?.address}</Text>
+                            </View>
+                            <View style={styles.detailRow}>
+                                <Ionicons name="call" size={20} color={COLORS.secondary} />
+                                <Text style={styles.detailText}>{selectedBusiness?.phone || 'Telefon belirtilmemiş'}</Text>
+                            </View>
+
+                            <Text style={styles.sectionHeader}>Özellikler</Text>
+                            <View style={styles.amenitiesContainer}>
+                                {selectedBusiness?.has_wifi && <View style={styles.amenityChip}><Text style={styles.amenityText}>Wi-Fi</Text></View>}
+                                {selectedBusiness?.has_socket && <View style={styles.amenityChip}><Text style={styles.amenityText}>Priz</Text></View>}
+                                {selectedBusiness?.is_pet_friendly && <View style={styles.amenityChip}><Text style={styles.amenityText}>Hayvan Dostu</Text></View>}
+                                {selectedBusiness?.is_quiet && <View style={styles.amenityChip}><Text style={styles.amenityText}>Sessiz</Text></View>}
+                                {selectedBusiness?.serves_food && <View style={styles.amenityChip}><Text style={styles.amenityText}>Yemek</Text></View>}
+                                {selectedBusiness?.has_board_games && <View style={styles.amenityChip}><Text style={styles.amenityText}>Oyun</Text></View>}
+                            </View>
+                        </ScrollView>
+
+                        <View style={styles.modalFooter}>
+                            <TouchableOpacity
+                                style={[styles.button, styles.closeButton]}
+                                onPress={() => setModalVisible(false)}
+                            >
+                                <Text style={[styles.buttonText, { color: COLORS.text }]}>Kapat</Text>
+                            </TouchableOpacity>
+
+                            {!selectedBusiness?.is_approved && (
+                                <TouchableOpacity
+                                    style={[styles.button, styles.approveButton]}
+                                    onPress={() => handleApprove(selectedBusiness.id)}
+                                >
+                                    <Text style={styles.buttonText}>Onayla</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -241,6 +320,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: SIZES.medium,
+        paddingBottom: 100
     },
     card: {
         backgroundColor: COLORS.surface,
@@ -283,7 +363,8 @@ const styles = StyleSheet.create({
     },
     actionButtons: {
         flexDirection: 'row',
-        gap: SIZES.medium,
+        gap: SIZES.small,
+        flexWrap: 'wrap'
     },
     button: {
         flex: 1,
@@ -293,12 +374,21 @@ const styles = StyleSheet.create({
         padding: SIZES.small,
         borderRadius: SIZES.radius,
         gap: 6,
+        minWidth: 80
     },
     approveButton: {
         backgroundColor: COLORS.success,
     },
     rejectButton: {
         backgroundColor: COLORS.error,
+    },
+    detailsButton: {
+        backgroundColor: COLORS.surface,
+        borderWidth: 1,
+        borderColor: COLORS.primary
+    },
+    closeButton: {
+        backgroundColor: COLORS.border,
     },
     buttonText: {
         color: '#fff',
@@ -309,6 +399,79 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: COLORS.textSecondary,
         marginTop: SIZES.extraLarge,
+    },
+    // MODAL STYLES
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: COLORS.background,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        height: '70%',
+        padding: SIZES.medium,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: SIZES.medium,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.border,
+        paddingBottom: SIZES.small
+    },
+    modalTitle: {
+        fontSize: SIZES.large,
+        fontWeight: 'bold',
+        color: COLORS.primary,
+    },
+    modalBody: {
+        flex: 1,
+    },
+    modalFooter: {
+        flexDirection: 'row',
+        gap: SIZES.medium,
+        paddingTop: SIZES.medium,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+    },
+    detailRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: SIZES.medium,
+        gap: 10
+    },
+    detailText: {
+        fontSize: SIZES.medium,
+        color: COLORS.text,
+        flex: 1
+    },
+    sectionHeader: {
+        fontSize: SIZES.medium,
+        fontWeight: 'bold',
+        marginTop: SIZES.medium,
+        marginBottom: SIZES.small,
+        color: COLORS.text
+    },
+    amenitiesContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8
+    },
+    amenityChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+        backgroundColor: COLORS.primary + '20', // %20 opacity
+        borderWidth: 1,
+        borderColor: COLORS.primary
+    },
+    amenityText: {
+        color: COLORS.primary,
+        fontSize: 12,
+        fontWeight: 'bold'
     }
 });
 

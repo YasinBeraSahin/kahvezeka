@@ -204,37 +204,55 @@ function BusinessDetailPage() {
 
               {/* MENU TAB */}
               <TabPanel value={tabValue} index={0}>
-                <List>
+                <Box>
                   {business.menu_items && business.menu_items.length > 0 ? (
-                    business.menu_items.map((item, index) => (
-                      <div key={item.id}>
-                        <ListItem alignItems="flex-start" sx={{ py: 3, borderBottom: '1px solid #f0f0f0' }}>
-                          <ListItemText
-                            primary={
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <Typography variant="h6" component="span">{item.name}</Typography>
-                                <Typography variant="h6" component="span" color="primary.main">{item.price} TL</Typography>
-                              </Box>
-                            }
-                            secondary={
-                              <Box>
-                                {item.category && (
-                                  <Chip label={item.category} size="small" color="secondary" variant="outlined" sx={{ mr: 1, mb: 0.5 }} />
-                                )}
-                                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                                  {item.description}
-                                </Typography>
-                              </Box>
-                            }
-                          />
-                        </ListItem>
-                        {index < business.menu_items.length - 1 && <Divider component="li" />}
-                      </div>
-                    ))
+                    ['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık', 'Diğer'].map(category => {
+                      const itemsInCat = business.menu_items.filter(item => {
+                        if (category === 'Diğer') {
+                          return !item.category || !['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık'].includes(item.category);
+                        }
+                        return item.category === category;
+                      });
+
+                      if (itemsInCat.length === 0) return null;
+
+                      return (
+                        <Box key={category} sx={{ mb: 3 }}>
+                          <Typography variant="h6" color="primary" sx={{ mb: 1, borderBottom: '1px solid #eee', pb: 1, mt: 2 }}>
+                            {category === 'Sıcak' ? '☕ Sıcak Kahveler' :
+                              category === 'Soğuk' ? '❄️ Soğuk Kahveler' :
+                                category === 'Tatlı' ? '🍰 Tatlılar' :
+                                  category === 'Atıştırmalık' ? '🥪 Atıştırmalıklar' : '📦 Diğer'}
+                          </Typography>
+                          <List>
+                            {itemsInCat.map((item, index) => (
+                              <div key={item.id}>
+                                <ListItem alignItems="flex-start" sx={{ py: 2 }}>
+                                  <ListItemText
+                                    primary={
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="subtitle1" component="span" fontWeight="bold">{item.name}</Typography>
+                                        <Typography variant="subtitle1" component="span" color="primary.main" fontWeight="bold">{item.price} TL</Typography>
+                                      </Box>
+                                    }
+                                    secondary={
+                                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                        {item.description}
+                                      </Typography>
+                                    }
+                                  />
+                                </ListItem>
+                                {index < itemsInCat.length - 1 && <Divider component="li" />}
+                              </div>
+                            ))}
+                          </List>
+                        </Box>
+                      );
+                    })
                   ) : (
                     <Typography sx={{ p: 2, color: 'text.secondary' }}>Henüz menü eklenmemiş.</Typography>
                   )}
-                </List>
+                </Box>
               </TabPanel>
 
               {/* REVIEWS TAB */}

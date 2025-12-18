@@ -16,37 +16,44 @@ const MenuTab = ({ business }) => {
         );
     }
 
-    const renderItem = ({ item }) => (
-        <View style={styles.menuItem}>
-            <View style={styles.itemInfo}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemDescription} numberOfLines={2}>
-                    {item.description || 'Açıklama bulunmuyor.'}
-                </Text>
-                <Text style={styles.itemPrice}>{item.price} ₺</Text>
-            </View>
-            {item.image_url ? (
-                <Image
-                    source={{ uri: getImageUrl(item.image_url) }}
-                    style={styles.itemImage}
-                />
-            ) : (
-                <View style={[styles.itemImage, { backgroundColor: COLORS.border, justifyContent: 'center', alignItems: 'center' }]}>
-                    <Text style={{ fontSize: 24 }}>☕</Text>
-                </View>
-            )}
-        </View>
-    );
+    const categories = ['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık', 'Diğer'];
 
     return (
         <View style={styles.container}>
-            <FlatList
-                data={menuItems}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.id.toString()}
-                scrollEnabled={false}
-                ItemSeparatorComponent={() => <View style={styles.separator} />}
-            />
+            {categories.map(category => {
+                const itemsInCat = menuItems.filter(item => {
+                    if (category === 'Diğer') {
+                        return !item.category || !['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık'].includes(item.category);
+                    }
+                    return item.category === category;
+                });
+
+                if (itemsInCat.length === 0) return null;
+
+                return (
+                    <View key={category} style={styles.categorySection}>
+                        <Text style={styles.categoryHeader}>
+                            {category === 'Sıcak' ? '☕ Sıcak Kahveler' :
+                                category === 'Soğuk' ? '❄️ Soğuk Kahveler' :
+                                    category === 'Tatlı' ? '🍰 Tatlılar' :
+                                        category === 'Atıştırmalık' ? '🥪 Atıştırmalıklar' : '📦 Diğer'}
+                        </Text>
+                        {itemsInCat.map((item, index) => (
+                            <View key={item.id} style={styles.menuItem}>
+                                <View style={styles.itemInfo}>
+                                    <View style={styles.namePriceRow}>
+                                        <Text style={styles.itemName}>{item.name}</Text>
+                                        <Text style={styles.itemPrice}>{item.price} ₺</Text>
+                                    </View>
+                                    <Text style={styles.itemDescription} numberOfLines={2}>
+                                        {item.description || 'Açıklama bulunmuyor.'}
+                                    </Text>
+                                </View>
+                            </View>
+                        ))}
+                    </View>
+                );
+            })}
         </View>
     );
 };
@@ -69,39 +76,47 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
         fontSize: SIZES.font,
     },
+    categorySection: {
+        marginBottom: SIZES.large,
+    },
+    categoryHeader: {
+        fontSize: SIZES.large,
+        fontWeight: 'bold',
+        color: COLORS.primary,
+        marginBottom: SIZES.small,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.border,
+        paddingBottom: 4,
+    },
     menuItem: {
-        flexDirection: 'row',
-        paddingVertical: SIZES.medium,
-        alignItems: 'center',
+        paddingVertical: SIZES.small,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.border,
     },
     itemInfo: {
         flex: 1,
-        paddingRight: SIZES.medium,
+    },
+    namePriceRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4,
     },
     itemName: {
         fontSize: SIZES.medium,
         fontWeight: 'bold',
         color: COLORS.text,
-        marginBottom: 4,
-    },
-    itemDescription: {
-        fontSize: SIZES.small,
-        color: COLORS.textSecondary,
-        marginBottom: 8,
+        flex: 1,
     },
     itemPrice: {
         fontSize: SIZES.medium,
         fontWeight: 'bold',
         color: COLORS.primary,
+        marginLeft: 8,
     },
-    itemImage: {
-        width: 80,
-        height: 80,
-        borderRadius: SIZES.radius,
-    },
-    separator: {
-        height: 1,
-        backgroundColor: COLORS.border,
+    itemDescription: {
+        fontSize: SIZES.small,
+        color: COLORS.textSecondary,
     },
 });
 
