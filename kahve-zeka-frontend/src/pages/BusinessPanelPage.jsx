@@ -39,7 +39,7 @@ function BusinessPanelPage() {
 
   // Menü ve Kampanya state'leri
   const [menuItems, setMenuItems] = useState([]);
-  const [newMenuItem, setNewMenuItem] = useState({ name: '', description: '', price: '' });
+  const [newMenuItem, setNewMenuItem] = useState({ name: '', description: '', price: '', category: 'Sıcak' });
 
   const [campaigns, setCampaigns] = useState([]);
   const [newCampaign, setNewCampaign] = useState({ title: '', description: '' });
@@ -181,7 +181,7 @@ function BusinessPanelPage() {
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       setMenuItems([...menuItems, response.data]);
-      setNewMenuItem({ name: '', description: '', price: '' });
+      setNewMenuItem({ name: '', description: '', price: '', category: 'Sıcak' });
       setSuccess('Menü öğesi eklendi!');
     } catch (err) {
       console.error("Menü ekleme hatası:", err.response);
@@ -353,41 +353,81 @@ function BusinessPanelPage() {
 
           <Paper sx={{ padding: 4, marginTop: 4 }}>
             <Typography variant="h6">Menü Yönetimi</Typography>
+            {/* Kategori Seçimi ve Form */}
             <Box component="form" onSubmit={handleAddMenuItem} sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-start' }}>
               <TextField label="Ürün Adı" name="name" value={newMenuItem.name} onChange={handleMenuFormChange} required sx={{ flexBasis: '200px', flexGrow: 1 }} />
               <TextField label="Açıklama" name="description" value={newMenuItem.description} onChange={handleMenuFormChange} sx={{ flexBasis: '250px', flexGrow: 2 }} />
               <TextField label="Fiyat (TL)" name="price" type="number" value={newMenuItem.price} onChange={handleMenuFormChange} required sx={{ flexBasis: '100px', flexGrow: 1 }} />
 
-
+              <TextField
+                select
+                label="Kategori"
+                name="category"
+                value={newMenuItem.category || ''}
+                onChange={handleMenuFormChange}
+                required
+                SelectProps={{ native: true }}
+                sx={{ flexBasis: '150px', flexGrow: 1 }}
+              >
+                <option value="">Seçiniz</option>
+                <option value="Sıcak">Sıcak Kahve</option>
+                <option value="Soğuk">Soğuk Kahve</option>
+                <option value="Tatlı">Tatlı</option>
+                <option value="Atıştırmalık">Atıştırmalık</option>
+                <option value="Diğer">Diğer</option>
+              </TextField>
 
               <Button type="submit" variant="contained" color="secondary" sx={{ height: '56px' }}>Ekle</Button>
             </Box>
             <Divider sx={{ my: 3 }} />
-            <Typography variant="subtitle1">Mevcut Menü</Typography>
-            {menuItems.length === 0 ? (<Typography>Henüz menü öğesi eklenmemiş.</Typography>) : (
-              <List>
-                {menuItems.map(item => (
-                  <ListItem
-                    key={item.id}
-                    secondaryAction={<IconButton edge="end" onClick={() => handleDeleteMenuItem(item.id)}><DeleteIcon /></IconButton>}
-                    sx={{ alignItems: 'flex-start' }}
-                  >
-                    {/* Varsa resmi göster */}
-                    {item.image_url && (
-                      <Box
-                        component="img"
-                        src={item.image_url.startsWith('http') ? item.image_url : `${API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL}/${item.image_url.startsWith('/') ? item.image_url.slice(1) : item.image_url}`}
-                        onError={(e) => {
-                          console.log('Image load error:', item.image_url);
-                          e.target.style.display = 'none';
-                        }}
-                        sx={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 1, mr: 2 }}
-                      />
-                    )}
-                    <ListItemText primary={item.name} secondary={`${item.description || ''} - ${item.price} TL`} />
-                  </ListItem>
-                ))}
-              </List>
+
+            <Typography variant="subtitle1" gutterBottom>Mevcut Menü</Typography>
+
+            {menuItems.length === 0 ? (
+              <Typography color="text.secondary">Henüz menü öğesi eklenmemiş.</Typography>
+            ) : (
+              // Kategorilere göre grupla ve göster
+              ['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık', 'Diğer'].map(category => {
+                // Bu kategoriye ait ürünleri filtrele. 
+                // Eğer ürünün kategorisi null ise veya listede yoksa 'Diğer' altında gösterelim.
+                const itemsInCat = menuItems.filter(item => {
+                  if (category === 'Diğer') {
+                    return !item.category || !['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık'].includes(item.category);
+                  }
+                  return item.category === category;
+                });
+
+                if (itemsInCat.length === 0) return null;
+
+                return (
+                  <Box key={category} sx={{ mb: 3 }}>
+                    <Typography variant="h6" color="primary" sx={{ mb: 1, borderBottom: '1px solid #eee', pb: 1 }}>
+                      {category === 'Sıcak' ? '☕ Sıcak Kahveler' :
+                        category === 'Soğuk' ? '❄️ Soğuk Kahveler' :
+                          category === 'Tatlı' ? '🍰 Tatlılar' :
+                            category === 'Atıştırmalık' ? '🥪 Atıştırmalıklar' : '📦 Diğer'}
+                    </Typography>
+                    <List>
+                      {itemsInCat.map(item => (
+                        <ListItem
+                          key={item.id}
+                          secondaryAction={<IconButton edge="end" onClick={() => handleDeleteMenuItem(item.id)}><DeleteIcon /></IconButton>}
+                          sx={{ alignItems: 'flex-start', bgcolor: '#fafafa', mb: 1, borderRadius: 1 }}
+                        >
+                          <ListItemText
+                            primary={
+                              <Box component="span" sx={{ fontWeight: 'bold' }}>
+                                {item.name} <Box component="span" sx={{ color: 'secondary.main', ml: 1 }}>{item.price} TL</Box>
+                              </Box>
+                            }
+                            secondary={item.description}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                );
+              })
             )}
           </Paper>
 
