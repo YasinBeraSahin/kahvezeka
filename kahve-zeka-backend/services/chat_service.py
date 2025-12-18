@@ -122,6 +122,7 @@ async def recommend_coffee_from_mood(user_message):
 
         response = model.generate_content(prompt)
         response_text = response.text.strip()
+        print(f"DEBUG: Raw Gemini Response: {response_text}")
         
         # Yanıttan sayıyı ayıkla (Gemini bazen '1.' veya 'Cevap: 1' diyebilir)
         import re
