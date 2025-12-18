@@ -102,16 +102,29 @@ const ChatScreen = ({ navigation }) => {
         if (item.type === 'recommendation_list') {
             return (
                 <View style={styles.recommendationContainer}>
-                    {item.recommendations.map((rec, index) => (
-                        <View key={index} style={styles.recommendationCard}>
-                            <View style={styles.recHeader}>
-                                <Ionicons name="cafe" size={20} color={COLORS.primary} />
-                                <Text style={styles.recTitle}>{rec.title}</Text>
+                    {item.recommendations.map((rec, index) => {
+                        const isAnalysis = rec.title.includes('AI Analizi');
+                        return (
+                            <View key={index} style={[
+                                styles.recommendationCard,
+                                isAnalysis && { borderLeftColor: '#9C27B0', backgroundColor: '#F3E5F5' }
+                            ]}>
+                                <View style={styles.recHeader}>
+                                    <Ionicons
+                                        name={isAnalysis ? "sparkles" : "cafe"}
+                                        size={20}
+                                        color={isAnalysis ? "#9C27B0" : COLORS.primary}
+                                    />
+                                    <Text style={[
+                                        styles.recTitle,
+                                        isAnalysis && { color: '#9C27B0' }
+                                    ]}>{rec.title}</Text>
+                                </View>
+                                <Text style={styles.recCoffeeName}>{rec.coffee}</Text>
+                                <Text style={styles.recDesc}>{rec.description}</Text>
                             </View>
-                            <Text style={styles.recCoffeeName}>{rec.coffee}</Text>
-                            <Text style={styles.recDesc}>{rec.description}</Text>
-                        </View>
-                    ))}
+                        );
+                    })}
                 </View>
             );
         }

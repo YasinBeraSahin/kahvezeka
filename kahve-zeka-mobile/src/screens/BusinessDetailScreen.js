@@ -96,10 +96,13 @@ const BusinessDetailScreen = ({ navigation, route }) => {
             <ScrollView stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}>
                 {/* Header Image & Info */}
                 <View style={styles.headerContainer}>
-                    {/* <Image source={{ uri: `${API_URL}${business.image_url}` }} style={styles.image} /> */}
-                    <View style={styles.imagePlaceholder}>
-                        <Ionicons name="cafe" size={50} color={COLORS.primary} />
-                    </View>
+                    {business.image_url ? (
+                        <Image source={{ uri: getImageUrl(business.image_url) }} style={styles.coverImage} resizeMode="cover" />
+                    ) : (
+                        <View style={styles.imagePlaceholder}>
+                            <Ionicons name="cafe" size={50} color={COLORS.primary} />
+                        </View>
+                    )}
                     <View style={styles.overlay} />
 
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
