@@ -19,11 +19,20 @@ export const AuthProvider = ({ children }) => {
         const loadAuth = async () => {
             try {
                 const token = await getToken();
-                const savedUser = await getUser();
-
-                if (token && savedUser) {
-                    setUser(savedUser);
-                    setIsAuthenticated(true);
+                if (token) {
+                    // Token varsa doğruluğunu kontrol et
+                    try {
+                        const userProfile = await getUserProfile();
+                        await saveUser(userProfile); // Bilgileri güncelle
+                        setUser(userProfile);
+                        setIsAuthenticated(true);
+                    } catch (error) {
+                        // Token geçersizse temizle
+                        console.log('Token invalid, clearing auth');
+                        await clearAuth();
+                        setUser(null);
+                        setIsAuthenticated(false);
+                    }
                 }
             } catch (error) {
                 console.error('Auth loading error:', error);

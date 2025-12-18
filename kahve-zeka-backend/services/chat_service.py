@@ -410,4 +410,15 @@ async def recommend_coffee_smart(user_message, db: Session, user_lat: float = No
     except Exception as e:
         print(f"Smart Recommend Error: {e}")
         # Hata olursa eski sistemi fallback olarak kullan
-        return await recommend_coffee_from_mood(user_message, db, user_lat, user_lon)
+        # Ancak Fallback de API hatası verebilir, bu yüzden onu da try-except içine alalım
+        try:
+            return await recommend_coffee_from_mood(user_message, db, user_lat, user_lon)
+        except Exception as fallback_error:
+            print(f"Fallback Error: {fallback_error}")
+            # En son çare: Statik yanıt döndür
+            return {
+                "emotion_category": "Belirsiz",
+                "recommendations": COFFEE_MATRIX["Belirsiz"],
+                "matching_products": [],
+                "error": "Servis geçici olarak kullanılamıyor."
+            }
