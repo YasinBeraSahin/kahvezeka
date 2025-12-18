@@ -255,94 +255,94 @@ async def recommend_coffee_smart(user_message, db: Session, user_lat: float = No
 
     # 1. Gather Context (Nearby Menu Items)
     # ---------------------------------------------------------
-    # Get all approved businesses
-    businesses = db.query(Business).filter(Business.is_approved == True).all()
-    
-    # Filter by distance (if location provided) or take all (limit 10 closest)
-    nearby_data = []
-    
-    for b in businesses:
-        dist = calculate_distance(user_lat, user_lon, b.latitude, b.longitude)
-        nearby_data.append({
-            "business": b,
-            "distance": dist
-        })
-    
-    # Sort by distance (nearest first)
-    nearby_data.sort(key=lambda x: x["distance"])
-    
-    # Take top 5 nearest businesses to keep context window manageable
-    nearby_data = nearby_data[:5]
-    
-    if not nearby_data:
-        # Fallback if no businesses
-        return await recommend_coffee_from_mood(user_message, db, user_lat, user_lon)
-
-    # Format menu items for Prompt
-    menu_context_str = ""
-    valid_item_ids = []
-    
-    for entry in nearby_data:
-        b = entry["business"]
-        dist_str = f"{entry['distance']:.1f} km" if entry['distance'] != float('inf') else "? km"
-        
-        menu_context_str += f"\n--- MEKAN: {b.name} (Uzaklık: {dist_str}) ---\n"
-        
-        for item in b.menu_items:
-            # Item ID'yi takip etmek önemli
-            valid_item_ids.append(item.id)
-            desc = item.description if item.description else "Açıklama yok"
-            cat = item.category if item.category else "Genel"
-            menu_context_str += f"[ID: {item.id}] Ürün: {item.name} | Fiyat: {item.price} TL | Kategori: {cat} | İçerik: {desc}\n"
-
-    # 2. Build Prompt
-    # ---------------------------------------------------------
-    prompt = f"""
-    Sen Kahve Zeka uygulamasının yapay zeka asistanısın. Hem bir Barista hem de bir "Kahve Arama Motoru" gibi çalışırsın.
-    
-    PARAMETRELER:
-    - Kullanıcı Mesajı: "{user_message}"
-    - Mevcut Menü Verisi: Aşağıdaki "MEKAN VE MENÜ LİSTESİ"
-    
-    GÖREVİN:
-    Aşağıdaki menü listesinden kullanıcıya EN UYGUN 3 ürünü seçmek ve JSON formatında döndürmek.
-    
-    KRİTİK MANTIK KURALLARI (BUNLARA KESİNLİKLE UY):
-    
-    1. **NİYET ANALİZİ (Intent Detection):**
-       - EĞER kullanıcı ÖZEL BİR ÜRÜN İSTİYORSA (Örn: "Americano", "Latte", "Cheesecake"):
-         *   GÖREVİN: Bu ürünü (veya buna çok benzeyen alternatifleri) **FARKLI MEKANLARDAN** bulup kıyaslamaktır.
-         *   HATA YAPMA: Aynı mekandaki 3 farklı ürünü önerme. Amacımız kullanıcının aradığı ürünü nerede bulacağını göstermek.
-         *   ÖNCELİK: Aranan kelimeyi tam içeren ürünlere öncelik ver.
-         
-       - EĞER kullanıcı BİR DUYGU/DURUM BELİRTİYORSA (Örn: "Yorgunum", "Tatlı krizim tuttu"):
-         *   GÖREVİN: Bu ruh haline en iyi gelecek **EN İYİ 3 ÜRÜNÜ** seçmektir.
-         *   KRİTER: Mekan çeşitliliği güzel olur ama şart değil. En etkili ürünler hangileriyse onları seç.
-    
-    2. **SEÇİM KURALLARI:**
-       - Sadece "MEKAN VE MENÜ LİSTESİ" içindeki ürünleri seçebilirsin.
-       - Asla listede olmayan bir ID uydurma.
-    
-    3. **YANIT FORMATI (JSON):**
-       {{
-         "emotion_category": "Kullanıcının Ruh Hali (Örn: Odaklanmış, Keyifli, Telaşlı - Eğer net bir ürün arıyorsa 'Kararlı' yaz)",
-         "intent": "SEARCH" veya "RECOMMENDATION",
-         "thought_process": "Neden bu ürünleri seçtiğini kısaca açıkla (Örn: 'Americano istediğiniz için bölgedeki en iyi 3 Americano seçeneğini listeledim.')",
-         "recommendations": [
-           {{
-             "id": 123,  // Menüdeki ID
-             "reason": "Kısa ve ikna edici bir sebep (Örn: 'En yakın seçenek ve fiyatı uygun.')"
-           }}
-         ]
-       }}
-    
-    MEKAN VE MENÜ LİSTESİ:
-    {menu_context_str}
-    """
-    
-    # 3. Call Gemini
-    # ---------------------------------------------------------
     try:
+        # Get all approved businesses
+        businesses = db.query(Business).filter(Business.is_approved == True).all()
+        
+        # Filter by distance (if location provided) or take all (limit 10 closest)
+        nearby_data = []
+        
+        for b in businesses:
+            dist = calculate_distance(user_lat, user_lon, b.latitude, b.longitude)
+            nearby_data.append({
+                "business": b,
+                "distance": dist
+            })
+        
+        # Sort by distance (nearest first)
+        nearby_data.sort(key=lambda x: x["distance"])
+        
+        # Take top 5 nearest businesses to keep context window manageable
+        nearby_data = nearby_data[:5]
+        
+        if not nearby_data:
+            # Fallback if no businesses
+            return await recommend_coffee_from_mood(user_message, db, user_lat, user_lon)
+
+        # Format menu items for Prompt
+        menu_context_str = ""
+        valid_item_ids = []
+        
+        for entry in nearby_data:
+            b = entry["business"]
+            dist_str = f"{entry['distance']:.1f} km" if entry['distance'] != float('inf') else "? km"
+            
+            menu_context_str += f"\n--- MEKAN: {b.name} (Uzaklık: {dist_str}) ---\n"
+            
+            for item in b.menu_items:
+                # Item ID'yi takip etmek önemli
+                valid_item_ids.append(item.id)
+                desc = item.description if item.description else "Açıklama yok"
+                cat = item.category if item.category else "Genel"
+                menu_context_str += f"[ID: {item.id}] Ürün: {item.name} | Fiyat: {item.price} TL | Kategori: {cat} | İçerik: {desc}\n"
+
+        # 2. Build Prompt
+        # ---------------------------------------------------------
+        prompt = f"""
+        Sen Kahve Zeka uygulamasının yapay zeka asistanısın. Hem bir Barista hem de bir "Kahve Arama Motoru" gibi çalışırsın.
+        
+        PARAMETRELER:
+        - Kullanıcı Mesajı: "{user_message}"
+        - Mevcut Menü Verisi: Aşağıdaki "MEKAN VE MENÜ LİSTESİ"
+        
+        GÖREVİN:
+        Aşağıdaki menü listesinden kullanıcıya EN UYGUN 3 ürünü seçmek ve JSON formatında döndürmek.
+        
+        KRİTİK MANTIK KURALLARI (BUNLARA KESİNLİKLE UY):
+        
+        1. **NİYET ANALİZİ (Intent Detection):**
+           - EĞER kullanıcı ÖZEL BİR ÜRÜN İSTİYORSA (Örn: "Americano", "Latte", "Cheesecake"):
+             *   GÖREVİN: Bu ürünü (veya buna çok benzeyen alternatifleri) **FARKLI MEKANLARDAN** bulup kıyaslamaktır.
+             *   HATA YAPMA: Aynı mekandaki 3 farklı ürünü önerme. Amacımız kullanıcının aradığı ürünü nerede bulacağını göstermek.
+             *   ÖNCELİK: Aranan kelimeyi tam içeren ürünlere öncelik ver.
+             
+           - EĞER kullanıcı BİR DUYGU/DURUM BELİRTİYORSA (Örn: "Yorgunum", "Tatlı krizim tuttu"):
+             *   GÖREVİN: Bu ruh haline en iyi gelecek **EN İYİ 3 ÜRÜNÜ** seçmektir.
+             *   KRİTER: Mekan çeşitliliği güzel olur ama şart değil. En etkili ürünler hangileriyse onları seç.
+        
+        2. **SEÇİM KURALLARI:**
+           - Sadece "MEKAN VE MENÜ LİSTESİ" içindeki ürünleri seçebilirsin.
+           - Asla listede olmayan bir ID uydurma.
+        
+        3. **YANIT FORMATI (JSON):**
+           {{
+             "emotion_category": "Kullanıcının Ruh Hali (Örn: Odaklanmış, Keyifli, Telaşlı - Eğer net bir ürün arıyorsa 'Kararlı' yaz)",
+             "intent": "SEARCH" veya "RECOMMENDATION",
+             "thought_process": "Neden bu ürünleri seçtiğini kısaca açıkla (Örn: 'Americano istediğiniz için bölgedeki en iyi 3 Americano seçeneğini listeledim.')",
+             "recommendations": [
+               {{
+                 "id": 123,  // Menüdeki ID
+                 "reason": "Kısa ve ikna edici bir sebep (Örn: 'En yakın seçenek ve fiyatı uygun.')"
+               }}
+             ]
+           }}
+        
+        MEKAN VE MENÜ LİSTESİ:
+        {menu_context_str}
+        """
+        
+        # 3. Call Gemini
+        # ---------------------------------------------------------
         response = model.generate_content(prompt)
         response_text = response.text.strip()
         
@@ -406,19 +406,7 @@ async def recommend_coffee_smart(user_message, db: Session, user_lat: float = No
             "matching_products": matching_products, # Aşağıdaki ürün listesi
             "is_smart_search": True
         }
-
     except Exception as e:
-        print(f"Smart Recommend Error: {e}")
-        # Hata olursa eski sistemi fallback olarak kullan
-        # Ancak Fallback de API hatası verebilir, bu yüzden onu da try-except içine alalım
-        try:
-            return await recommend_coffee_from_mood(user_message, db, user_lat, user_lon)
-        except Exception as fallback_error:
-            print(f"Fallback Error: {fallback_error}")
-            # En son çare: Statik yanıt döndür
-            return {
-                "emotion_category": "Belirsiz",
-                "recommendations": COFFEE_MATRIX["Belirsiz"],
-                "matching_products": [],
-                "error": "Servis geçici olarak kullanılamıyor."
-            }
+        print(f"CRITICAL ERROR in Smart Recommend: {e}")
+        # Hata fall-through
+        pass

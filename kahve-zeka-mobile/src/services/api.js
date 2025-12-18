@@ -4,7 +4,7 @@ import { getToken } from '../utils/storage';
 
 // Backend API URL - geliştirme için local, production için gerçek URL
 export const API_URL = __DEV__
-    ? 'https://kahve-zeka-api.onrender.com' // Using Production API because local network is blocked
+    ? 'https://kahve-zeka-api.onrender.com' // Using Production API
     : 'https://kahve-zeka-api.onrender.com';
 
 export const api = axios.create({
