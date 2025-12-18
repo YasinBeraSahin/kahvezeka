@@ -13,16 +13,10 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
 function BusinessPanelPage() {
-  // AuthContext'ten hem 'token'ı hem de 'user' objesini (ID'si için) al
   const { token, user } = useAuth();
-
-  // 'null' = bilinmiyor, 'true' = mekan var, 'false' = mekan yok
   const [hasBusiness, setHasBusiness] = useState(null);
-
-  // API'den dönen tüm business objesini saklar (is_approved dahil)
   const [businessData, setBusinessData] = useState(null);
 
-  // Bu state, hem 'Güncelleme' hem de 'Yeni Oluşturma' formu için kullanılacak
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -37,30 +31,26 @@ function BusinessPanelPage() {
     has_board_games: false
   });
 
-  // Menü ve Kampanya state'leri
   const [menuItems, setMenuItems] = useState([]);
+  // Initial state with default category
   const [newMenuItem, setNewMenuItem] = useState({ name: '', description: '', price: '', category: 'Sıcak' });
 
   const [campaigns, setCampaigns] = useState([]);
   const [newCampaign, setNewCampaign] = useState({ title: '', description: '' });
 
-  // Yükleme ve durum state'leri
   const [pageLoading, setPageLoading] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Sayfa yüklendiğinde mevcut mekanı çekmeyi dene
   useEffect(() => {
-    // Sadece token varsa API isteği yap
     if (token) {
       axios.get(`${API_URL}/businesses/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
         .then(response => {
-          // BAŞARILI: Mekan bulundu
           const data = response.data;
-          setBusinessData(data); // Gelen tüm objeyi sakla
+          setBusinessData(data);
           setFormData({
             name: data.name,
             address: data.address,
@@ -76,19 +66,16 @@ function BusinessPanelPage() {
           });
           setMenuItems(data.menu_items || []);
           setCampaigns(data.campaigns || []);
-          setHasBusiness(true); // Mekanı var
+          setHasBusiness(true);
           setPageLoading(false);
         })
         .catch(err => {
           console.error("Mekan detayı hatası:", err);
-          // Hata 404 ise (Mekan bulunamadı), bu "yeni sahip" durumudur.
-          // CORS veya tarayıcı kısıtlamaları bazen response objesini gizleyebilir, bu yüzden err.message'a da bakıyoruz.
           if ((err.response && err.response.status === 404) || (err.message && err.message.includes('404'))) {
-            setHasBusiness(false); // Mekanı yok, "Oluştur" formu gösterilecek
+            setHasBusiness(false);
           } else if (err.response && err.response.status === 403) {
             setError("Bu sayfaya erişim yetkiniz yok. Lütfen 'İşletme Sahibi' olarak giriş yaptığınızdan emin olun.");
           } else {
-            // Başka bir hata (örn: 500 veya 401)
             console.error("Mekan bilgileri yüklenemedi:", err.response);
             setError("Mekan bilgileri yüklenemedi. (Sunucu bağlantısı veya yetki hatası)");
           }
@@ -97,7 +84,6 @@ function BusinessPanelPage() {
     }
   }, [token]);
 
-  // Form alanı değiştiğinde çalışır (hem yeni hem güncelleme için ortak)
   const handleFormChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prevData => ({
@@ -106,54 +92,42 @@ function BusinessPanelPage() {
     }));
   };
 
-
-
-  // --- MEKAN YÖNETİMİ ---
-
-  // YENİ MEKAN OLUŞTURMA (hasBusiness false ise)
   const handleCreateBusiness = async (e) => {
     e.preventDefault();
     setFormLoading(true); setError(null); setSuccess(null);
     try {
-      // 'POST /businesses/' endpoint'ine, 'owner_id'mizi de ekleyerek yolla
-      // 'is_approved' backend'de otomatik olarak 'False' ayarlanacak
       const response = await axios.post(
         `${API_URL}/businesses/`,
-        { ...formData, owner_id: user.id }, // 'user' objesini context'ten aldık
+        { ...formData, owner_id: user.id },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
-
       const data = response.data;
-      setBusinessData(data); // Gelen yeni mekanı sakla
-      setMenuItems([]); // Yeni mekanın menüsü boştur
-      setCampaigns([]); // Yeni mekanın kampanyaları boştur
-      setHasBusiness(true); // Artık bir mekanı var
+      setBusinessData(data);
+      setMenuItems([]);
+      setCampaigns([]);
+      setHasBusiness(true);
       setSuccess('Mekanınız başarıyla oluşturuldu! Admin onayı bekleniyor.');
       setFormLoading(false);
-
     } catch (err) {
       setError('Mekan oluşturulamadı. Lütfen tüm alanları kontrol edin.');
       setFormLoading(false);
     }
   };
 
-  // MEVCUT MEKANI GÜNCELLEME (hasBusiness true ise)
   const handleUpdate = async (e) => {
     e.preventDefault();
     setFormLoading(true); setError(null); setSuccess(null);
-
     try {
       const response = await axios.put(
         `${API_URL}/businesses/me`,
-        formData, // Sadece form datasını gönder, image_url yok
+        formData,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       const data = response.data;
-      setFormData({ // Sadece form verisini güncelle
+      setFormData({
         name: data.name, address: data.address, phone: data.phone,
         latitude: data.latitude, longitude: data.longitude
       });
-      // 'businessData'yı da güncelle
       setBusinessData(prev => ({ ...prev, ...data }));
       setSuccess('Mekan bilgileri başarıyla güncellendi!');
       setFormLoading(false);
@@ -163,8 +137,6 @@ function BusinessPanelPage() {
     }
   };
 
-  // --- MENÜ YÖNETİMİ ---
-
   const handleMenuFormChange = (e) => {
     const { name, value } = e.target;
     setNewMenuItem(prevData => ({ ...prevData, [name]: value }));
@@ -173,11 +145,10 @@ function BusinessPanelPage() {
   const handleAddMenuItem = async (e) => {
     e.preventDefault();
     setError(null); setSuccess(null);
-
     try {
       const response = await axios.post(
         `${API_URL}/businesses/me/menu-items/`,
-        { ...newMenuItem, price: parseFloat(newMenuItem.price) }, // image_url yok
+        { ...newMenuItem, price: parseFloat(newMenuItem.price) },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       setMenuItems([...menuItems, response.data]);
@@ -204,8 +175,6 @@ function BusinessPanelPage() {
       setError('Menü öğesi silinemedi.');
     }
   };
-
-  // --- KAMPANYA YÖNETİMİ ---
 
   const handleCampaignFormChange = (e) => {
     const { name, value } = e.target;
@@ -246,41 +215,78 @@ function BusinessPanelPage() {
     }
   };
 
-  // --- YÜKLEME VE HATA DURUMLARI ---
   if (pageLoading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><CircularProgress /></Box>;
   }
-  // 'hasBusiness' null değilse (yani API yanıt verdi) ve bir hata varsa göster
   if (error && hasBusiness !== null) {
     return <Alert severity="error">{error}</Alert>;
   }
 
-  // --- ARAYÜZ ÇİZİMİ ---
+  // --- MENU RENDERING LOGIC ---
+  const renderedMenuItems = menuItems.length === 0 ? (
+    <Typography color="text.secondary">Henüz menü öğesi eklenmemiş.</Typography>
+  ) : (
+    <Box>
+      {['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık', 'Diğer'].map(category => {
+        const itemsInCat = menuItems.filter(item => {
+          if (category === 'Diğer') {
+            return !item.category || !['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık'].includes(item.category);
+          }
+          return item.category === category;
+        });
+
+        if (itemsInCat.length === 0) return null;
+
+        return (
+          <Box key={category} sx={{ mb: 3 }}>
+            <Typography variant="h6" color="primary" sx={{ mb: 1, borderBottom: '1px solid #eee', pb: 1 }}>
+              {category === 'Sıcak' ? '☕ Sıcak Kahveler' :
+                category === 'Soğuk' ? '❄️ Soğuk Kahveler' :
+                  category === 'Tatlı' ? '🍰 Tatlılar' :
+                    category === 'Atıştırmalık' ? '🥪 Atıştırmalıklar' : '📦 Diğer'}
+            </Typography>
+            <List>
+              {itemsInCat.map(item => (
+                <ListItem
+                  key={item.id}
+                  secondaryAction={<IconButton edge="end" onClick={() => handleDeleteMenuItem(item.id)}><DeleteIcon /></IconButton>}
+                  sx={{ alignItems: 'flex-start', bgcolor: '#fafafa', mb: 1, borderRadius: 1 }}
+                >
+                  <ListItemText
+                    primary={
+                      <Box component="span" sx={{ fontWeight: 'bold' }}>
+                        {item.name} <Box component="span" sx={{ color: 'secondary.main', ml: 1 }}>{item.price} TL</Box>
+                      </Box>
+                    }
+                    secondary={item.description}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        );
+      })}
+    </Box>
+  );
+
   return (
     <Container maxWidth="md">
-
-      {/* Genel Hata/Başarı Mesajları */}
       <Box sx={{ mt: 2, mb: 4, position: 'fixed', bottom: 0, right: 16, zIndex: 9999 }}>
         {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
         {success && <Alert severity="success" onClose={() => setSuccess(null)}>{success}</Alert>}
       </Box>
 
       {hasBusiness === false && (
-        // --- DURUM 1: MEKANI YOK (YENİ OLUŞTURMA MODU) ---
         <Paper sx={{ padding: 4, marginTop: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            İşletme Panelim
-          </Typography>
+          <Typography variant="h4" component="h1" gutterBottom>İşletme Panelim</Typography>
           <Typography variant="h6">Mekanınız Henüz Kayıtlı Değil</Typography>
           <Typography>Lütfen sistemde görünebilmek için mekanınızın bilgilerini girin.</Typography>
-
           <Box component="form" onSubmit={handleCreateBusiness} noValidate sx={{ mt: 2 }}>
             <TextField fullWidth label="Mekan Adı" name="name" value={formData.name} onChange={handleFormChange} margin="normal" required />
             <TextField fullWidth label="Adres" name="address" value={formData.address} onChange={handleFormChange} margin="normal" required />
             <TextField fullWidth label="Telefon" name="phone" value={formData.phone || ''} onChange={handleFormChange} margin="normal" />
             <TextField fullWidth label="Enlem" name="latitude" type="number" value={formData.latitude} onChange={handleFormChange} margin="normal" required />
             <TextField fullWidth label="Boylam" name="longitude" type="number" value={formData.longitude} onChange={handleFormChange} margin="normal" required />
-
             <FormControl component="fieldset" sx={{ mt: 2, mb: 1, width: '100%', border: '1px solid #ddd', borderRadius: 1, p: 2 }}>
               <FormLabel component="legend">Mekan Özellikleri</FormLabel>
               <FormGroup row>
@@ -292,7 +298,6 @@ function BusinessPanelPage() {
                 <FormControlLabel control={<Checkbox checked={formData.has_board_games} onChange={handleFormChange} name="has_board_games" />} label="Masa Oyunları" />
               </FormGroup>
             </FormControl>
-
             <Button type="submit" variant="contained" color="primary" size="large" sx={{ mt: 2 }} disabled={formLoading}>
               {formLoading ? <CircularProgress size={24} color="inherit" /> : 'Mekanımı Oluştur'}
             </Button>
@@ -301,38 +306,22 @@ function BusinessPanelPage() {
       )}
 
       {hasBusiness === true && businessData && (
-        // --- DURUM 2: MEKANI VAR ---
         <>
-          {businessData.is_approved === false ? (
-            // --- DURUM 2a: MEKAN ONAY BEKLİYOR ---
+          {businessData.is_approved === false && (
             <Paper sx={{ padding: 4, marginTop: 4, textAlign: 'center' }}>
-              <Typography variant="h5" gutterBottom>
-                Başvurunuz Alındı!
-              </Typography>
-              <Typography>
-                Mekanınız ("{businessData.name}") ekibimiz tarafından inceleniyor.
-                Onaylandığında, paneliniz otomatik olarak aktif hale gelecektir
-                ve mekanınız haritada görünmeye başlayacaktır.
-              </Typography>
-              <Typography sx={{ mt: 2, fontStyle: 'italic', color: 'text.secondary' }}>
-                Onay sürecinde mekan bilgilerinizi, menünüzü veya kampanyalarınızı güncelleyebilirsiniz.
-              </Typography>
+              <Typography variant="h5" gutterBottom>Başvurunuz Alındı!</Typography>
+              <Typography>Mekanınız ("{businessData.name}") inceleniyor.</Typography>
+              <Typography sx={{ mt: 2, fontStyle: 'italic', color: 'text.secondary' }}>Bilgilerinizi güncelleyebilirsiniz.</Typography>
             </Paper>
-          ) : (
-            // --- DURUM 2b: MEKAN ONAYLANMIŞ ---
-            null
           )}
 
           <Paper sx={{ padding: 4, marginTop: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-              İşletme Panelim: {formData.name}
-            </Typography>
+            <Typography variant="h4" component="h1" gutterBottom>İşletme Panelim: {formData.name}</Typography>
             <Typography variant="h6">Mekan Bilgilerini Güncelle</Typography>
             <Box component="form" onSubmit={handleUpdate} noValidate sx={{ mt: 2 }}>
               <TextField fullWidth label="Mekan Adı" name="name" value={formData.name} onChange={handleFormChange} margin="normal" required />
               <TextField fullWidth label="Adres" name="address" value={formData.address} onChange={handleFormChange} margin="normal" required />
               <TextField fullWidth label="Telefon" name="phone" value={formData.phone || ''} onChange={handleFormChange} margin="normal" />
-
               <FormControl component="fieldset" sx={{ mt: 2, mb: 1, width: '100%', border: '1px solid #ddd', borderRadius: 1, p: 2 }}>
                 <FormLabel component="legend">Mekan Özellikleri</FormLabel>
                 <FormGroup row>
@@ -344,7 +333,6 @@ function BusinessPanelPage() {
                   <FormControlLabel control={<Checkbox checked={formData.has_board_games} onChange={handleFormChange} name="has_board_games" />} label="Masa Oyunları" />
                 </FormGroup>
               </FormControl>
-
               <Button type="submit" variant="contained" color="primary" size="large" sx={{ mt: 2 }} disabled={formLoading}>
                 {formLoading ? <CircularProgress size={24} color="inherit" /> : 'Bilgilerini Güncelle'}
               </Button>
@@ -353,22 +341,11 @@ function BusinessPanelPage() {
 
           <Paper sx={{ padding: 4, marginTop: 4 }}>
             <Typography variant="h6">Menü Yönetimi</Typography>
-            {/* Kategori Seçimi ve Form */}
             <Box component="form" onSubmit={handleAddMenuItem} sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-start' }}>
               <TextField label="Ürün Adı" name="name" value={newMenuItem.name} onChange={handleMenuFormChange} required sx={{ flexBasis: '200px', flexGrow: 1 }} />
               <TextField label="Açıklama" name="description" value={newMenuItem.description} onChange={handleMenuFormChange} sx={{ flexBasis: '250px', flexGrow: 2 }} />
               <TextField label="Fiyat (TL)" name="price" type="number" value={newMenuItem.price} onChange={handleMenuFormChange} required sx={{ flexBasis: '100px', flexGrow: 1 }} />
-
-              <TextField
-                select
-                label="Kategori"
-                name="category"
-                value={newMenuItem.category || ''}
-                onChange={handleMenuFormChange}
-                required
-                SelectProps={{ native: true }}
-                sx={{ flexBasis: '150px', flexGrow: 1 }}
-              >
+              <TextField select label="Kategori" name="category" value={newMenuItem.category || ''} onChange={handleMenuFormChange} required SelectProps={{ native: true }} sx={{ flexBasis: '150px', flexGrow: 1 }}>
                 <option value="">Seçiniz</option>
                 <option value="Sıcak">Sıcak Kahve</option>
                 <option value="Soğuk">Soğuk Kahve</option>
@@ -376,59 +353,11 @@ function BusinessPanelPage() {
                 <option value="Atıştırmalık">Atıştırmalık</option>
                 <option value="Diğer">Diğer</option>
               </TextField>
-
               <Button type="submit" variant="contained" color="secondary" sx={{ height: '56px' }}>Ekle</Button>
             </Box>
             <Divider sx={{ my: 3 }} />
-
             <Typography variant="subtitle1" gutterBottom>Mevcut Menü</Typography>
-
-            {menuItems.length === 0 ? (
-              <Typography color="text.secondary">Henüz menü öğesi eklenmemiş.</Typography>
-            ) : (
-              // Kategorilere göre grupla ve göster
-              ['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık', 'Diğer'].map(category => {
-                // Bu kategoriye ait ürünleri filtrele. 
-                // Eğer ürünün kategorisi null ise veya listede yoksa 'Diğer' altında gösterelim.
-                const itemsInCat = menuItems.filter(item => {
-                  if (category === 'Diğer') {
-                    return !item.category || !['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık'].includes(item.category);
-                  }
-                  return item.category === category;
-                });
-
-                if (itemsInCat.length === 0) return null;
-
-                return (
-                  <Box key={category} sx={{ mb: 3 }}>
-                    <Typography variant="h6" color="primary" sx={{ mb: 1, borderBottom: '1px solid #eee', pb: 1 }}>
-                      {category === 'Sıcak' ? '☕ Sıcak Kahveler' :
-                        category === 'Soğuk' ? '❄️ Soğuk Kahveler' :
-                          category === 'Tatlı' ? '🍰 Tatlılar' :
-                            category === 'Atıştırmalık' ? '🥪 Atıştırmalıklar' : '📦 Diğer'}
-                    </Typography>
-                    <List>
-                      {itemsInCat.map(item => (
-                        <ListItem
-                          key={item.id}
-                          secondaryAction={<IconButton edge="end" onClick={() => handleDeleteMenuItem(item.id)}><DeleteIcon /></IconButton>}
-                          sx={{ alignItems: 'flex-start', bgcolor: '#fafafa', mb: 1, borderRadius: 1 }}
-                        >
-                          <ListItemText
-                            primary={
-                              <Box component="span" sx={{ fontWeight: 'bold' }}>
-                                {item.name} <Box component="span" sx={{ color: 'secondary.main', ml: 1 }}>{item.price} TL</Box>
-                              </Box>
-                            }
-                            secondary={item.description}
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
-                );
-              })
-            )}
+            {renderedMenuItems}
           </Paper>
 
           <Paper sx={{ padding: 4, marginTop: 4 }}>
