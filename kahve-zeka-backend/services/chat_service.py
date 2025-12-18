@@ -298,33 +298,46 @@ async def recommend_coffee_smart(user_message, db: Session, user_lat: float = No
     # 2. Build Prompt
     # ---------------------------------------------------------
     prompt = f"""
-    Sen uzman bir Barista ve Kahve Gurmesisin.
+    Sen Kahve Zeka uygulamasının yapay zeka asistanısın. Hem bir Barista hem de bir "Kahve Arama Motoru" gibi çalışırsın.
+    
+    PARAMETRELER:
+    - Kullanıcı Mesajı: "{user_message}"
+    - Mevcut Menü Verisi: Aşağıdaki "MEKAN VE MENÜ LİSTESİ"
     
     GÖREVİN:
-    Aşağıdaki "MEKAN VE MENÜ LİSTESİ" içinden, kullanıcının ruh haline ve isteğine EN UYGUN 3 farklı ürünü seçmek.
+    Aşağıdaki menü listesinden kullanıcıya EN UYGUN 3 ürünü seçmek ve JSON formatında döndürmek.
     
-    KURALLAR:
-    1. Öncelikle kullanıcının mesajından RUH HALİNİ (Mood) analiz et (Örn: Yorgun, Mutlu, Romantik...).
-    2. Sadece aşağıda listelenen ürünlerden seçim yapabilirsin. Uydurma ürün önerme.
-    3. Seçtiğin ürünlerin ID'lerini kesinlikle doğru kullan.
-    4. Yanıtın mutlaka geçerli bir JSON formatında olmalı.
+    KRİTİK MANTIK KURALLARI (BUNLARA KESİNLİKLE UY):
     
-    KULLANICI MESAJI: "{user_message}"
+    1. **NİYET ANALİZİ (Intent Detection):**
+       - EĞER kullanıcı ÖZEL BİR ÜRÜN İSTİYORSA (Örn: "Americano", "Latte", "Cheesecake"):
+         *   GÖREVİN: Bu ürünü (veya buna çok benzeyen alternatifleri) **FARKLI MEKANLARDAN** bulup kıyaslamaktır.
+         *   HATA YAPMA: Aynı mekandaki 3 farklı ürünü önerme. Amacımız kullanıcının aradığı ürünü nerede bulacağını göstermek.
+         *   ÖNCELİK: Aranan kelimeyi tam içeren ürünlere öncelik ver.
+         
+       - EĞER kullanıcı BİR DUYGU/DURUM BELİRTİYORSA (Örn: "Yorgunum", "Tatlı krizim tuttu"):
+         *   GÖREVİN: Bu ruh haline en iyi gelecek **EN İYİ 3 ÜRÜNÜ** seçmektir.
+         *   KRİTER: Mekan çeşitliliği güzel olur ama şart değil. En etkili ürünler hangileriyse onları seç.
+    
+    2. **SEÇİM KURALLARI:**
+       - Sadece "MEKAN VE MENÜ LİSTESİ" içindeki ürünleri seçebilirsin.
+       - Asla listede olmayan bir ID uydurma.
+    
+    3. **YANIT FORMATI (JSON):**
+       {{
+         "emotion_category": "Kullanıcının Ruh Hali (Örn: Odaklanmış, Keyifli, Telaşlı - Eğer net bir ürün arıyorsa 'Kararlı' yaz)",
+         "intent": "SEARCH" veya "RECOMMENDATION",
+         "thought_process": "Neden bu ürünleri seçtiğini kısaca açıkla (Örn: 'Americano istediğiniz için bölgedeki en iyi 3 Americano seçeneğini listeledim.')",
+         "recommendations": [
+           {{
+             "id": 123,  // Menüdeki ID
+             "reason": "Kısa ve ikna edici bir sebep (Örn: 'En yakın seçenek ve fiyatı uygun.')"
+           }}
+         ]
+       }}
     
     MEKAN VE MENÜ LİSTESİ:
     {menu_context_str}
-    
-    İSTENEN JSON FORMATI: (Lütfen tırnak işaretlerini "" kullanın)
-    {{
-      "emotion_category": "Tespit Edilen Ruh Hali (Örn: Yorgun, Keyifli)",
-      "thought_process": "Kısaca neden bu ürünleri seçtiğini açıkla (Barista yorumu)",
-      "recommendations": [
-        {{
-          "id": 123,  
-          "reason": "Bu ürünü neden seçtin?"
-        }}
-      ]
-    }}
     """
     
     # 3. Call Gemini

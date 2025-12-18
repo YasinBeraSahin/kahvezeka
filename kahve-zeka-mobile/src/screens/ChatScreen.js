@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 import { API_URL } from '../services/api';
 import axios from 'axios';
+import * as Location from 'expo-location';
 
 const ChatScreen = ({ navigation }) => {
     const [messages, setMessages] = useState([
@@ -11,7 +12,24 @@ const ChatScreen = ({ navigation }) => {
     ]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [userLocation, setUserLocation] = useState(null);
     const flatListRef = useRef();
+
+    useEffect(() => {
+        (async () => {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                console.log('Permission to access location was denied');
+                return;
+            }
+
+            let location = await Location.getCurrentPositionAsync({});
+            setUserLocation({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude
+            });
+        })();
+    }, []);
 
     const sendMessage = async () => {
         if (!input.trim()) return;
@@ -22,10 +40,13 @@ const ChatScreen = ({ navigation }) => {
         setLoading(true);
 
         try {
-            // API Çağrısı
-            const response = await axios.post(`${API_URL}/api/chat/recommend`, {
-                message: userMessage.text
-            });
+            // API Çağrısı (Konum bilgisiyle)
+            const payload = {
+                message: userMessage.text,
+                ...(userLocation && { latitude: userLocation.latitude, longitude: userLocation.longitude })
+            };
+
+            const response = await axios.post(`${API_URL}/api/chat/recommend`, payload);
 
             const data = response.data;
             const emotion = data.emotion_category;

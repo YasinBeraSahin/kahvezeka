@@ -16,14 +16,14 @@ const MenuTab = ({ business }) => {
         );
     }
 
-    const categories = ['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık', 'Diğer'];
+    const categories = ['Sıcak', 'Soğuk', 'Çay', 'Soğuk İçecek', 'Fresh / Smoothie', 'Tatlı', 'Atıştırmalık', 'Sandviç', 'Diğer'];
 
     return (
         <View style={styles.container}>
             {categories.map(category => {
                 const itemsInCat = menuItems.filter(item => {
                     if (category === 'Diğer') {
-                        return !item.category || !['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık'].includes(item.category);
+                        return !item.category || !['Sıcak', 'Soğuk', 'Çay', 'Soğuk İçecek', 'Fresh / Smoothie', 'Tatlı', 'Atıştırmalık', 'Sandviç'].includes(item.category);
                     }
                     return item.category === category;
                 });
@@ -33,10 +33,15 @@ const MenuTab = ({ business }) => {
                 return (
                     <View key={category} style={styles.categorySection}>
                         <Text style={styles.categoryHeader}>
-                            {category === 'Sıcak' ? '☕ Sıcak Kahveler' :
-                                category === 'Soğuk' ? '❄️ Soğuk Kahveler' :
-                                    category === 'Tatlı' ? '🍰 Tatlılar' :
-                                        category === 'Atıştırmalık' ? '🥪 Atıştırmalıklar' : '📦 Diğer'}
+                            {category === 'Sıcak' && '☕ Sıcak Kahveler'}
+                            {category === 'Soğuk' && '❄️ Soğuk Kahveler'}
+                            {category === 'Çay' && '🍵 Çaylar'}
+                            {category === 'Soğuk İçecek' && '🥤 Soğuk İçecekler'}
+                            {category === 'Fresh / Smoothie' && '🍹 Fresh / Smoothie'}
+                            {category === 'Tatlı' && '🍰 Tatlılar'}
+                            {category === 'Atıştırmalık' && '🍪 Atıştırmalıklar'}
+                            {category === 'Sandviç' && '🥪 Sandviçler'}
+                            {category === 'Diğer' && '📦 Diğer'}
                         </Text>
                         {itemsInCat.map((item, index) => (
                             <View key={item.id} style={styles.menuItem}>

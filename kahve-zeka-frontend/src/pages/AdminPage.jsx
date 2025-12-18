@@ -20,6 +20,8 @@ function AdminPage() {
   const [error, setError] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsBusiness, setDetailsBusiness] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedBusiness, setSelectedBusiness] = useState(null);
 
   const fetchBusinesses = async () => {
     try {

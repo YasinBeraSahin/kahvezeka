@@ -227,10 +227,10 @@ function BusinessPanelPage() {
     <Typography color="text.secondary">Henüz menü öğesi eklenmemiş.</Typography>
   ) : (
     <Box>
-      {['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık', 'Diğer'].map(category => {
+      {['Sıcak', 'Soğuk', 'Çay', 'Soğuk İçecek', 'Fresh / Smoothie', 'Tatlı', 'Atıştırmalık', 'Sandviç', 'Diğer'].map(category => {
         const itemsInCat = menuItems.filter(item => {
           if (category === 'Diğer') {
-            return !item.category || !['Sıcak', 'Soğuk', 'Tatlı', 'Atıştırmalık'].includes(item.category);
+            return !item.category || !['Sıcak', 'Soğuk', 'Çay', 'Soğuk İçecek', 'Fresh / Smoothie', 'Tatlı', 'Atıştırmalık', 'Sandviç'].includes(item.category);
           }
           return item.category === category;
         });
@@ -240,10 +240,15 @@ function BusinessPanelPage() {
         return (
           <Box key={category} sx={{ mb: 3 }}>
             <Typography variant="h6" color="primary" sx={{ mb: 1, borderBottom: '1px solid #eee', pb: 1 }}>
-              {category === 'Sıcak' ? '☕ Sıcak Kahveler' :
-                category === 'Soğuk' ? '❄️ Soğuk Kahveler' :
-                  category === 'Tatlı' ? '🍰 Tatlılar' :
-                    category === 'Atıştırmalık' ? '🥪 Atıştırmalıklar' : '📦 Diğer'}
+              {category === 'Sıcak' && '☕ Sıcak Kahveler'}
+              {category === 'Soğuk' && '❄️ Soğuk Kahveler'}
+              {category === 'Çay' && '🍵 Çaylar'}
+              {category === 'Soğuk İçecek' && '🥤 Soğuk İçecekler'}
+              {category === 'Fresh / Smoothie' && '🍹 Fresh / Smoothie'}
+              {category === 'Tatlı' && '🍰 Tatlılar'}
+              {category === 'Atıştırmalık' && '🍪 Atıştırmalıklar'}
+              {category === 'Sandviç' && '🥪 Sandviçler'}
+              {category === 'Diğer' && '📦 Diğer'}
             </Typography>
             <List>
               {itemsInCat.map(item => (
@@ -349,8 +354,12 @@ function BusinessPanelPage() {
                 <option value="">Seçiniz</option>
                 <option value="Sıcak">Sıcak Kahve</option>
                 <option value="Soğuk">Soğuk Kahve</option>
+                <option value="Çay">Çaylar</option>
+                <option value="Soğuk İçecek">Soğuk İçecekler (Kola, Soda vb.)</option>
+                <option value="Fresh / Smoothie">Fresh / Smoothie</option>
                 <option value="Tatlı">Tatlı</option>
                 <option value="Atıştırmalık">Atıştırmalık</option>
+                <option value="Sandviç">Sandviç</option>
                 <option value="Diğer">Diğer</option>
               </TextField>
               <Button type="submit" variant="contained" color="secondary" sx={{ height: '56px' }}>Ekle</Button>
