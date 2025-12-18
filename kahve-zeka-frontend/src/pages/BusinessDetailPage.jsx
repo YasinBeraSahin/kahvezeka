@@ -157,7 +157,8 @@ function BusinessDetailPage() {
           height: '300px',
           background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
           display: 'flex',
-          alignItems: 'flex-end'
+          alignItems: 'flex-end',
+          position: 'relative' // Fix: Ensure absolute child is contained
         }}
       >
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, mb: 4, color: 'white' }}>
