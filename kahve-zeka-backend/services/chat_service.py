@@ -296,49 +296,46 @@ async def recommend_coffee_smart(user_message, db: Session, user_lat: float = No
                 cat = item.category if item.category else "Genel"
                 menu_context_str += f"[ID: {item.id}] Ürün: {item.name} | Fiyat: {item.price} TL | Kategori: {cat} | İçerik: {desc}\n"
 
-        # 2. Build Prompt
+        # 2. Build Prompt (Advanced Persona)
         # ---------------------------------------------------------
         prompt = f"""
-        Sen Kahve Zeka uygulamasının yapay zeka asistanısın. Hem bir Barista hem de bir "Kahve Arama Motoru" gibi çalışırsın.
+        ROLÜN: Kahve Zeka uygulamasının "Baş Baristası" ve "Yerel Rehberi"sin.
         
-        PARAMETRELER:
-        - Kullanıcı Mesajı: "{user_message}"
-        - Mevcut Menü Verisi: Aşağıdaki "MEKAN VE MENÜ LİSTESİ"
+        GÖREVİN: Kullanıcının ne dediğini derinlemesine analiz et ve ona aşağıdaki MENÜ listesinden nokta atışı 3 öneri yap.
         
-        GÖREVİN:
-        Aşağıdaki menü listesinden kullanıcıya EN UYGUN 3 ürünü seçmek ve JSON formatında döndürmek.
+        KULLANICI MESAJI: "{user_message}"
         
-        KRİTİK MANTIK KURALLARI (BUNLARA KESİNLİKLE UY):
+        MEVCUT MENÜ VERİSİ (En yakından uzağa sıralı):
+        {menu_context_str}
         
-        1. **NİYET ANALİZİ (Intent Detection):**
-           - EĞER kullanıcı ÖZEL BİR ÜRÜN İSTİYORSA (Örn: "Americano", "Latte", "Cheesecake"):
-             *   GÖREVİN: Bu ürünü (veya buna çok benzeyen alternatifleri) **FARKLI MEKANLARDAN** bulup kıyaslamaktır.
-             *   HATA YAPMA: Aynı mekandaki 3 farklı ürünü önerme. Amacımız kullanıcının aradığı ürünü nerede bulacağını göstermek.
-             *   ÖNCELİK: Aranan kelimeyi tam içeren ürünlere öncelik ver.
-             
-           - EĞER kullanıcı BİR DUYGU/DURUM BELİRTİYORSA (Örn: "Yorgunum", "Tatlı krizim tuttu"):
-             *   GÖREVİN: Bu ruh haline en iyi gelecek **EN İYİ 3 ÜRÜNÜ** seçmektir.
-             *   KRİTER: Mekan çeşitliliği güzel olur ama şart değil. En etkili ürünler hangileriyse onları seç.
+        ANALİZ KURALLARI (BU MANTIKLA DÜŞÜN):
         
-        2. **SEÇİM KURALLARI:**
-           - Sadece "MEKAN VE MENÜ LİSTESİ" içindeki ürünleri seçebilirsin.
-           - Asla listede olmayan bir ID uydurma.
+        1. **DURUM TESPİTİ (Mood & Function):**
+           - **YORGUNLUK / ÇALIŞMA:** Kullanıcı "çok çalıştım", "yorgunum", "ayılamadım", "enerji lazım" diyorsa -> HEDEF: YÜKSEK KAFEİN.
+             *   ÖNER: Americano, Filtre Kahve, Double Espresso, Cold Brew.
+             *   YASAK: Sadece şeker içeren (sıcak çikolata vb.) içecekleri ana öneri yapma. Kafein şart.
+           - **STRES / RAHATLAMA:** "Gerginim", "Bunaldım" -> HEDEF: KONFOR.
+             *   ÖNER: Bitki çayları, Sütlü yumuşak kahveler (Latte), Sıcak Çikolata.
+           - **KEYİF / ÖDÜL:** "Canım tatlı çekti", "Kutlama" -> HEDEF: LEZZET.
+             *   ÖNER: Aromalı latteler, Frappe, Tatlılar, Cheesecake.
+           - **LOGİSTİK (ACİLEYET):** Eğer "acelem var" derse -> En yakın mesafedeki "Al-Götür" uygun ürünleri seç.
         
-        3. **YANIT FORMATI (JSON):**
+        2. **SEÇİM STRATEJİSİ:**
+           - Eğer kullanıcı net bir ürün adı verdiyse (Örn: "Latte"), listedeki EN İYİ Latte seçeneklerini (fiyat/mesafe dengesine göre) bul.
+           - Eğer ruh hali belirttiyse, o ruh haline en uygun içerikleri farklı mekanlardan seçmeye çalış.
+           - **MESAFE FAKTÖRÜ:** Çok uzak (3km+) harika bir ürün yerine, yakındaki (500m) iyi bir ürünü tercih et. Ancak yakındakiler çok kötüyse uzağı öner.
+        
+        3. **ÇIKTI FORMATI (JSON):**
            {{
-             "emotion_category": "Kullanıcının Ruh Hali (Örn: Odaklanmış, Keyifli, Telaşlı - Eğer net bir ürün arıyorsa 'Kararlı' yaz)",
-             "intent": "SEARCH" veya "RECOMMENDATION",
-             "thought_process": "Neden bu ürünleri seçtiğini kısaca açıkla (Örn: 'Americano istediğiniz için bölgedeki en iyi 3 Americano seçeneğini listeledim.')",
+             "emotion_category": "Kullanıcının Ruh Hali (Örn: 'Enerji Arayışında', 'Keyifçi', 'Telaşlı')",
+             "thought_process": "Neden bu seçimi yaptığını 1 cümleyle açıkla (Örn: 'Yorgun olduğunuz için yüksek kafeinli seçenekleri ve en yakın noktaları öne çıkardım.')",
              "recommendations": [
                {{
-                 "id": 123,  // Menüdeki ID
-                 "reason": "Kısa ve ikna edici bir sebep (Örn: 'En yakın seçenek ve fiyatı uygun.')"
+                 "id": 123,  // Menüdeki ID (ASLA UYDURMA, listeden seç)
+                 "reason": "Kullanıcıya hitap eden ikna edici bir açıklama. (Örn: 'Hem size en yakın seçenek hem de sertifikalı çekirdek kullanıyorlar.')"
                }}
              ]
            }}
-        
-        MEKAN VE MENÜ LİSTESİ:
-        {menu_context_str}
         """
         
         # 3. Call Gemini
@@ -362,6 +359,7 @@ async def recommend_coffee_smart(user_message, db: Session, user_lat: float = No
         # 4. Process Response & Fetch Details
         # ---------------------------------------------------------
         emotion = ai_data.get("emotion_category", "Belirsiz")
+        thought = ai_data.get("thought_process", "")
         ai_recs = ai_data.get("recommendations", [])
         
         matching_products = []
@@ -384,20 +382,26 @@ async def recommend_coffee_smart(user_message, db: Session, user_lat: float = No
                     "business_name": db_item.business.name,
                     "business_id": db_item.business.id,
                     "distance": dist,
-                    "ai_reason": reason, # Frontend'de gösterebiliriz
-                    "description": db_item.description # Orijinal açıklama
+                    "ai_reason": reason, 
+                    "description": db_item.description 
                 })
 
         # Frontend formatına uyumlu dönüş
-        # 'recommendations' alanı eskiden genel önerilerdi (Matrix).
-        # Şimdi AI'nın seçtiği ürünlerin "Nedenini" buraya koyabiliriz.
-        
         frontend_recs = []
+        
+        # Eğer AI genel bir düşünce süreci belirttiyse, ilk karta bunu ekleyelim
+        if thought and matching_products:
+             frontend_recs.append({
+                "title": f"💡 AI Analizi",
+                "coffee": emotion, 
+                "description": thought 
+            })
+
         for p in matching_products:
             frontend_recs.append({
                 "title": f"Öneri: {p['name']}",
-                "coffee": p['business_name'], # Kartta büyük görünen yer
-                "description": p['ai_reason'] # AI'nın sebebi description olsun
+                "coffee": p['business_name'], 
+                "description": p['ai_reason'] 
             })
 
         return {
