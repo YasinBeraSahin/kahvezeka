@@ -260,25 +260,111 @@ function BusinessDetailPage() {
 
               {/* REVIEWS TAB */}
               <TabPanel value={tabValue} index={1}>
-                {business.reviews.map((review) => (
-                  <Paper key={review.id} elevation={0} sx={{ p: 2, mb: 2, border: '1px solid #eee', borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <Avatar sx={{ bgcolor: 'primary.light', mr: 2 }}>
-                        <PersonIcon />
-                      </Avatar>
-                      <Box>
-                        <Typography variant="subtitle1" fontWeight="bold">
-                          {review.owner.username}
-                        </Typography>
-                        <Rating value={review.rating} readOnly size="small" />
+                {/* Yeni Yorum Formu */}
+                <Box sx={{ mb: 4, p: 2, bgcolor: '#f9f9f9', borderRadius: 2 }}>
+                  <Typography variant="h6" gutterBottom>Yorum Yap</Typography>
+                  {token ? (
+                    <Box component="form" onSubmit={(e) => {
+                      e.preventDefault();
+                      if (submitting) return;
+                      setSubmitting(true);
+                      setFormError(null);
+
+                      axios.post(`${API_URL}/businesses/${businessId}/reviews/`, {
+                        rating: newRating,
+                        comment: newComment
+                      }, {
+                        headers: {
+                          'Authorization': `Bearer ${token}`
+                        }
+                      })
+                        .then(response => {
+                          // Listeyi güncelle
+                          const newReview = {
+                            ...response.data,
+                            owner: { username: user.username } // Backend dönmeyebilir diye ekliyoruz
+                          };
+                          setBusiness(prev => ({
+                            ...prev,
+                            reviews: [newReview, ...prev.reviews]
+                          }));
+                          setNewComment('');
+                          setNewRating(5);
+                          toast.success('Yorumunuz eklendi!');
+                          setSubmitting(false);
+                        })
+                        .catch(err => {
+                          console.error('Yorum ekleme hatası:', err);
+                          setFormError('Yorum eklenirken bir hata oluştu.');
+                          setSubmitting(false);
+                        });
+                    }}>
+                      <Box sx={{ mb: 2 }}>
+                        <Typography component="legend">Puanınız</Typography>
+                        <Rating
+                          name="simple-controlled"
+                          value={newRating}
+                          onChange={(event, newValue) => {
+                            setNewRating(newValue);
+                          }}
+                        />
                       </Box>
+                      <TextField
+                        fullWidth
+                        label="Yorumunuzu yazın..."
+                        multiline
+                        rows={3}
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        required
+                        sx={{ mb: 2, bgcolor: 'white' }}
+                      />
+                      {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        color="secondary"
+                        disabled={submitting}
+                        sx={{ color: 'white' }}
+                      >
+                        {submitting ? 'Gönderiliyor...' : 'Yorumu Gönder'}
+                      </Button>
                     </Box>
-                    <Typography variant="body1" color="text.secondary" sx={{ ml: 7 }}>
-                      {review.comment}
-                    </Typography>
-                  </Paper>
-                ))}
-                {business.reviews.length === 0 && <Typography>Henüz yorum yapılmamış.</Typography>}
+                  ) : (
+                    <Alert severity="info" action={
+                      <Button color="inherit" size="small" component={RouterLink} to="/login">
+                        Giriş Yap
+                      </Button>
+                    }>
+                      Yorum yapmak için giriş yapmalısınız.
+                    </Alert>
+                  )}
+                </Box>
+
+                <Typography variant="h6" sx={{ mb: 2 }}>Ziyaretçi Yorumları</Typography>
+
+                {business.reviews.length > 0 ? (
+                  business.reviews.map((review) => (
+                    <Paper key={review.id} elevation={0} sx={{ p: 2, mb: 2, border: '1px solid #eee', borderRadius: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <Avatar sx={{ bgcolor: 'primary.light', mr: 2 }}>
+                          <PersonIcon />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle1" fontWeight="bold">
+                            {review.owner ? review.owner.username : 'Anonim'}
+                          </Typography>
+                          <Rating value={review.rating} readOnly size="small" />
+                        </Box>
+                      </Box>
+                      <Typography variant="body1" color="text.secondary" sx={{ ml: 7 }}>
+                        {review.comment}
+                      </Typography>
+                    </Paper>
+                  ))
+                ) : (
+                  <Typography color="text.secondary">Henüz yorum yapılmamış. İlk yorumu sen yap!</Typography>
+                )}
               </TabPanel>
 
               {/* CAMPAIGNS TAB */}
