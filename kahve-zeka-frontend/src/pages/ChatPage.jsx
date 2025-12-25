@@ -85,7 +85,11 @@ function ChatPage() {
             let introText = `Seni "${emotion}" hissettim. İşte sana özel önerilerim:`;
 
             if (emotion === "Belirsiz") {
-                introText = "Yazdıklarınızdan belirli bir duygu çıkaramadım. Alakasız veya nötr bir durum gibi görünüyor. Lütfen hislerinizi daha açık ifade eder misiniz?";
+                // Eğer AI özel bir cevap döndürdüyse onu kullan, yoksa genel mesaj
+                introText = data.thought_process || "Nasıl hissettiğini tam anlayamadım, biraz daha detay verebilir misin?";
+            } else if (data.thought_process) {
+                // Duygu netse de AI'nin açıklamasını ekle (daha doğal duruyor)
+                introText = `${data.thought_process}`;
             }
 
             const botIntroMessage = {
