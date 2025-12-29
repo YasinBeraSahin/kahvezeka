@@ -344,13 +344,7 @@ async def recommend_coffee_smart(user_message, db: Session, user_lat: float = No
         response_text = response.text.strip()
         
         # Clean up JSON (remove markdown ticks if present)
-        if response_text.startswith("```json"):
-            response_text = response_text[7:]
-        elif response_text.startswith("```"):
-            response_text = response_text[3:]
-        if response_text.endswith("```"):
-            response_text = response_text[:-3]
-        response_text = response_text.strip()
+        response_text = response_text.replace("```json", "").replace("```", "").strip()
         
         print(f"DEBUG: Gemini RAG Response: {response_text}")
         
@@ -417,16 +411,14 @@ async def recommend_coffee_smart(user_message, db: Session, user_lat: float = No
         }
     except Exception as e:
         print(f"CRITICAL ERROR in Smart Recommend: {e}")
-        try:
-             # Ana AI başarısız olursa yedek (eski) sistemi devreye sok
-            return await recommend_coffee_from_mood(user_message, db, user_lat, user_lon)
-        except Exception as fallback_e:
-            print(f"Fallback Failed: {fallback_e}")
-            return {
-                "emotion_category": "Belirsiz",
-                "recommendations": [],
-                "matching_products": [],
-                "thought_process": "Sistem geçici olarak yanıt veremiyor, lütfen tekrar deneyin.",
-                "is_smart_search": False,
-                "error": str(e)
-            }
+    except Exception as e:
+        print(f"CRITICAL ERROR in Smart Recommend: {e}")
+        # Kullanıcı matris fallback istemiyor, hatayı gösterelim
+        return {
+            "emotion_category": "Hata",
+            "recommendations": [],
+            "matching_products": [],
+            "thought_process": f"Yapay zeka servisine erişilemedi. Hata detayı: {str(e)}",
+            "is_smart_search": False,
+            "error": str(e)
+        }
