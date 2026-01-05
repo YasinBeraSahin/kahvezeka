@@ -296,7 +296,7 @@ export const rejectBusiness = async (businessId) => {
 
 export const trackView = async (businessId) => {
     try {
-        await api.post(`/analytics/${businessId}/view`);
+        await api.post(`/api/analytics/${businessId}/view`);
     } catch (error) {
         console.log('View tracking failed:', error);
         // Tracking errors shouldn't crash the app
@@ -305,7 +305,7 @@ export const trackView = async (businessId) => {
 
 export const trackClick = async (businessId) => {
     try {
-        await api.post(`/analytics/${businessId}/click`);
+        await api.post(`/api/analytics/${businessId}/click`);
     } catch (error) {
         console.log('Click tracking failed:', error);
     }
@@ -313,7 +313,7 @@ export const trackClick = async (businessId) => {
 
 export const getBusinessStats = async (businessId, days = 30) => {
     try {
-        const response = await api.get(`/analytics/${businessId}/stats?days=${days}`);
+        const response = await api.get(`/api/analytics/${businessId}/stats?days=${days}`);
         return response.data;
     } catch (error) {
         console.error('Stats fetch failed:', error);
@@ -323,7 +323,7 @@ export const getBusinessStats = async (businessId, days = 30) => {
 
 export const getBusinessRatings = async (businessId) => {
     try {
-        const response = await api.get(`/analytics/${businessId}/ratings`);
+        const response = await api.get(`/api/analytics/${businessId}/ratings`);
         return response.data;
     } catch (error) {
         console.error('Ratings fetch failed:', error);
