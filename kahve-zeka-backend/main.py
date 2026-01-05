@@ -956,6 +956,49 @@ def get_business_rating_distribution(
         
     return result
 
+# --- PRODUCTION FIX ENDPOINT ---
+@app.post("/api/admin/fix-prod-schema")
+def fix_prod_schema(db: Session = Depends(get_db)):
+    """
+    Production tablosunu güncellemek için geçici endpoint.
+    Render'da DB'ye doğrudan erişim zor olduğu için buradan yapıyoruz.
+    """
+    from sqlalchemy import text
+    try:
+        # 0. Tablo hiç yoksa oluştur (create_all eksik tabloları oluşturur, mevcutlara dokunmaz)
+        models.Base.metadata.create_all(bind=engine)
+        print("Ensured tables exist.")
+
+        # 1. ai_recommendations sütunu - Postgres için IF NOT EXISTS güvenlidir
+        try:
+            # Postgres syntax: ADD COLUMN IF NOT EXISTS
+            # Eğer hata verirse (SQLite vb.) try-except yakalar
+            db.execute(text("ALTER TABLE business_analytics ADD COLUMN IF NOT EXISTS ai_recommendations INTEGER DEFAULT 0;"))
+            print("Checked/Added ai_recommendations")
+        except Exception as e:
+            print(f"Postgres specific alter failed, try standard: {e}")
+            try:
+                db.execute(text("ALTER TABLE business_analytics ADD COLUMN ai_recommendations INTEGER DEFAULT 0;"))
+            except Exception as e2:
+                 print(f"Skipped ai_recommendations (likely exists): {e2}")
+
+        # 2. favorites_gained sütunu
+        try:
+            db.execute(text("ALTER TABLE business_analytics ADD COLUMN IF NOT EXISTS favorites_gained INTEGER DEFAULT 0;"))
+            print("Checked/Added favorites_gained")
+        except Exception as e:
+             print(f"Postgres specific alter failed, try standard: {e}")
+             try:
+                db.execute(text("ALTER TABLE business_analytics ADD COLUMN favorites_gained INTEGER DEFAULT 0;"))
+             except Exception as e2:
+                 print(f"Skipped favorites_gained (likely exists): {e2}")
+            
+        db.commit()
+        return {"message": "Schema update attempted successfully. Check logs for details."}
+    except Exception as e:
+        db.rollback()
+        return {"error": str(e)}
+
 # --- DEBUG / SYSTEM ENDPOINTS ---
 @app.post("/debug/reset-db")
 def reset_database(db: Session = Depends(get_db)):
