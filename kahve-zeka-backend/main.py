@@ -221,8 +221,29 @@ def add_favorite(
         return {"message": "Zaten favorilerde"}
     
     current_user.favorites.append(business)
+    
+    # --- FAVORITES ANALYTICS TRACKING ---
+    try:
+        from models import BusinessAnalytics
+        from datetime import datetime
+        today = datetime.now().date()
+        
+        stat = db.query(BusinessAnalytics).filter(
+            BusinessAnalytics.business_id == business_id,
+            BusinessAnalytics.date == today
+        ).first()
+        
+        if stat:
+            stat.favorites_gained += 1
+        else:
+            stat = BusinessAnalytics(business_id=business_id, date=today, favorites_gained=1)
+            db.add(stat)
+    except Exception as e:
+        print(f"Analytics Error: {e}")
+    # ------------------------------------
+    
     db.commit()
-    return {"message": "Favorilere eklendi"}
+    return {"message": "Mekan favorilere eklendi"}
 
 @app.delete("/users/me/favorites/{business_id}", response_model=dict)
 def remove_favorite(
@@ -894,10 +915,46 @@ def get_business_stats(
         {
             "date": s.date.strftime("%Y-%m-%d"),
             "views": s.views,
-            "clicks": s.clicks
+            "clicks": s.clicks,
+            "ai_recommendations": s.ai_recommendations,
+            "favorites_gained": s.favorites_gained
         }
         for s in stats
     ]
+
+@app.get("/api/analytics/{business_id}/ratings")
+def get_business_rating_distribution(
+    business_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Bir mekanın yıldız dağılımını (kaç tane 5 yıldız, kaç tane 1 yıldız vb.) getirir.
+    """
+    # Yetki Kontrolü
+    business = db.query(models.Business).filter(models.Business.id == business_id).first()
+    if not business:
+         raise HTTPException(status_code=404, detail="Mekan bulunamadı")
+    
+    if current_user.role != 'admin' and business.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Bu veriye erişim yetkiniz yok")
+
+    # Group by rating
+    from sqlalchemy import func
+    distribution = db.query(
+        models.Review.rating,
+        func.count(models.Review.id)
+    ).filter(
+        models.Review.business_id == business_id
+    ).group_by(models.Review.rating).all()
+    
+    # Format result: {1: 10, 2: 5, ...}
+    dist_dict = {r: c for r, c in distribution}
+    result = []
+    for i in range(1, 6):
+        result.append({"name": f"{i} Yıldız", "value": dist_dict.get(i, 0)})
+        
+    return result
 
 # --- DEBUG / SYSTEM ENDPOINTS ---
 @app.post("/debug/reset-db")

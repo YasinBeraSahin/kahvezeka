@@ -221,6 +221,31 @@ async def recommend_coffee_from_mood(user_message, db: Session = None, user_lat:
                      if not any(mp["id"] == item["id"] for mp in matching_products):
                          matching_products.append(item)
 
+            if len(matching_products) > 0:
+                from models import BusinessAnalytics
+                from datetime import datetime
+                
+                # --- AI Recommendation Tracking ---
+                try:
+                    today = datetime.now().date()
+                    track_business_ids = set([p["business_id"] for p in matching_products])
+                    
+                    for bid in track_business_ids:
+                        stat = db.query(BusinessAnalytics).filter(
+                            BusinessAnalytics.business_id == bid,
+                            BusinessAnalytics.date == today
+                        ).first()
+                        
+                        if stat:
+                            stat.ai_recommendations += 1
+                        else:
+                            stat = BusinessAnalytics(business_id=bid, date=today, ai_recommendations=1)
+                            db.add(stat)
+                    
+                    db.commit() # Save analytics
+                except Exception as e:
+                    print(f"Analytics Tracking Error: {e}")
+                # ----------------------------------
 
         return {
             "emotion_category": matched_category,

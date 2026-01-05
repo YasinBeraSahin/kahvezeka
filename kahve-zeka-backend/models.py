@@ -112,6 +112,8 @@ class BusinessAnalytics(Base):
     
     views = Column(Integer, default=0)
     clicks = Column(Integer, default=0)
+    ai_recommendations = Column(Integer, default=0) # AI kaç kere önerdi
+    favorites_gained = Column(Integer, default=0)   # Kaç kere favorilendi
     
     business = relationship("Business", back_populates="analytics")
 
