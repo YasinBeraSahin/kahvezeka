@@ -727,85 +727,177 @@ async def send_message_to_session(
     """
     Mevcut bir oturuma mesaj gönderir ve AI cevabını kaydeder.
     """
-    # 1. Oturumu Doğrula
-    session = db.query(models.ChatSession).filter(
-        models.ChatSession.id == session_id,
-        models.ChatSession.user_id == current_user.id
+    import traceback
+    try:
+        # 1. Oturumu Doğrula
+        session = db.query(models.ChatSession).filter(
+            models.ChatSession.id == session_id,
+            models.ChatSession.user_id == current_user.id
+        ).first()
+        
+        if not session:
+            raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+
+        # 2. Kullanıcı Mesajını Kaydet
+        user_msg = models.ChatMessage(
+            session_id=session_id,
+            sender="user",
+            content=request.message
+        )
+        db.add(user_msg)
+        db.commit()
+
+        # 3. AI Cevabını Al
+        ai_result = await chat_service.recommend_coffee_smart(
+            request.message, 
+            db,
+            user_lat=request.latitude,
+            user_lon=request.longitude
+        )
+
+        # 4. AI Mesajlarını Kaydet (Parçalı olarak)
+        
+        # a. Giriş/Düşünce Mesajı
+        intro_text = ai_result.get("thought_process")
+        if not intro_text:
+             emotion = ai_result.get("emotion_category", "Belirsiz")
+             intro_text = f"Seni '{emotion}' hissettim."
+
+        bot_intro = models.ChatMessage(
+            session_id=session_id,
+            sender="bot",
+            content=intro_text
+        )
+        db.add(bot_intro)
+        
+        # b. Öneriler (Varsa)
+        recs = ai_result.get("recommendations", [])
+        if recs:
+            # Öneri verisini JSON olarak sakla
+            rec_json = json.dumps({"recommendations": recs})
+            bot_recs = models.ChatMessage(
+                session_id=session_id,
+                sender="bot",
+                content="Önerilerim:", # Fallback text
+                is_recommendation=True,
+                recommendation_data=rec_json
+            )
+            db.add(bot_recs)
+
+        # c. Ürünler (Varsa)
+        products = ai_result.get("matching_products", [])
+        if products:
+            prod_json = json.dumps({"products": products}, default=str) # Safe serialize
+            bot_prods = models.ChatMessage(
+                session_id=session_id,
+                sender="bot",
+                content="Mekan önerileri:",
+                is_recommendation=True, # Frontend bunu da kart olarak işleyebilir veya ayrı flag
+                recommendation_data=prod_json
+            )
+            db.add(bot_prods)
+
+        # Oturum başlığını güncelle (İlk mesajsa)
+        # Basitçe ilk mesajın ilk 30 karakteri olabilir
+        messages_count = db.query(models.ChatMessage).filter(models.ChatMessage.session_id == session_id).count()
+        if messages_count <= 4: # Yeni bir oturum sayılır
+            session.title = request.message[:50] + "..."
+            db.add(session)
+
+        db.commit()
+        
+        return ai_result
+    except Exception as e:
+        db.rollback()
+        print("CHAT ERROR TRACEBACK:")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Sunucu hatası: {str(e)}")
+
+
+# --- BUSINESS ANALYTICS ENDPOINTS ---
+@app.post("/api/analytics/{business_id}/view")
+def increment_business_view(
+    business_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Bir mekanın günlük görüntülenme sayısını artırır.
+    (Herhangi bir kullanıcı tetikleyebilir)
+    """
+    today = datetime.now().date()
+    # Bugün için kayıt var mı kontrol et
+    stat = db.query(models.BusinessAnalytics).filter(
+        models.BusinessAnalytics.business_id == business_id,
+        models.BusinessAnalytics.date == today
     ).first()
     
-    if not session:
-        raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
-
-    # 2. Kullanıcı Mesajını Kaydet
-    user_msg = models.ChatMessage(
-        session_id=session_id,
-        sender="user",
-        content=request.message
-    )
-    db.add(user_msg)
+    if stat:
+        stat.views += 1
+    else:
+        stat = models.BusinessAnalytics(business_id=business_id, date=today, views=1)
+        db.add(stat)
+    
     db.commit()
+    return {"status": "success", "views": stat.views}
 
-    # 3. AI Cevabını Al
-    ai_result = await chat_service.recommend_coffee_smart(
-        request.message, 
-        db,
-        user_lat=request.latitude,
-        user_lon=request.longitude
-    )
-
-    # 4. AI Mesajlarını Kaydet (Parçalı olarak)
+@app.post("/api/analytics/{business_id}/click")
+def increment_business_click(
+    business_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Bir mekanın aksiyon (tel, harita vb.) tıklanma sayısını artırır.
+    """
+    today = datetime.now().date()
+    stat = db.query(models.BusinessAnalytics).filter(
+        models.BusinessAnalytics.business_id == business_id,
+        models.BusinessAnalytics.date == today
+    ).first()
     
-    # a. Giriş/Düşünce Mesajı
-    intro_text = ai_result.get("thought_process")
-    if not intro_text:
-         emotion = ai_result.get("emotion_category", "Belirsiz")
-         intro_text = f"Seni '{emotion}' hissettim."
-
-    bot_intro = models.ChatMessage(
-        session_id=session_id,
-        sender="bot",
-        content=intro_text
-    )
-    db.add(bot_intro)
+    if stat:
+        stat.clicks += 1
+    else:
+        stat = models.BusinessAnalytics(business_id=business_id, date=today, clicks=1)
+        db.add(stat)
     
-    # b. Öneriler (Varsa)
-    recs = ai_result.get("recommendations", [])
-    if recs:
-        # Öneri verisini JSON olarak sakla
-        rec_json = json.dumps({"recommendations": recs})
-        bot_recs = models.ChatMessage(
-            session_id=session_id,
-            sender="bot",
-            content="Önerilerim:", # Fallback text
-            is_recommendation=True,
-            recommendation_data=rec_json
-        )
-        db.add(bot_recs)
-
-    # c. Ürünler (Varsa)
-    products = ai_result.get("matching_products", [])
-    if products:
-        prod_json = json.dumps({"products": products}) # Dikkat: datetime objeleri varsa serialize hatası verebilir, ama şu an yok gibi.
-        bot_prods = models.ChatMessage(
-            session_id=session_id,
-            sender="bot",
-            content="Mekan önerileri:",
-            is_recommendation=True, # Frontend bunu da kart olarak işleyebilir veya ayrı flag
-            recommendation_data=prod_json
-        )
-        db.add(bot_prods)
-
-    # Oturum başlığını güncelle (İlk mesajsa)
-    # Basitçe ilk mesajın ilk 30 karakteri olabilir
-    messages_count = db.query(models.ChatMessage).filter(models.ChatMessage.session_id == session_id).count()
-    if messages_count <= 4: # Yeni bir oturum sayılır
-        session.title = request.message[:50] + "..."
-        db.add(session)
-
     db.commit()
-    
-    return ai_result
+    return {"status": "success", "clicks": stat.clicks}
 
+@app.get("/api/analytics/{business_id}/stats")
+def get_business_stats(
+    business_id: int,
+    days: int = 30,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Bir mekanın son X günkü istatistiklerini getirir.
+    (Sadece mekan sahibi görebilir)
+    """
+    # Yetki Kontrolü
+    business = db.query(models.Business).filter(models.Business.id == business_id).first()
+    if not business:
+         raise HTTPException(status_code=404, detail="Mekan bulunamadı")
+    
+    # Admin değilse ve sahibi değilse hata ver
+    if current_user.role != 'admin' and business.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Bu veriye erişim yetkiniz yok")
+
+    start_date = datetime.now().date() - timedelta(days=days)
+    
+    stats = db.query(models.BusinessAnalytics).filter(
+        models.BusinessAnalytics.business_id == business_id,
+        models.BusinessAnalytics.date >= start_date
+    ).order_by(models.BusinessAnalytics.date.asc()).all()
+    
+    return [
+        {
+            "date": s.date.strftime("%Y-%m-%d"),
+            "views": s.views,
+            "clicks": s.clicks
+        }
+        for s in stats
+    ]
 
 # --- DEBUG / SYSTEM ENDPOINTS ---
 @app.post("/debug/reset-db")

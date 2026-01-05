@@ -41,6 +41,8 @@ import CasinoIcon from '@mui/icons-material/Casino';
 import FastfoodIcon from '@mui/icons-material/Fastfood';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import PhoneIcon from '@mui/icons-material/Phone';
+import MapIcon from '@mui/icons-material/Map';
 import { toast } from 'react-toastify';
 
 
@@ -96,7 +98,18 @@ function BusinessDetailPage() {
     if (token && businessId) {
       checkFavoriteStatus();
     }
+
+    // Görüntülenme Sayısını Artır
+    if (businessId) {
+      axios.post(`${API_URL}/api/analytics/${businessId}/view`)
+        .catch(err => console.error("View count error:", err));
+    }
   }, [token, businessId]);
+
+  const handleActionClick = () => {
+    axios.post(`${API_URL}/api/analytics/${businessId}/click`)
+      .catch(err => console.error("Click count error:", err));
+  };
 
   const checkFavoriteStatus = async () => {
     try {
@@ -411,6 +424,33 @@ function BusinessDetailPage() {
                 <Typography variant="body2" color="text.secondary">
                   {business.address}
                 </Typography>
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  startIcon={<MapIcon />}
+                  onClick={() => {
+                    handleActionClick();
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${business.latitude},${business.longitude}`);
+                  }}
+                >
+                  Yol Tarifi
+                </Button>
+                {business.phone && (
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<PhoneIcon />}
+                    onClick={() => {
+                      handleActionClick();
+                      window.location.href = `tel:${business.phone}`;
+                    }}
+                  >
+                    Ara
+                  </Button>
+                )}
               </Box>
 
               <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 1 }}>

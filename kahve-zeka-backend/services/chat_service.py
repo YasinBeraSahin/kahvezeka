@@ -411,8 +411,6 @@ async def recommend_coffee_smart(user_message, db: Session, user_lat: float = No
         }
     except Exception as e:
         print(f"CRITICAL ERROR in Smart Recommend: {e}")
-    except Exception as e:
-        print(f"CRITICAL ERROR in Smart Recommend: {e}")
         # Kullanıcı matris fallback istemiyor, hatayı gösterelim
         return {
             "emotion_category": "Hata",

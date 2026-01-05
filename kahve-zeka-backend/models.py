@@ -1,6 +1,6 @@
 # models.py
 
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text, func, select, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text, func, select, Boolean, DateTime, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from database import Base
@@ -98,6 +98,23 @@ class Business(Base):
     @hybrid_property
     def review_count(self):
         return len(self.reviews)
+
+    # İstatistikler İlişkisi
+    analytics = relationship("BusinessAnalytics", back_populates="business", cascade="all, delete-orphan")
+
+# İstatistikler Tablosu
+class BusinessAnalytics(Base):
+    __tablename__ = "business_analytics"
+
+    id = Column(Integer, primary_key=True, index=True)
+    business_id = Column(Integer, ForeignKey("businesses.id"), index=True)
+    date = Column(Date, default=func.current_date()) # Sadece tarih
+    
+    views = Column(Integer, default=0)
+    clicks = Column(Integer, default=0)
+    
+    business = relationship("Business", back_populates="analytics")
+
 
 # --- YENİ MENÜ ÖĞESİ MODELİ ---
 class MenuItem(Base):

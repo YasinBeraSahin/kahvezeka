@@ -4,9 +4,10 @@ import {
   Container, Typography, Button, TextField, Box, Paper,
   CircularProgress, Alert, List, ListItem, ListItemText,
   IconButton, Divider, Checkbox, FormControlLabel, FormGroup,
-  FormControl, FormLabel
+  FormControl, FormLabel, Tabs, Tab
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AnalyticsDashboard from '../components/AnalyticsDashboard';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -42,6 +43,11 @@ function BusinessPanelPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [tabIndex, setTabIndex] = useState(0);
+
+  const handleTabChange = (event, newValue) => {
+    setTabIndex(newValue);
+  };
 
   useEffect(() => {
     if (token) {
@@ -312,82 +318,109 @@ function BusinessPanelPage() {
 
       {hasBusiness === true && businessData && (
         <>
-          {businessData.is_approved === false && (
-            <Paper sx={{ padding: 4, marginTop: 4, textAlign: 'center' }}>
-              <Typography variant="h5" gutterBottom>Başvurunuz Alındı!</Typography>
-              <Typography>Mekanınız ("{businessData.name}") inceleniyor.</Typography>
-              <Typography sx={{ mt: 2, fontStyle: 'italic', color: 'text.secondary' }}>Bilgilerinizi güncelleyebilirsiniz.</Typography>
+
+          <Paper sx={{ mt: 4, mb: 2 }}>
+            <Tabs
+              value={tabIndex}
+              onChange={handleTabChange}
+              variant="fullWidth"
+              indicatorColor="primary"
+              textColor="primary"
+            >
+              <Tab label="Mekan Bilgileri" />
+              <Tab label="Tüm Menü" />
+              <Tab label="Kampanyalar" />
+              <Tab label="İstatistikler" />
+            </Tabs>
+          </Paper>
+
+          {tabIndex === 0 && (
+            <>
+              {businessData.is_approved === false && (
+                <Paper sx={{ padding: 4, marginTop: 2, textAlign: 'center', bgcolor: '#fff3e0' }}>
+                  <Typography variant="h6" gutterBottom color="warning.main">⏳ Onay Bekleniyor</Typography>
+                  <Typography>Mekanınız ("{businessData.name}") şu an inceleniyor. Onaylanana kadar kullanıcılara görünmeyecektir.</Typography>
+                </Paper>
+              )}
+
+              <Paper sx={{ padding: 4, marginTop: 2 }}>
+                <Typography variant="h6" gutterBottom>Mekan Bilgilerini Güncelle</Typography>
+                <Box component="form" onSubmit={handleUpdate} noValidate sx={{ mt: 2 }}>
+                  <TextField fullWidth label="Mekan Adı" name="name" value={formData.name} onChange={handleFormChange} margin="normal" required />
+                  <TextField fullWidth label="Adres" name="address" value={formData.address} onChange={handleFormChange} margin="normal" required />
+                  <TextField fullWidth label="Telefon" name="phone" value={formData.phone || ''} onChange={handleFormChange} margin="normal" />
+                  <FormControl component="fieldset" sx={{ mt: 2, mb: 1, width: '100%', border: '1px solid #ddd', borderRadius: 1, p: 2 }}>
+                    <FormLabel component="legend">Mekan Özellikleri</FormLabel>
+                    <FormGroup row>
+                      <FormControlLabel control={<Checkbox checked={formData.has_wifi} onChange={handleFormChange} name="has_wifi" />} label="Wifi Var" />
+                      <FormControlLabel control={<Checkbox checked={formData.has_socket} onChange={handleFormChange} name="has_socket" />} label="Priz Var" />
+                      <FormControlLabel control={<Checkbox checked={formData.is_quiet} onChange={handleFormChange} name="is_quiet" />} label="Sessiz Ortam" />
+                      <FormControlLabel control={<Checkbox checked={formData.is_pet_friendly} onChange={handleFormChange} name="is_pet_friendly" />} label="Hayvan Dostu" />
+                      <FormControlLabel control={<Checkbox checked={formData.serves_food} onChange={handleFormChange} name="serves_food" />} label="Yemek Servisi" />
+                      <FormControlLabel control={<Checkbox checked={formData.has_board_games} onChange={handleFormChange} name="has_board_games" />} label="Masa Oyunları" />
+                    </FormGroup>
+                  </FormControl>
+                  <Button type="submit" variant="contained" color="primary" size="large" sx={{ mt: 2 }} disabled={formLoading}>
+                    {formLoading ? <CircularProgress size={24} color="inherit" /> : 'Bilgilerini Güncelle'}
+                  </Button>
+                </Box>
+              </Paper>
+            </>
+          )}
+
+          {tabIndex === 1 && (
+            <Paper sx={{ padding: 4, marginTop: 2 }}>
+              <Typography variant="h6">Menü Yönetimi</Typography>
+              <Box component="form" onSubmit={handleAddMenuItem} sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                <TextField label="Ürün Adı" name="name" value={newMenuItem.name} onChange={handleMenuFormChange} required sx={{ flexBasis: '200px', flexGrow: 1 }} />
+                <TextField label="Açıklama" name="description" value={newMenuItem.description} onChange={handleMenuFormChange} sx={{ flexBasis: '250px', flexGrow: 2 }} />
+                <TextField label="Fiyat (TL)" name="price" type="number" value={newMenuItem.price} onChange={handleMenuFormChange} required sx={{ flexBasis: '100px', flexGrow: 1 }} />
+                <TextField select label="Kategori" name="category" value={newMenuItem.category || ''} onChange={handleMenuFormChange} required SelectProps={{ native: true }} sx={{ flexBasis: '150px', flexGrow: 1 }}>
+                  <option value="">Seçiniz</option>
+                  <option value="Sıcak">Sıcak Kahve</option>
+                  <option value="Soğuk">Soğuk Kahve</option>
+                  <option value="Çay">Çaylar</option>
+                  <option value="Soğuk İçecek">Soğuk İçecekler (Kola, Soda vb.)</option>
+                  <option value="Fresh / Smoothie">Fresh / Smoothie</option>
+                  <option value="Tatlı">Tatlı</option>
+                  <option value="Atıştırmalık">Atıştırmalık</option>
+                  <option value="Sandviç">Sandviç</option>
+                  <option value="Diğer">Diğer</option>
+                </TextField>
+                <Button type="submit" variant="contained" color="secondary" sx={{ height: '56px' }}>Ekle</Button>
+              </Box>
+              <Divider sx={{ my: 3 }} />
+              <Typography variant="subtitle1" gutterBottom>Mevcut Menü</Typography>
+              {renderedMenuItems}
             </Paper>
           )}
 
-          <Paper sx={{ padding: 4, marginTop: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom>İşletme Panelim: {formData.name}</Typography>
-            <Typography variant="h6">Mekan Bilgilerini Güncelle</Typography>
-            <Box component="form" onSubmit={handleUpdate} noValidate sx={{ mt: 2 }}>
-              <TextField fullWidth label="Mekan Adı" name="name" value={formData.name} onChange={handleFormChange} margin="normal" required />
-              <TextField fullWidth label="Adres" name="address" value={formData.address} onChange={handleFormChange} margin="normal" required />
-              <TextField fullWidth label="Telefon" name="phone" value={formData.phone || ''} onChange={handleFormChange} margin="normal" />
-              <FormControl component="fieldset" sx={{ mt: 2, mb: 1, width: '100%', border: '1px solid #ddd', borderRadius: 1, p: 2 }}>
-                <FormLabel component="legend">Mekan Özellikleri</FormLabel>
-                <FormGroup row>
-                  <FormControlLabel control={<Checkbox checked={formData.has_wifi} onChange={handleFormChange} name="has_wifi" />} label="Wifi Var" />
-                  <FormControlLabel control={<Checkbox checked={formData.has_socket} onChange={handleFormChange} name="has_socket" />} label="Priz Var" />
-                  <FormControlLabel control={<Checkbox checked={formData.is_quiet} onChange={handleFormChange} name="is_quiet" />} label="Sessiz Ortam" />
-                  <FormControlLabel control={<Checkbox checked={formData.is_pet_friendly} onChange={handleFormChange} name="is_pet_friendly" />} label="Hayvan Dostu" />
-                  <FormControlLabel control={<Checkbox checked={formData.serves_food} onChange={handleFormChange} name="serves_food" />} label="Yemek Servisi" />
-                  <FormControlLabel control={<Checkbox checked={formData.has_board_games} onChange={handleFormChange} name="has_board_games" />} label="Masa Oyunları" />
-                </FormGroup>
-              </FormControl>
-              <Button type="submit" variant="contained" color="primary" size="large" sx={{ mt: 2 }} disabled={formLoading}>
-                {formLoading ? <CircularProgress size={24} color="inherit" /> : 'Bilgilerini Güncelle'}
-              </Button>
-            </Box>
-          </Paper>
+          {tabIndex === 2 && (
+            <Paper sx={{ padding: 4, marginTop: 2 }}>
+              <Typography variant="h6">Kampanya Yönetimi</Typography>
+              <Box component="form" onSubmit={handleAddCampaign} sx={{ mt: 2 }}>
+                <TextField fullWidth label="Kampanya Başlığı" name="title" value={newCampaign.title} onChange={handleCampaignFormChange} required margin="normal" />
+                <TextField fullWidth label="Kampanya Açıklaması" name="description" value={newCampaign.description} onChange={handleCampaignFormChange} required multiline rows={3} margin="normal" />
+                <Button type="submit" variant="contained" color="secondary" sx={{ mt: 1 }}>Kampanya Ekle</Button>
+              </Box>
+              <Divider sx={{ my: 3 }} />
+              <Typography variant="subtitle1">Mevcut Kampanyalar</Typography>
+              {campaigns.length === 0 ? (<Typography>Henüz kampanya eklenmemiş.</Typography>) : (
+                <List>
+                  {campaigns.map(campaign => (
+                    <ListItem key={campaign.id} secondaryAction={<IconButton edge="end" onClick={() => handleDeleteCampaign(campaign.id)}><DeleteIcon /></IconButton>}>
+                      <ListItemText primary={campaign.title} secondary={campaign.description} />
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+            </Paper>
+          )}
 
-          <Paper sx={{ padding: 4, marginTop: 4 }}>
-            <Typography variant="h6">Menü Yönetimi</Typography>
-            <Box component="form" onSubmit={handleAddMenuItem} sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-              <TextField label="Ürün Adı" name="name" value={newMenuItem.name} onChange={handleMenuFormChange} required sx={{ flexBasis: '200px', flexGrow: 1 }} />
-              <TextField label="Açıklama" name="description" value={newMenuItem.description} onChange={handleMenuFormChange} sx={{ flexBasis: '250px', flexGrow: 2 }} />
-              <TextField label="Fiyat (TL)" name="price" type="number" value={newMenuItem.price} onChange={handleMenuFormChange} required sx={{ flexBasis: '100px', flexGrow: 1 }} />
-              <TextField select label="Kategori" name="category" value={newMenuItem.category || ''} onChange={handleMenuFormChange} required SelectProps={{ native: true }} sx={{ flexBasis: '150px', flexGrow: 1 }}>
-                <option value="">Seçiniz</option>
-                <option value="Sıcak">Sıcak Kahve</option>
-                <option value="Soğuk">Soğuk Kahve</option>
-                <option value="Çay">Çaylar</option>
-                <option value="Soğuk İçecek">Soğuk İçecekler (Kola, Soda vb.)</option>
-                <option value="Fresh / Smoothie">Fresh / Smoothie</option>
-                <option value="Tatlı">Tatlı</option>
-                <option value="Atıştırmalık">Atıştırmalık</option>
-                <option value="Sandviç">Sandviç</option>
-                <option value="Diğer">Diğer</option>
-              </TextField>
-              <Button type="submit" variant="contained" color="secondary" sx={{ height: '56px' }}>Ekle</Button>
-            </Box>
-            <Divider sx={{ my: 3 }} />
-            <Typography variant="subtitle1" gutterBottom>Mevcut Menü</Typography>
-            {renderedMenuItems}
-          </Paper>
+          {tabIndex === 3 && (
+            <AnalyticsDashboard businessId={businessData.id} />
+          )}
 
-          <Paper sx={{ padding: 4, marginTop: 4 }}>
-            <Typography variant="h6">Kampanya Yönetimi</Typography>
-            <Box component="form" onSubmit={handleAddCampaign} sx={{ mt: 2 }}>
-              <TextField fullWidth label="Kampanya Başlığı" name="title" value={newCampaign.title} onChange={handleCampaignFormChange} required margin="normal" />
-              <TextField fullWidth label="Kampanya Açıklaması" name="description" value={newCampaign.description} onChange={handleCampaignFormChange} required multiline rows={3} margin="normal" />
-              <Button type="submit" variant="contained" color="secondary" sx={{ mt: 1 }}>Kampanya Ekle</Button>
-            </Box>
-            <Divider sx={{ my: 3 }} />
-            <Typography variant="subtitle1">Mevcut Kampanyalar</Typography>
-            {campaigns.length === 0 ? (<Typography>Henüz kampanya eklenmemiş.</Typography>) : (
-              <List>
-                {campaigns.map(campaign => (
-                  <ListItem key={campaign.id} secondaryAction={<IconButton edge="end" onClick={() => handleDeleteCampaign(campaign.id)}><DeleteIcon /></IconButton>}>
-                    <ListItemText primary={campaign.title} secondary={campaign.description} />
-                  </ListItem>
-                ))}
-              </List>
-            )}
-          </Paper>
         </>
       )}
     </Container>
