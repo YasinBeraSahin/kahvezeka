@@ -1,8 +1,8 @@
 // src/screens/BusinessDetailScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions, StatusBar, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getBusinessDetail, addFavorite, removeFavorite, getFavorites } from '../services/api';
+import { getBusinessDetail, addFavorite, removeFavorite, getFavorites, trackView, trackClick } from '../services/api';
 import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 import StarRating from '../components/StarRating';
 import { getImageUrl } from '../utils/image';
@@ -64,6 +64,8 @@ const BusinessDetailScreen = ({ navigation, route }) => {
             }
 
             setBusiness(data);
+            // Track View
+            trackView(businessId);
         } catch (error) {
             console.error(error);
         } finally {
@@ -125,6 +127,39 @@ const BusinessDetailScreen = ({ navigation, route }) => {
                         <Text style={styles.address} numberOfLines={2}>
                             <Ionicons name="location-outline" size={16} color={COLORS.secondary} /> {business.address}
                         </Text>
+
+                        {/* Action Buttons */}
+                        <View style={styles.actionButtonsRow}>
+                            <TouchableOpacity
+                                style={styles.actionButton}
+                                onPress={() => {
+                                    trackClick(businessId);
+                                    Linking.openURL(`tel:${business.phone}`);
+                                }}
+                            >
+                                <Ionicons name="call" size={20} color={COLORS.surface} />
+                                <Text style={styles.actionButtonText}>Ara</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.actionButton, { backgroundColor: COLORS.secondary }]}
+                                onPress={() => {
+                                    trackClick(businessId);
+                                    // Basit map linki Google Maps'i açar
+                                    const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
+                                    const latLng = `${business.latitude},${business.longitude}`;
+                                    const label = business.name;
+                                    const url = Platform.select({
+                                        ios: `${scheme}${label}@${latLng}`,
+                                        android: `${scheme}${latLng}(${label})`
+                                    });
+                                    Linking.openURL(url);
+                                }}
+                            >
+                                <Ionicons name="navigate" size={20} color={COLORS.surface} />
+                                <Text style={styles.actionButtonText}>Yol Tarifi</Text>
+                            </TouchableOpacity>
+                        </View>
 
                         {/* Amenities Icons Row - IMPROVED */}
                         <View style={styles.amenitiesRow}>
@@ -371,6 +406,28 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: 'bold',
     },
+    actionButtonsRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 12,
+        marginBottom: 4
+    },
+    actionButton: {
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: COLORS.primary,
+        paddingVertical: 10,
+        borderRadius: SIZES.radius,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 8,
+        ...SHADOWS.light
+    },
+    actionButtonText: {
+        color: COLORS.surface,
+        fontWeight: 'bold',
+        fontSize: SIZES.medium
+    }
 });
 
 export default BusinessDetailScreen;

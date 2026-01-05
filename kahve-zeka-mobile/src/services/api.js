@@ -292,4 +292,43 @@ export const rejectBusiness = async (businessId) => {
     }
 };
 
+// --- ANALYTICS ENDPOINTS ---
+
+export const trackView = async (businessId) => {
+    try {
+        await api.post(`/analytics/${businessId}/view`);
+    } catch (error) {
+        console.log('View tracking failed:', error);
+        // Tracking errors shouldn't crash the app
+    }
+};
+
+export const trackClick = async (businessId) => {
+    try {
+        await api.post(`/analytics/${businessId}/click`);
+    } catch (error) {
+        console.log('Click tracking failed:', error);
+    }
+};
+
+export const getBusinessStats = async (businessId, days = 30) => {
+    try {
+        const response = await api.get(`/analytics/${businessId}/stats?days=${days}`);
+        return response.data;
+    } catch (error) {
+        console.error('Stats fetch failed:', error);
+        throw error;
+    }
+};
+
+export const getBusinessRatings = async (businessId) => {
+    try {
+        const response = await api.get(`/analytics/${businessId}/ratings`);
+        return response.data;
+    } catch (error) {
+        console.error('Ratings fetch failed:', error);
+        throw error;
+    }
+};
+
 export default api;

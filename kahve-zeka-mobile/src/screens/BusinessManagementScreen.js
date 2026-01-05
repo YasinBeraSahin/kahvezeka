@@ -25,6 +25,7 @@ import {
     addCampaign,
     deleteCampaign
 } from '../services/api';
+import MobileAnalyticsDashboard from '../components/MobileAnalyticsDashboard';
 
 const BusinessManagementScreen = ({ navigation }) => {
     const { user, logout } = useAuth();
@@ -247,9 +248,13 @@ const BusinessManagementScreen = ({ navigation }) => {
                         <TouchableOpacity style={[styles.tab, activeTab === 'campaigns' && styles.activeTab]} onPress={() => setActiveTab('campaigns')}>
                             <Text style={[styles.tabText, activeTab === 'campaigns' && styles.activeTabText]}>Kampanya</Text>
                         </TouchableOpacity>
+                        <TouchableOpacity style={[styles.tab, activeTab === 'analytics' && styles.activeTab]} onPress={() => setActiveTab('analytics')}>
+                            <Text style={[styles.tabText, activeTab === 'analytics' && styles.activeTabText]}>Analiz</Text>
+                        </TouchableOpacity>
                     </View>
 
                     <ScrollView contentContainerStyle={styles.content}>
+                        {activeTab === 'analytics' && business && <MobileAnalyticsDashboard businessId={business.id} />}
                         {activeTab === 'info' && (
                             <View>
                                 <Text style={styles.statusText}>
