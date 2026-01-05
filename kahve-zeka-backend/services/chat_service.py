@@ -428,6 +428,37 @@ async def recommend_coffee_smart(user_message, db: Session, user_lat: float = No
                 "description": p['ai_reason'] 
             })
 
+        # --- AI ANALYTICS TRACKING (Fix) ---
+        if len(matching_products) > 0:
+             try:
+                from models import BusinessAnalytics
+                from datetime import datetime
+                today = datetime.now().date()
+                
+                # Sadece benzersiz işletmeleri say
+                track_business_ids = set([p["business_id"] for p in matching_products])
+                print(f"Tracking AI Recs for Businesses: {track_business_ids}")
+
+                for bid in track_business_ids:
+                    stat = db.query(BusinessAnalytics).filter(
+                        BusinessAnalytics.business_id == bid,
+                        BusinessAnalytics.date == today
+                    ).first()
+                    
+                    if stat:
+                        stat.ai_recommendations += 1
+                        print(f"Updated stat for business {bid}: {stat.ai_recommendations}")
+                    else:
+                        stat = BusinessAnalytics(business_id=bid, date=today, ai_recommendations=1)
+                        db.add(stat)
+                        print(f"Created stat for business {bid}")
+                
+                db.commit() 
+             except Exception as track_err:
+                print(f"Analytics Tracking Failed: {track_err}")
+                db.rollback()
+        # -----------------------------------
+
         return {
             "emotion_category": emotion,
             "recommendations": frontend_recs, # Kartlarda görünecek AI yorumları
