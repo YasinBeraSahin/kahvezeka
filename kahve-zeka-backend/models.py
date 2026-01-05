@@ -1,6 +1,6 @@
 # models.py
 
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text, func, select, Boolean
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text, func, select, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from database import Base
@@ -25,6 +25,10 @@ class User(Base):
     favorites = relationship("Business", secondary="favorites", back_populates="favorited_by")
 
     reviews = relationship("Review", back_populates="owner")
+    
+    # Chat Geçmişi
+    chat_sessions = relationship("ChatSession", back_populates="owner")
+
 
 # Many-to-Many ilişki için ara tablo
 from sqlalchemy import Table
@@ -122,3 +126,30 @@ class Campaign(Base):
     business_id = Column(Integer, ForeignKey("businesses.id"))
     
     business = relationship("Business", back_populates="campaigns")
+
+# --- CHAT GEÇMİŞİ MODELLERİ ---
+class ChatSession(Base):
+    __tablename__ = "chat_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    title = Column(String, nullable=True) # "Kahve Önerisi - 10.05.2024" gibi
+    created_at = Column(DateTime, default=func.now())
+    
+    # İlişkiler
+    owner = relationship("User", back_populates="chat_sessions")
+    messages = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan")
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("chat_sessions.id"))
+    sender = Column(String) # 'user' veya 'bot'
+    content = Column(Text)  # Mesaj içeriği (JSON string olarak tutulabilir eğer zengin içerik varsa)
+    is_recommendation = Column(Boolean, default=False) # Öneri içeriyor mu?
+    recommendation_data = Column(Text, nullable=True) # Öneri JSON verisi
+    timestamp = Column(DateTime, default=func.now())
+
+    session = relationship("ChatSession", back_populates="messages")
+

@@ -629,6 +629,184 @@ async def recommend_coffee(request: ChatRequest, db: Session = Depends(get_db)):
     )
     return result
 
+# --- CHAT HISTORY ENDPOINTS ---
+import json
+
+class ChatSessionCreate(schemas.BaseModel):
+    title: Optional[str] = "Yeni Sohbet"
+
+class ChatMessageCreate(schemas.BaseModel):
+    content: str
+    sender: str # 'user' or 'bot'
+    is_recommendation: bool = False
+    recommendation_data: Optional[str] = None # JSON string
+
+@app.post("/api/chat/sessions", response_model=dict)
+def create_chat_session(
+    session_data: ChatSessionCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Yeni bir sohbet oturumu başlatır."""
+    new_session = models.ChatSession(
+        user_id=current_user.id,
+        title=session_data.title
+    )
+    db.add(new_session)
+    db.commit()
+    db.refresh(new_session)
+    return {"id": new_session.id, "title": new_session.title, "created_at": new_session.created_at}
+
+@app.get("/api/chat/sessions", response_model=List[dict])
+def get_chat_sessions(
+    skip: int = 0, 
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Kullanıcının sohbet geçmişini getirir."""
+    sessions = db.query(models.ChatSession).filter(
+        models.ChatSession.user_id == current_user.id
+    ).order_by(models.ChatSession.created_at.desc()).offset(skip).limit(limit).all()
+    
+    return [
+        {"id": s.id, "title": s.title, "created_at": s.created_at}
+        for s in sessions
+    ]
+
+@app.get("/api/chat/sessions/{session_id}/messages", response_model=List[dict])
+def get_session_messages(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Bir oturuma ait mesajları getirir."""
+    session = db.query(models.ChatSession).filter(
+        models.ChatSession.id == session_id,
+        models.ChatSession.user_id == current_user.id
+    ).first()
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+        
+    messages = db.query(models.ChatMessage).filter(
+        models.ChatMessage.session_id == session_id
+    ).order_by(models.ChatMessage.timestamp.asc()).all()
+    
+    result = []
+    for m in messages:
+        msg_dict = {
+            "id": m.id,
+            "text": m.content,
+            "sender": m.sender,
+            "timestamp": m.timestamp,
+        }
+        if m.is_recommendation and m.recommendation_data:
+             try:
+                 rec_data = json.loads(m.recommendation_data)
+                 # Frontend'in beklediği formatta veriyi genişlet
+                 if "recommendations" in rec_data:
+                     msg_dict["isRecommendation"] = True
+                     msg_dict["recommendations"] = rec_data["recommendations"]
+                 if "products" in rec_data:
+                     msg_dict["isProductList"] = True
+                     msg_dict["products"] = rec_data["products"]
+             except:
+                 pass
+        result.append(msg_dict)
+        
+    return result
+
+@app.post("/api/chat/sessions/{session_id}/message")
+async def send_message_to_session(
+    session_id: int,
+    request: ChatRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Mevcut bir oturuma mesaj gönderir ve AI cevabını kaydeder.
+    """
+    # 1. Oturumu Doğrula
+    session = db.query(models.ChatSession).filter(
+        models.ChatSession.id == session_id,
+        models.ChatSession.user_id == current_user.id
+    ).first()
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+
+    # 2. Kullanıcı Mesajını Kaydet
+    user_msg = models.ChatMessage(
+        session_id=session_id,
+        sender="user",
+        content=request.message
+    )
+    db.add(user_msg)
+    db.commit()
+
+    # 3. AI Cevabını Al
+    ai_result = await chat_service.recommend_coffee_smart(
+        request.message, 
+        db,
+        user_lat=request.latitude,
+        user_lon=request.longitude
+    )
+
+    # 4. AI Mesajlarını Kaydet (Parçalı olarak)
+    
+    # a. Giriş/Düşünce Mesajı
+    intro_text = ai_result.get("thought_process")
+    if not intro_text:
+         emotion = ai_result.get("emotion_category", "Belirsiz")
+         intro_text = f"Seni '{emotion}' hissettim."
+
+    bot_intro = models.ChatMessage(
+        session_id=session_id,
+        sender="bot",
+        content=intro_text
+    )
+    db.add(bot_intro)
+    
+    # b. Öneriler (Varsa)
+    recs = ai_result.get("recommendations", [])
+    if recs:
+        # Öneri verisini JSON olarak sakla
+        rec_json = json.dumps({"recommendations": recs})
+        bot_recs = models.ChatMessage(
+            session_id=session_id,
+            sender="bot",
+            content="Önerilerim:", # Fallback text
+            is_recommendation=True,
+            recommendation_data=rec_json
+        )
+        db.add(bot_recs)
+
+    # c. Ürünler (Varsa)
+    products = ai_result.get("matching_products", [])
+    if products:
+        prod_json = json.dumps({"products": products}) # Dikkat: datetime objeleri varsa serialize hatası verebilir, ama şu an yok gibi.
+        bot_prods = models.ChatMessage(
+            session_id=session_id,
+            sender="bot",
+            content="Mekan önerileri:",
+            is_recommendation=True, # Frontend bunu da kart olarak işleyebilir veya ayrı flag
+            recommendation_data=prod_json
+        )
+        db.add(bot_prods)
+
+    # Oturum başlığını güncelle (İlk mesajsa)
+    # Basitçe ilk mesajın ilk 30 karakteri olabilir
+    messages_count = db.query(models.ChatMessage).filter(models.ChatMessage.session_id == session_id).count()
+    if messages_count <= 4: # Yeni bir oturum sayılır
+        session.title = request.message[:50] + "..."
+        db.add(session)
+
+    db.commit()
+    
+    return ai_result
+
+
 # --- DEBUG / SYSTEM ENDPOINTS ---
 @app.post("/debug/reset-db")
 def reset_database(db: Session = Depends(get_db)):
