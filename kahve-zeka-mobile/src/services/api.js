@@ -298,7 +298,6 @@ export const trackView = async (businessId) => {
     try {
         await api.post(`/api/analytics/${businessId}/view`);
     } catch (error) {
-        console.log('View tracking failed:', error);
         // Tracking errors shouldn't crash the app
     }
 };

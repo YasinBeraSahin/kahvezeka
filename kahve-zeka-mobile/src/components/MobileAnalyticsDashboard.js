@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions, ActivityIndicator, ScrollView } from 'react-native';
-import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
+import { WebView } from 'react-native-webview';
 import { getBusinessStats, getBusinessRatings } from '../services/api';
 import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,20 +20,20 @@ const MobileAnalyticsDashboard = ({ businessId }) => {
     const loadData = async () => {
         try {
             const [statsData, ratingsData] = await Promise.all([
-                getBusinessStats(businessId, 7), // Son 7 gün mobilde daha iyi görünür
+                getBusinessStats(businessId, 7),
                 getBusinessRatings(businessId)
             ]);
 
-            setStats(statsData);
-            setRatings(ratingsData);
+            setStats(statsData || []);
+            setRatings(ratingsData || []);
 
-            // Calculate totals
-            const totalViews = statsData.reduce((acc, curr) => acc + curr.views, 0);
-            const totalClicks = statsData.reduce((acc, curr) => acc + curr.clicks, 0);
-            const totalAI = statsData.reduce((acc, curr) => acc + curr.ai_recommendations, 0);
-            const totalFavs = statsData.reduce((acc, curr) => acc + curr.favorites_gained, 0);
-
-            setSummary({ views: totalViews, clicks: totalClicks, ai: totalAI, favorites: totalFavs });
+            if (statsData) {
+                const totalViews = statsData.reduce((acc, curr) => acc + curr.views, 0);
+                const totalClicks = statsData.reduce((acc, curr) => acc + curr.clicks, 0);
+                const totalAI = statsData.reduce((acc, curr) => acc + curr.ai_recommendations, 0);
+                const totalFavs = statsData.reduce((acc, curr) => acc + curr.favorites_gained, 0);
+                setSummary({ views: totalViews, clicks: totalClicks, ai: totalAI, favorites: totalFavs });
+            }
 
         } catch (error) {
             console.error(error);
@@ -46,19 +46,85 @@ const MobileAnalyticsDashboard = ({ businessId }) => {
         return <ActivityIndicator size="large" color={COLORS.primary} />;
     }
 
-    // Chart Config
-    const chartConfig = {
-        backgroundGradientFrom: "#ffffff",
-        backgroundGradientTo: "#ffffff",
-        color: (opacity = 1) => `rgba(106, 76, 51, ${opacity})`, // Primary Color
-        strokeWidth: 2,
-        barPercentage: 0.5,
-        useShadowColorFromDataset: false
+    // Chart.js HTML Content
+    const generateHtml = () => {
+        const labels = stats.map(d => `"${d.date.split('-')[2]}"`).join(',');
+        const views = stats.map(d => d.views).join(',');
+        const clicks = stats.map(d => d.clicks).join(',');
+        const aiRecs = stats.map(d => d.ai_recommendations).join(',');
+
+        const ratingLabels = ratings.map(r => `"${r.name}"`).join(',');
+        const ratingValues = ratings.map(r => r.value).join(',');
+        const ratingColors = ratings.map(r => {
+            const val = parseInt(r.name[0]);
+            return val >= 4 ? "'#4caf50'" : val === 3 ? "'#ffeb3b'" : "'#f44336'";
+        }).join(',');
+
+        return `
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 10px; background-color: #f5f5f5; }
+                .chart-container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+                h2 { font-size: 16px; color: #333; margin-bottom: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class="chart-container">
+                <h2>Trafik (Son 7 Gün)</h2>
+                <canvas id="trafficChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Yapay Zeka Etkileşimi</h2>
+                <canvas id="aiChart"></canvas>
+            </div>
+             <div class="chart-container">
+                <h2>Puan Dağılımı</h2>
+                <canvas id="ratingChart"></canvas>
+            </div>
+            <script>
+                // Traffic Chart
+                new Chart(document.getElementById('trafficChart'), {
+                    type: 'line',
+                    data: {
+                        labels: [${labels}],
+                        datasets: [
+                            { label: 'Görüntülenme', data: [${views}], borderColor: '#2196f3', tension: 0.4 },
+                            { label: 'Tıklama', data: [${clicks}], borderColor: '#ff9800', tension: 0.4 }
+                        ]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                });
+
+                // AI Chart
+                new Chart(document.getElementById('aiChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: [${labels}],
+                        datasets: [{ label: 'AI Önerisi', data: [${aiRecs}], backgroundColor: '#9c27b0' }]
+                    },
+                     options: { responsive: true, plugins: { legend: { display: false } } }
+                });
+                
+                // Rating Chart
+                 new Chart(document.getElementById('ratingChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: [${ratingLabels}],
+                        datasets: [{ data: [${ratingValues}], backgroundColor: [${ratingColors}] }]
+                    },
+                     options: { responsive: true, plugins: { legend: { position: 'right' } } }
+                });
+            </script>
+        </body>
+        </html>
+        `;
     };
 
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-
             {/* Summary Cards */}
             <View style={styles.summaryGrid}>
                 <SummaryCard icon="eye" value={summary.views} label="Görüntülenme" color="#2196f3" />
@@ -67,65 +133,15 @@ const MobileAnalyticsDashboard = ({ businessId }) => {
                 <SummaryCard icon="heart" value={summary.favorites} label="Yeni Favori" color="#e91e63" />
             </View>
 
-            {/* Traffic Chart */}
-            <Text style={styles.chartTitle}>Trafik (Son 7 Gün)</Text>
-            <LineChart
-                data={{
-                    labels: stats.map(d => d.date.split('-')[2]), // Sadece gün
-                    datasets: [
-                        { data: stats.map(d => d.views), color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`, strokeWidth: 2 },
-                        { data: stats.map(d => d.clicks), color: (opacity = 1) => `rgba(255, 152, 0, ${opacity})`, strokeWidth: 2 }
-                    ],
-                    legend: ["Görüntülenme", "Tıklama"]
-                }}
-                width={screenWidth - 32}
-                height={220}
-                chartConfig={chartConfig}
-                bezier
-                style={styles.chart}
-            />
-
-            {/* AI & Favorites Chart */}
-            <Text style={styles.chartTitle}>Etkileşimler</Text>
-            <BarChart
-                data={{
-                    labels: stats.map(d => d.date.split('-')[2]),
-                    datasets: [
-                        { data: stats.map(d => d.ai_recommendations) }
-                    ]
-                }}
-                width={screenWidth - 32}
-                height={220}
-                yAxisLabel=""
-                chartConfig={{
-                    ...chartConfig,
-                    color: (opacity = 1) => `rgba(156, 39, 176, ${opacity})`
-                }}
-                style={styles.chart}
-                showValuesOnTopOfBars
-            />
-
-            {/* Ratings Pie Chart */}
-            <Text style={styles.chartTitle}>Puan Dağılımı</Text>
-            <PieChart
-                data={ratings.map((r, i) => ({
-                    name: r.name,
-                    population: r.value,
-                    color: ['#4caf50', '#8bc34a', '#ffeb3b', '#ff9800', '#f44336'][5 - parseInt(r.name[0])], // 5->Green, 1->Red logic sort of
-                    legendFontColor: "#7F7F7F",
-                    legendFontSize: 12
-                }))}
-                width={screenWidth - 32}
-                height={220}
-                chartConfig={chartConfig}
-                accessor={"population"}
-                backgroundColor={"transparent"}
-                paddingLeft={"15"}
-                absolute
-                style={styles.chart}
-            />
-
-            <View style={{ height: 50 }} />
+            {/* WebView Charts */}
+            <View style={{ height: 900 }}>
+                <WebView
+                    originWhitelist={['*']}
+                    source={{ html: generateHtml() }}
+                    style={{ backgroundColor: 'transparent' }}
+                    scrollEnabled={false}
+                />
+            </View>
         </ScrollView>
     );
 };
@@ -174,20 +190,6 @@ const styles = StyleSheet.create({
     cardLabel: {
         fontSize: 12,
         color: COLORS.textSecondary
-    },
-    chartTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: COLORS.text,
-        marginBottom: 12,
-        marginTop: 8
-    },
-    chart: {
-        borderRadius: 16,
-        paddingRight: 40, // fix for chart kit cut off
-        marginVertical: 8,
-        ...SHADOWS.light,
-        backgroundColor: COLORS.surface
     }
 });
 

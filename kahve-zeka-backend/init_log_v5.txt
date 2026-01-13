@@ -1,0 +1,42 @@
+ENV SET: postgresql://kahvezeka_v3_user:xPHXTid4on9szfk4LQyRSnav87mvDOEC@dpg-d5jac9q4d50c73a9v67g-a.frankfurt-postgres.render.com/kahvezeka_v3
+Importing database module...
+Importing models...
+Creating tables...
+Tables created.
+Starting User Creation...
+User admin already exists.
+User owner already exists.
+User user already exists.
+User mekan_sahibi already exists.
+Starting Business Creation...
+Business Espresso Lab already exists.
+Business Starbucks already exists.
+Business Petra Roasting Co. already exists.
+Seeding Detailed Business...
+Creating Espresso Lab - Kadıköy...
+Seeding Menu Items...
+Menu items created.
+Seeding Campaign...
+EXCEPTION OCCURRED:
+'discount_percentage' is an invalid keyword argument for Campaign
+Traceback (most recent call last):
+  File "C:\Users\yasin\Desktop\kahve-zeka\kahve-zeka-backend\init_remote_db_v5.py", line 157, in <module>
+    campaign = models.Campaign(
+        title="Kahve + Tatlı Menüsü",
+    ...<2 lines>...
+        business_id=business.id
+    )
+  File "<string>", line 4, in __init__
+  File "C:\Users\yasin\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\state.py", line 571, in _initialize_instance
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\yasin\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\yasin\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\state.py", line 569, in _initialize_instance
+    manager.original_init(*mixed[1:], **kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasin\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\decl_base.py", line 2173, in _declarative_constructor
+    raise TypeError(
+        "%r is an invalid keyword argument for %s" % (k, cls_.__name__)
+    )
+TypeError: 'discount_percentage' is an invalid keyword argument for Campaign
